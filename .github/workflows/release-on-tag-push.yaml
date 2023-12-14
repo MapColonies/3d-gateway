@@ -1,0 +1,38 @@
+name: "Publish release on tag push"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code for CHANGELOG.md
+        uses: actions/checkout@v2
+
+      - name: Get package info
+        id: package
+        uses: codex-team/action-nodejs-package-info@v1
+
+      - name: Generate postman collection for service
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Set File name
+        uses: myci-actions/export-env-var@1
+        with:
+          name: P_COLLECTION_FILE_NAME
+          value: ${{ steps.package.outputs.name }}-v${{ steps.package.outputs.version }}-postman-collection.json
+
+      - run: 'npx openapi-to-postmanv2 -s openapi3.yaml -o ${{ env.P_COLLECTION_FILE_NAME }}'
+
+      - name: Publish Release to Github
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+          files: ${{ env.P_COLLECTION_FILE_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
