@@ -1,21 +1,21 @@
-{{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
-{{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
+{{- if .Values.route.enabled -}}
 apiVersion: route.openshift.io/v1
 kind: Route
-metadata:
-  name: {{ $releaseName }}-{{ $chartName }}-route
+metadata: {{ $fullname := printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
+  name: {{ $fullname }}
+  labels:
+    app: {{ $fullname }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
   annotations:
-    haproxy.router.openshift.io/rewrite-target: /
-    {{- if .Values.route.timeout.enabled }}
-    haproxy.router.openshift.io/timeout: {{ .Values.route.timeout.duration }}
+    {{- range $key, $value := .Values.route.annotations }}
+      {{ $key }}: {{ tpl $value $ | quote }}
     {{- end }}
 spec:
-  path:  {{ .Values.route.path | default "/" }}
   to:
     kind: Service
-    name: {{ $releaseName }}-{{ $chartName }}
+    name: {{ $fullname }}
   tls:
-    termination: edge
+    termination: edge  
 {{- end -}}
