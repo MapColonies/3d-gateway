@@ -8,7 +8,7 @@ export class MiddlewareRequestSender {
     return supertest.agent(this.app).post('/ingestion').set('Content-Type', 'application/json').send(payload);
   }
 
-  public async updateMetadata(payload: UpdatePayload): Promise<supertest.Response> {
-    return supertest.agent(this.app).post('/update').set('Content-Type', 'application/json').send(payload);
+  public async updateMetadata(identifier: string, payload: UpdatePayload): Promise<supertest.Response> {
+    return supertest.agent(this.app).post(`/update/${identifier}`).set('Content-Type', 'application/json').send(payload);
   }
 }

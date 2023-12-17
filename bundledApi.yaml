@@ -37,12 +37,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-  /update:
+  /update/{identifier}:
     post:
       operationId: updateMetadata
       summary: Updates metadata of a model
       tags:
         - update
+      parameters:
+        - $ref: '#/components/parameters/identifier'
       requestBody:
         content:
           application/json:
@@ -68,6 +70,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/error'
 components:
+  parameters:
+    identifier:
+      in: path
+      name: identifier
+      required: true
+      schema:
+        type: string
+      description: Metadata record identifier
   schemas:
     error:
       type: object

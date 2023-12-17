@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
 import { CatalogCall } from '../../../../src/externalServices/catalog/requestCall';
 import { CatalogConfig } from '../../../../src/externalServices/catalog/interfaces';
-import { createUuid } from '../../../helpers/helpers';
+import { createUpdatePayload, createUuid } from '../../../helpers/helpers';
 
 let catalog: CatalogCall;
 
@@ -96,6 +96,41 @@ describe('catalogCall tests', () => {
       const response = catalog.isProductIdExist(productId);
 
       await expect(response).rejects.toThrow('there is a problem with catalog');
+    });
+  });
+
+  describe('patchMetadata Function', () => {
+    it('Returns the response of the catalog when metadata was updated successfully', async () => {
+      const identifier = createUuid();
+      const payload = createUpdatePayload();
+      mockAxios.patch.mockResolvedValue({ status: StatusCodes.OK, data: payload });
+
+      const response = await catalog.patchMetadata(identifier, payload);
+
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      expect(response).toBe(payload);
+    });
+
+    it('Rejects if got unexpected response from catalog', async () => {
+      const identifier = createUuid();
+      const payload = createUpdatePayload();
+      mockAxios.patch.mockResolvedValue({ status: StatusCodes.CONFLICT });
+
+      const response = catalog.patchMetadata(identifier, payload);
+
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      await expect(response).rejects.toThrow('Problem with the catalog during send updatedMetadata');
+    });
+
+    it('rejects if service is not available', async () => {
+      const identifier = createUuid();
+      const payload = createUpdatePayload();
+      mockAxios.patch.mockRejectedValue(new Error('catalog is not available'));
+
+      const response = catalog.patchMetadata(identifier, payload);
+
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      await expect(response).rejects.toThrow('catalog is not available');
     });
   });
 });

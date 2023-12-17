@@ -36,12 +36,12 @@ export class MiddlewareController {
     }
   };
 
-  public updateModel: UpdateMetadataHandler = async (req, res, next) => {
+  public updateMetadata: UpdateMetadataHandler = async (req, res, next) => {
     const { identifier } = req.params;
     try {
       const payload = req.body;
       const response = await this.manager.updateMetadata(identifier, payload);
-      return res.status(httpStatus.CREATED).json(response);
+      return res.status(httpStatus.OK).json(response);
     } catch (error) {
       this.logger.error({ msg: `Failed in updating the metadata!`, error });
       return next(error);

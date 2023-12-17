@@ -71,6 +71,6 @@ export class CatalogCall {
       return response.data;
     }
     this.logger.error({ msg: 'Got unexpected status-code form catalog', response });
-    throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during send updatedMetadata', true);
+    throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during send updatedMetadata', true);
   }
 }

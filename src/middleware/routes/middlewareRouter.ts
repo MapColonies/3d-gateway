@@ -7,7 +7,7 @@ const middlewareRouterFactory: FactoryFunction<Router> = (dependencyContainer) =
   const controller = dependencyContainer.resolve(MiddlewareController);
 
   router.post('/ingestion', controller.createModel);
-  router.post('/update:identifier', controller.updateModel);
+  router.post('/update/:identifier', controller.updateMetadata);
 
   return router;
 };
