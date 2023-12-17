@@ -65,7 +65,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.isProductIdExist(productId);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/find/${productId}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/lastVersion/${productId}`);
       expect(response).toBe(true);
     });
 
@@ -75,7 +75,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.isProductIdExist(productId);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/find/${productId}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/lastVersion/${productId}`);
       expect(response).toBe(false);
     });
 
@@ -85,7 +85,7 @@ describe('catalogCall tests', () => {
 
       const response = catalog.isProductIdExist(productId);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/find/${productId}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/lastVersion/${productId}`);
       await expect(response).rejects.toThrow('Problem with the catalog during validation of productId existence');
     });
 
