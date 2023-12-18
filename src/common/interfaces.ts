@@ -13,9 +13,9 @@ export interface OpenApiConfig {
 }
 
 export interface IngestionPayload {
-    modelPath: string;
-    tilesetFilename: string;
-    metadata: Omit<Layer3DMetadata, 'productSource'>;
+  modelPath: string;
+  tilesetFilename: string;
+  metadata: Omit<Layer3DMetadata, 'productSource'>;
 }
 
 export interface UpdatePayload {

@@ -178,6 +178,6 @@ export const createUpdatePayload = (): Partial<UpdatePayload> => {
 
 export const createUpdateStatusPayload = (): UpdateStatusPayload => {
   return {
-    productStatus: 'UNPUBLISHED'
+    productStatus: 'UNPUBLISHED',
   };
-}
+};

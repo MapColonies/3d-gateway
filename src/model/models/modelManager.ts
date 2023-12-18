@@ -15,7 +15,7 @@ export class ModelManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(ValidationManager) private readonly validator: ValidationManager,
-    @inject(StoreTriggerCall) private readonly storeTrigger: StoreTriggerCall,
+    @inject(StoreTriggerCall) private readonly storeTrigger: StoreTriggerCall
   ) {}
 
   public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {

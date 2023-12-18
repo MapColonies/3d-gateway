@@ -9,11 +9,7 @@ let metadataManager: MetadataManager;
 
 describe('MetadataManager', () => {
   beforeEach(() => {
-    metadataManager = new MetadataManager(
-      jsLogger({ enabled: false }),
-      validationManagerMock as never,
-      catalogMock as never
-    );
+    metadataManager = new MetadataManager(jsLogger({ enabled: false }), validationManagerMock as never, catalogMock as never);
   });
   afterEach(() => {
     jest.clearAllMocks();

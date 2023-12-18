@@ -10,11 +10,7 @@ let modelManager: ModelManager;
 
 describe('ModelManager', () => {
   beforeEach(() => {
-    modelManager = new ModelManager(
-      jsLogger({ enabled: false }),
-      validationManagerMock as never,
-      storeTriggerMock as never
-    );
+    modelManager = new ModelManager(jsLogger({ enabled: false }), validationManagerMock as never, storeTriggerMock as never);
   });
   afterEach(() => {
     jest.clearAllMocks();
