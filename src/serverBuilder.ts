@@ -11,9 +11,10 @@ import httpLogger from '@map-colonies/express-access-log-middleware';
 import { defaultMetricsMiddleware, getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
-import { MIDDLEWARE_ROUTER_SYMBOL } from './middleware/routes/middlewareRouter';
+import { MODEL_ROUTER_SYMBOL } from './model/routes/modelRouter';
 import { mountDirs } from './common/constants';
 import { handleError } from './common/handleError';
+import { METADATA_ROUTER_SYMBOL } from './metadata/routes/metadataRouter';
 
 @injectable()
 export class ServerBuilder {
@@ -22,7 +23,8 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(MIDDLEWARE_ROUTER_SYMBOL) private readonly middlewareRouter: Router
+    @inject(MODEL_ROUTER_SYMBOL) private readonly modelRouter: Router,
+    @inject(METADATA_ROUTER_SYMBOL) private readonly metadataRouter: Router
   ) {
     this.serverInstance = express();
   }
@@ -45,7 +47,8 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/', this.middlewareRouter);
+    this.serverInstance.use('/model', this.modelRouter);
+    this.serverInstance.use('/metadata', this.metadataRouter);
     this.serverInstance.use(getStorageExplorerMiddleware(mountDirs, this.logger as unknown as Record<string, unknown>));
     this.buildDocsRoutes();
   }

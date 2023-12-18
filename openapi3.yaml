@@ -7,7 +7,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 paths:
-  /ingestion:
+  /model/ingestion:
     post:
       operationId: createModel
       summary: Invokes a new model ingestion flow
@@ -37,7 +37,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-  /update/{identifier}:
+  /metadata/update/{identifier}:
     post:
       operationId: updateMetadata
       summary: Updates metadata of a model
@@ -69,7 +69,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-  /update/status/{identifier}:
+  /metadata/update/status/{identifier}:
     post:
       operationId: updateStatus
       summary: Updates metadata of a model

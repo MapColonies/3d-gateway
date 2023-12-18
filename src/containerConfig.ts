@@ -6,7 +6,8 @@ import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
-import { middlewareRouterFactory, MIDDLEWARE_ROUTER_SYMBOL } from './middleware/routes/middlewareRouter';
+import { modelRouterFactory, MODEL_ROUTER_SYMBOL } from './model/routes/modelRouter';
+import { METADATA_ROUTER_SYMBOL, metadataRouterFactory } from './metadata/routes/metadataRouter';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -28,7 +29,8 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
-    { token: MIDDLEWARE_ROUTER_SYMBOL, provider: { useFactory: middlewareRouterFactory } },
+    { token: MODEL_ROUTER_SYMBOL, provider: { useFactory: modelRouterFactory } },
+    { token: METADATA_ROUTER_SYMBOL, provider: { useFactory: metadataRouterFactory } },
     {
       token: 'onSignal',
       provider: {

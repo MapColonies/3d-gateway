@@ -1,5 +1,5 @@
 import config from 'config';
-import * as utils from '../../../../src/middleware/models/utilities';
+import * as utils from '../../../../src/model/models/utilities';
 
 describe('utilities tests', () => {
   describe('removeFootprintSpaces tests', () => {
