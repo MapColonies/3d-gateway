@@ -5,6 +5,6 @@ export class ModelRequestSender {
   public constructor(private readonly app: Express.Application) {}
 
   public async createModel(payload: IngestionPayload): Promise<supertest.Response> {
-    return supertest.agent(this.app).post('/model/ingestion').set('Content-Type', 'application/json').send(payload);
+    return supertest.agent(this.app).post('/models/ingestion').set('Content-Type', 'application/json').send(payload);
   }
 }

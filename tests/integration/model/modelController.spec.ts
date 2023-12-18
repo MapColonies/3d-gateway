@@ -38,7 +38,7 @@ describe('ModelController', function () {
     mockAxios.reset();
   });
 
-  describe('POST /model/ingestion', function () {
+  describe('POST /models/ingestion', function () {
     describe('Happy Path 🙂', function () {
       describe('Sphere', function () {
         it('should return 201 status code and the added model', async function () {

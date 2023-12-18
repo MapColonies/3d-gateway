@@ -7,7 +7,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 paths:
-  /model/ingestion:
+  /models/ingestion:
     post:
       operationId: createModel
       summary: Invokes a new model ingestion flow

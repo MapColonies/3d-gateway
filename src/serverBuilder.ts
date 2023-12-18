@@ -47,7 +47,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/model', this.modelRouter);
+    this.serverInstance.use('/models', this.modelRouter);
     this.serverInstance.use('/metadata', this.metadataRouter);
     this.serverInstance.use(getStorageExplorerMiddleware(mountDirs, this.logger as unknown as Record<string, unknown>));
     this.buildDocsRoutes();
