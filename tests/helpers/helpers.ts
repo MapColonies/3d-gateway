@@ -3,7 +3,7 @@ import config from 'config';
 import { randBetweenDate, randNumber, randPastDate, randSentence, randUuid, randWord } from '@ngneat/falso';
 import { Polygon } from 'geojson';
 import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
-import { IngestionPayload, UpdatePayload } from '../../src/common/interfaces';
+import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
 
@@ -175,3 +175,9 @@ export const createUpdatePayload = (): Partial<UpdatePayload> => {
   };
   return payload;
 };
+
+export const createUpdateStatusPayload = (): UpdateStatusPayload => {
+  return {
+    productStatus: 'UNPUBLISHED'
+  };
+}

@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
 import { CatalogCall } from '../../../../src/externalServices/catalog/requestCall';
 import { CatalogConfig } from '../../../../src/externalServices/catalog/interfaces';
-import { createUpdatePayload, createUuid } from '../../../helpers/helpers';
+import { createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
 
 let catalog: CatalogCall;
 
@@ -20,7 +20,7 @@ describe('catalogCall tests', () => {
   describe('isRecordExist Function', () => {
     it('Returns true when identifier exists in DB', async () => {
       const identifier = createUuid();
-      mockAxios.get.mockResolvedValue({ status: StatusCodes.OK });
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
 
       const response = await catalog.isRecordExist(identifier);
 
@@ -30,7 +30,7 @@ describe('catalogCall tests', () => {
 
     it('Returns false when identifier does not exist in DB', async () => {
       const identifier = createUuid();
-      mockAxios.get.mockResolvedValue({ status: StatusCodes.NOT_FOUND });
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
       const response = await catalog.isRecordExist(identifier);
 
@@ -40,7 +40,7 @@ describe('catalogCall tests', () => {
 
     it('Rejects if got unexpected response from catalog', async () => {
       const identifier = createUuid();
-      mockAxios.get.mockResolvedValue({ status: StatusCodes.INTERNAL_SERVER_ERROR });
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.INTERNAL_SERVER_ERROR });
 
       const response = catalog.isRecordExist(identifier);
 
@@ -50,7 +50,7 @@ describe('catalogCall tests', () => {
 
     it('rejects if service is not available', async () => {
       const identifier = createUuid();
-      mockAxios.get.mockRejectedValue(new Error('catalog is not available'));
+      mockAxios.get.mockRejectedValueOnce(new Error('catalog is not available'));
 
       const response = catalog.isRecordExist(identifier);
 
@@ -61,7 +61,7 @@ describe('catalogCall tests', () => {
   describe('isProductIdExist Function', () => {
     it('Returns true when productId exists in DB', async () => {
       const productId = createUuid();
-      mockAxios.get.mockResolvedValue({ status: StatusCodes.OK });
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
 
       const response = await catalog.isProductIdExist(productId);
 
@@ -71,7 +71,7 @@ describe('catalogCall tests', () => {
 
     it('Returns false when productId does not exist in DB', async () => {
       const productId = createUuid();
-      mockAxios.get.mockResolvedValue({ status: StatusCodes.NOT_FOUND });
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
       const response = await catalog.isProductIdExist(productId);
 
@@ -81,7 +81,7 @@ describe('catalogCall tests', () => {
 
     it('Rejects if got unexpected response from catalog', async () => {
       const productId = createUuid();
-      mockAxios.get.mockResolvedValue({ status: StatusCodes.INTERNAL_SERVER_ERROR });
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.INTERNAL_SERVER_ERROR });
 
       const response = catalog.isProductIdExist(productId);
 
@@ -91,7 +91,7 @@ describe('catalogCall tests', () => {
 
     it('rejects if service is not available', async () => {
       const productId = createUuid();
-      mockAxios.get.mockRejectedValue(new Error('catalog is not available'));
+      mockAxios.get.mockRejectedValueOnce(new Error('catalog is not available'));
 
       const response = catalog.isProductIdExist(productId);
 
@@ -103,7 +103,7 @@ describe('catalogCall tests', () => {
     it('Returns the response of the catalog when metadata was updated successfully', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
-      mockAxios.patch.mockResolvedValue({ status: StatusCodes.OK, data: payload });
+      mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: payload });
 
       const response = await catalog.patchMetadata(identifier, payload);
 
@@ -114,7 +114,7 @@ describe('catalogCall tests', () => {
     it('Rejects if got unexpected response from catalog', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
-      mockAxios.patch.mockResolvedValue({ status: StatusCodes.CONFLICT });
+      mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
       const response = catalog.patchMetadata(identifier, payload);
 
@@ -125,11 +125,46 @@ describe('catalogCall tests', () => {
     it('rejects if service is not available', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
-      mockAxios.patch.mockRejectedValue(new Error('catalog is not available'));
+      mockAxios.patch.mockRejectedValueOnce(new Error('catalog is not available'));
 
       const response = catalog.patchMetadata(identifier, payload);
 
       expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      await expect(response).rejects.toThrow('catalog is not available');
+    });
+  });
+
+  describe('changeStatus Function', () => {
+    it(`Returns the response of the catalog when metadata's status was updated successfully`, async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: payload });
+
+      const response = await catalog.changeStatus(identifier, payload);
+
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/status/${identifier}`, payload);
+      expect(response).toBe(payload);
+    });
+
+    it('Rejects if got unexpected response from catalog', async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
+
+      const response = catalog.changeStatus(identifier, payload);
+
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/status/${identifier}`, payload);
+      await expect(response).rejects.toThrow('Problem with the catalog during status change');
+    });
+
+    it('rejects if service is not available', async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      mockAxios.patch.mockRejectedValueOnce(new Error('catalog is not available'));
+
+      const response = catalog.changeStatus(identifier, payload);
+
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/status/${identifier}`, payload);
       await expect(response).rejects.toThrow('catalog is not available');
     });
   });

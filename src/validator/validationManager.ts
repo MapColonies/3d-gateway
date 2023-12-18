@@ -99,7 +99,7 @@ export class ValidationManager {
     return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${basePath}`;
   }
 
-  private async validateRecordExistence(identifier: string): Promise<boolean | string> {
+  public async validateRecordExistence(identifier: string): Promise<boolean | string> {
     return (await this.catalog.isRecordExist(identifier)) ? true : `Record with identifier: ${identifier} doesn't exist!`;
   }
 

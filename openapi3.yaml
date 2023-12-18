@@ -69,6 +69,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /update/status/{identifier}:
+    post:
+      operationId: updateStatus
+      summary: Updates metadata of a model
+      tags:
+        - update
+      parameters:
+        - $ref: '#/components/parameters/identifier'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updateStatus'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '5XX':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
 components:
   parameters:
     identifier:

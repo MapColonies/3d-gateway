@@ -38,3 +38,7 @@ export interface UpdatePayload {
   geographicArea?: string;
   keywords?: string;
 }
+
+export interface UpdateStatusPayload {
+  productStatus: string;
+}

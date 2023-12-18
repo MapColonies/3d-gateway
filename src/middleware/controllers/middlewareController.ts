@@ -4,13 +4,14 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload, UpdatePayload } from '../../common/interfaces';
+import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
 import { MiddlewareManager } from '../models/middlewareManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
 type UpdateMetadataHandler = RequestHandler<MetadataParams, unknown, UpdatePayload>;
+type UpdateStatusHandler = RequestHandler<MetadataParams, unknown, UpdateStatusPayload>;
 
 @injectable()
 export class MiddlewareController {
@@ -44,6 +45,18 @@ export class MiddlewareController {
       return res.status(httpStatus.OK).json(response);
     } catch (error) {
       this.logger.error({ msg: `Failed in updating the metadata!`, error });
+      return next(error);
+    }
+  };
+
+  public updateStatus: UpdateStatusHandler = async (req, res, next) => {
+    const { identifier } = req.params;
+    try {
+      const payload = req.body;
+      const response = await this.manager.updateStatus(identifier, payload);
+      return res.status(httpStatus.OK).json(response);
+    } catch (error) {
+      this.logger.error({ msg: `Failed in changing the status!`, error });
       return next(error);
     }
   };

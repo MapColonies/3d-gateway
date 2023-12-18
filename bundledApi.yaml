@@ -69,6 +69,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /update/status/{identifier}:
+    post:
+      operationId: updateStatus
+      summary: Updates metadata of a model
+      tags:
+        - update
+      parameters:
+        - $ref: '#/components/parameters/identifier'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updateStatus'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/metadata'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        5XX:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
 components:
   parameters:
     identifier:
@@ -787,3 +819,15 @@ components:
               format: date-time
               readOnly: true
               nullable: true
+    updateStatus:
+      type: object
+      description: 3d update status of record
+      required:
+        - productStatus
+      properties:
+        productStatus:
+          type: string
+          nullable: false
+          pattern: ^(UNPUBLISHED|PUBLISHED)$
+          description: The status of the model
+      additionalProperties: false

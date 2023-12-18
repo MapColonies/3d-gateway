@@ -4,7 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
-import { IConfig, UpdatePayload } from '../../common/interfaces';
+import { IConfig, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
 import { CatalogConfig } from './interfaces';
 
 @injectable()
@@ -70,7 +70,20 @@ export class CatalogCall {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return response.data;
     }
-    this.logger.error({ msg: 'Got unexpected status-code form catalog', response });
+    this.logger.error({ msg: 'Got unexpected status-code from catalog', response });
     throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during send updatedMetadata', true);
+  }
+
+  public async changeStatus(identifier: string, payload: UpdateStatusPayload): Promise<unknown> {
+    this.logger.debug({
+      msg: 'Change status of model in catalog service (CRUD)',
+    });
+    const response = await axios.patch(`${this.catalog.url}/${this.catalog.subUrl}/status/${identifier}`, payload);
+    if (response.status === StatusCodes.OK.valueOf()) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return response.data;
+    }
+    this.logger.error({ msg: 'Got unexpected status-code from catalog', response });
+    throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during status change', true);
   }
 }

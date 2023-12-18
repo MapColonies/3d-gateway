@@ -2,7 +2,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { AppError } from '../../../../src/common/appError';
 import { IngestionPayload, UpdatePayload } from '../../../../src/common/interfaces';
 import { MiddlewareManager } from '../../../../src/middleware/models/middlewareManager';
-import { createIngestionPayload, createStoreTriggerPayload, createUpdatePayload, createUuid } from '../../../helpers/helpers';
+import { createIngestionPayload, createStoreTriggerPayload, createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
 import { catalogMock, storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { StoreTriggerPayload } from '../../../../src/externalServices/storeTrigger/interfaces';
 
@@ -114,6 +114,50 @@ describe('MiddlewareManager', () => {
       catalogMock.patchMetadata.mockRejectedValue(new Error('catalog service is not available'));
 
       const response = middlewareManager.updateMetadata(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+    });
+  });
+
+  describe('updateStatus tests', () => {
+    it('resolves without errors', async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      validationManagerMock.validateRecordExistence.mockReturnValue(true);
+      catalogMock.changeStatus.mockResolvedValue(payload);
+
+      const response = await middlewareManager.updateStatus(identifier, payload);
+
+      expect(response).toMatchObject(payload);
+    });
+
+    it(`rejects if update's validation failed`, async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      validationManagerMock.validateRecordExistence.mockReturnValue('Some Error');
+
+      const response = middlewareManager.updateStatus(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+    });
+
+    it(`rejects if catalog is not available during validation`, async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      validationManagerMock.validateRecordExistence.mockRejectedValue(new Error('catalog service is not available'));
+
+      const response = middlewareManager.updateStatus(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+    });
+
+    it(`rejects if catalog is not available during update`, async () => {
+      const identifier = createUuid();
+      const payload = createUpdateStatusPayload();
+      validationManagerMock.validateRecordExistence.mockReturnValue(true);
+      catalogMock.changeStatus.mockRejectedValue(new Error('catalog service is not available'));
+
+      const response = middlewareManager.updateStatus(identifier, payload);
 
       await expect(response).rejects.toThrow(AppError);
     });
