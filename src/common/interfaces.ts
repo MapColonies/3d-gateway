@@ -1,4 +1,5 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
+import { Polygon } from 'geojson';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -20,6 +21,9 @@ export interface IngestionPayload {
 
 export interface UpdatePayload {
   productName?: string;
+  sourceDateStart?:Date;
+  sourceDateEnd?:Date;
+  footPrint?: Polygon;
   description?: string;
   creationDate?: Date;
   minResolutionMeter?: number;

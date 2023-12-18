@@ -154,9 +154,13 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
 
 export const createUpdatePayload = (): Partial<UpdatePayload> => {
   const minResolutionMeter = randNumber({ max: maxResolutionMeter });
+  const sourceDateStart = randPastDate();
+  const sourceDateEnd = randBetweenDate({ from: sourceDateStart, to: new Date() });
   const payload: UpdatePayload = {
     productName: randWord(),
     description: randWord(),
+    sourceDateStart: sourceDateStart,
+    sourceDateEnd: sourceDateEnd,
     creationDate: randPastDate(),
     classification: randWord(),
     minResolutionMeter: minResolutionMeter,

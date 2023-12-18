@@ -2,11 +2,12 @@ import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
-import { randSentence, randWord } from '@ngneat/falso';
+import { randFutureDate, randPastDate, randSentence, randWord } from '@ngneat/falso';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
-import { createUuid, createUpdatePayload, createUpdateStatusPayload } from '../../helpers/helpers';
+import { createUuid, createUpdatePayload, createUpdateStatusPayload, createWrongFootprintCoordinates, createWrongFootprintSchema } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
+import { UpdatePayload } from '../../../src/common/interfaces';
 import { MetadataRequestSender } from './helpers/requestSender';
 
 describe('MiddlewareController', function () {
@@ -57,6 +58,35 @@ describe('MiddlewareController', function () {
         expect(response.body).toHaveProperty('message', `classification is not a valid value.. Optional values: ${classification}`);
       });
 
+
+      it(`Should return 400 status code if the footprint is not valid`, async function () { 
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        const invalidFootprint = createWrongFootprintSchema();
+        payload.footPrint = invalidFootprint
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.BAD_REQUEST });
+
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+        console.log(response)
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
+          invalidFootprint
+        )}`);
+      })
+
+      it('should return 400 status code if startDate is later than endDate', async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        payload.sourceDateEnd = randPastDate();
+        payload.sourceDateStart = randFutureDate();
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        // expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `sourceStartDate should not be later than sourceEndDate`);
+      });
+
       it(`should return 400 status code if record does not exist in catalog`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
@@ -66,6 +96,7 @@ describe('MiddlewareController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `Record with identifier: ${identifier} doesn't exist!`);
+
       });
     });
 

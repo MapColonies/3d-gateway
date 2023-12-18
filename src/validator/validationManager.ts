@@ -69,7 +69,6 @@ export class ValidationManager {
     if (typeof result == 'string') {
       return result;
     }
-
     return true;
   }
 
@@ -83,6 +82,18 @@ export class ValidationManager {
 
     if (payload.classification != undefined) {
       result = await this.validateClassification(payload.classification);
+      if (typeof result == 'string') {
+        return result;
+      }
+    }
+    if (payload.sourceDateEnd && payload.sourceDateStart != undefined) {
+      result = this.validateDates(payload.sourceDateStart, payload.sourceDateEnd)
+      if (typeof result == 'string') {
+        return result;
+      }
+    }
+    if (payload.footPrint != undefined) {
+      result = this.validateFootprint(payload.footPrint)
       if (typeof result == 'string') {
         return result;
       }
@@ -109,6 +120,8 @@ export class ValidationManager {
     }
     return `Unknown model name! The model name isn't in the folder!, modelPath: ${modelPath}`;
   }
+
+
 
   private validateTilesetJson(payload: IngestionPayload): boolean | string {
     if (!fs.existsSync(`${payload.modelPath}/${payload.tilesetFilename}`)) {
