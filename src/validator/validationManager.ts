@@ -47,11 +47,15 @@ export class ValidationManager {
     if (typeof result == 'string') {
       return result;
     }
-    result = await this.validateClassification(payload.metadata.classification!);
+    result = this.validateFootprint(payload.metadata.footprint as Polygon);
     if (typeof result == 'string') {
       return result;
     }
-    result = this.validateFootprint(payload.metadata.footprint as Polygon);
+    result = this.validateProductType(payload.metadata.productType!, payload.metadata.productName!);
+    if (typeof result == 'string') {
+      return result;
+    }
+    result = this.validateIntersection(payload);
     if (typeof result == 'string') {
       return result;
     }
@@ -61,11 +65,7 @@ export class ValidationManager {
         return result;
       }
     }
-    result = this.validateProductType(payload.metadata.productType!, payload.metadata.productName!);
-    if (typeof result == 'string') {
-      return result;
-    }
-    result = this.validateIntersection(payload);
+    result = await this.validateClassification(payload.metadata.classification!);
     if (typeof result == 'string') {
       return result;
     }
