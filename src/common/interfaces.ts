@@ -21,8 +21,8 @@ export interface IngestionPayload {
 
 export interface UpdatePayload {
   productName?: string;
-  sourceDateStart?:Date;
-  sourceDateEnd?:Date;
+  sourceDateStart?: Date;
+  sourceDateEnd?: Date;
   footprint?: Polygon;
   description?: string;
   creationDate?: Date;

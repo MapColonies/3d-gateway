@@ -4,10 +4,15 @@ import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
 import { randFutureDate, randPastDate, randSentence, randWord } from '@ngneat/falso';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
-import { createUuid, createUpdatePayload, createUpdateStatusPayload, createWrongFootprintCoordinates, createWrongFootprintSchema } from '../../helpers/helpers';
+import {
+  createUuid,
+  createUpdatePayload,
+  createUpdateStatusPayload,
+  createWrongFootprintCoordinates,
+  createWrongFootprintSchema,
+} from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { UpdatePayload } from '../../../src/common/interfaces';
 import { MetadataRequestSender } from './helpers/requestSender';
 
 describe('MiddlewareController', function () {
@@ -58,24 +63,36 @@ describe('MiddlewareController', function () {
         expect(response.body).toHaveProperty('message', `classification is not a valid value.. Optional values: ${classification}`);
       });
 
-      it.only(`Should return 400 status code if the footprint is not in the  footPrint schema`, async function () { 
+      it(`Should return 400 status code if the footprint is not in the footprint schema`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        console.log(payload.classification)
-        const classification = payload.classification
-        const invalidFootprint = createWrongFootprintSchema();
-
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] })
-        console.log(payload.classification)
+        payload.footprint = createWrongFootprintSchema();
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty('message', `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
-          invalidFootprint
-        )}`);
-      })
+        expect(response.body).toHaveProperty(
+          'message',
+          `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
+            payload.footprint
+          )}`
+        );
+      });
+
+      it(`Should return 400 status code if the first and the last coordinates of footprint are not the same`, async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        payload.footprint = createWrongFootprintCoordinates();
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+        console.log(response.body);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty(
+          'message',
+          `Wrong footprint: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
+        );
+      });
 
       it('should return 400 status code if startDate is later than endDate', async function () {
         const identifier = createUuid();
@@ -98,7 +115,6 @@ describe('MiddlewareController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `Record with identifier: ${identifier} doesn't exist!`);
-
       });
     });
 
