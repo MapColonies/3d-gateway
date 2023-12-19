@@ -152,7 +152,7 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
   return lookupOptions;
 };
 
-export const createUpdatePayload = (): Partial<UpdatePayload> => {
+export const createUpdatePayload = (modelName = 'Sphere'): Partial<UpdatePayload> => {
   const minResolutionMeter = randNumber({ max: maxResolutionMeter });
   const sourceDateStart = randPastDate();
   const sourceDateEnd = randBetweenDate({ from: sourceDateStart, to: new Date() });
@@ -162,6 +162,7 @@ export const createUpdatePayload = (): Partial<UpdatePayload> => {
     sourceDateStart: sourceDateStart,
     sourceDateEnd: sourceDateEnd,
     creationDate: randPastDate(),
+    footprint: createFootprint(modelName),
     classification: randWord(),
     minResolutionMeter: minResolutionMeter,
     maxResolutionMeter: randNumber({ min: minResolutionMeter, max: maxResolutionMeter }),

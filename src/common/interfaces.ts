@@ -23,7 +23,7 @@ export interface UpdatePayload {
   productName?: string;
   sourceDateStart?:Date;
   sourceDateEnd?:Date;
-  footPrint?: Polygon;
+  footprint?: Polygon;
   description?: string;
   creationDate?: Date;
   minResolutionMeter?: number;

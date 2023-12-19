@@ -137,7 +137,7 @@ describe('ValidationManager', () => {
       expect(result).toBe(true);
     });
 
-    it('returns error string when the footPrint is ןמ invalid schema', () => {
+    it('returns error string when the footPrint is not invalid schema', () => {
       const footprint: unknown = createWrongFootprintSchema();
 
       const result = validationManager['validateFootprint'](footprint as Polygon);
@@ -357,8 +357,8 @@ describe('ValidationManager', () => {
         tilesetFilename: createTilesetFileName(),
         metadata: createMetadata(),
       };
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
       catalogMock.isProductIdExist.mockResolvedValue([payload.metadata.productId]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.validateIngestion(payload);
 
@@ -372,8 +372,8 @@ describe('ValidationManager', () => {
         metadata: createMetadata(),
       };
       payload.metadata.productType = ProductType.DSM;
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
       catalogMock.isProductIdExist.mockResolvedValue([payload.metadata.productId]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.validateIngestion(payload);
 
@@ -398,7 +398,7 @@ describe('ValidationManager', () => {
         tilesetFilename: createTilesetFileName(),
         metadata: createMetadata(),
       };
-      lookupTablesMock.getClassifications.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'lookup-tables error', true));
+      catalogMock.isProductIdExist.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'lookup-tables error', true));
 
       const response = validationManager.validateIngestion(payload);
 

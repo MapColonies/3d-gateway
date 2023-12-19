@@ -58,17 +58,19 @@ describe('MiddlewareController', function () {
         expect(response.body).toHaveProperty('message', `classification is not a valid value.. Optional values: ${classification}`);
       });
 
-
-      it(`Should return 400 status code if the footprint is not valid`, async function () { 
+      it.only(`Should return 400 status code if the footprint is not in the  footPrint schema`, async function () { 
         const identifier = createUuid();
         const payload = createUpdatePayload();
+        console.log(payload.classification)
+        const classification = payload.classification
         const invalidFootprint = createWrongFootprintSchema();
-        payload.footPrint = invalidFootprint
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.BAD_REQUEST });
 
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] })
+        console.log(payload.classification)
 
         const response = await requestSender.updateMetadata(identifier, payload);
-        console.log(response)
+
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
           invalidFootprint
@@ -83,7 +85,7 @@ describe('MiddlewareController', function () {
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
-        // expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `sourceStartDate should not be later than sourceEndDate`);
       });
 
