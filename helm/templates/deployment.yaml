@@ -1,85 +1,80 @@
-{{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
-{{- $cloudProviderDockerRegistryUrl := include "ts-server-boilerplate.cloudProviderDockerRegistryUrl" . -}}
-{{- $cloudProviderImagePullSecretName := include "ts-server-boilerplate.cloudProviderImagePullSecretName" . -}}
-{{- $imageTag := include "ts-server-boilerplate.tag" . -}}
-{{- if .Values.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: {{ $releaseName }}-{{ $chartName }}
+metadata: {{ $fullname := printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
+  name: {{ $fullname }}
   labels:
-    app: {{ $chartName }}
-    component: {{ $chartName }}
-    environment: {{ include "ts-server-boilerplate.environment" . }}
-    release: {{ $releaseName }}
-    {{- include "ts-server-boilerplate.labels" . | nindent 4 }}
+    app: {{ $fullname }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: "{{ .Release.Name }}"
 spec:
-  replicas: {{ .Values.replicaCount }}
-  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
-      app: {{ $chartName }}
-      release: {{ $releaseName }}
-      run: {{ $releaseName }}-{{ $chartName }}
-      {{- include "ts-server-boilerplate.selectorLabels" . | nindent 6 }}
+      app: {{ $fullname }}
+  replicas: {{ default 1 .Values.replicaCount | int }}
   template:
     metadata:
       labels:
-        app: {{ $chartName }}
-        release: {{ $releaseName }}
-        run: {{ $releaseName }}-{{ $chartName }}
-        {{- include "ts-server-boilerplate.selectorLabels" . | nindent 8 }}
-      {{- if .Values.resetOnConfigChange }}
-      annotations:
-        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-      {{- end }}
+        app: {{ $fullname }}
     spec:
-    {{- if $cloudProviderImagePullSecretName }}
-      imagePullSecrets:
-        - name: {{ $cloudProviderImagePullSecretName | quote }}
-    {{- end }}
-      containers:
-        - name: {{ $releaseName }}-{{ $chartName }}-deployment
-          {{- with .Values.image }}
-          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
-          {{- end }}
-          volumeMounts:
-            {{- if .Values.caSecretName }}
-            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
-              name: root-ca
-              subPath: {{ quote .Values.caKey }}
-            {{- end }}
-          env:
-            - name: SERVER_PORT
-              value: {{ .Values.env.targetPort | quote }}
-            {{- if .Values.caSecretName }}
-            - name: REQUESTS_CA_BUNDLE
-              value: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
-            - name: NODE_EXTRA_CA_CERTS
-              value: {{ printf "[%s/%s]" .Values.caPath .Values.caKey | quote }}
-            {{- end }}
-          envFrom:
-            - configMapRef:
-                name: {{ $releaseName }}-{{ $chartName }}-configmap
-          ports:
-            - name: http
-              containerPort: {{ .Values.env.targetPort }}
-              protocol: {{ .Values.env.protocol }}
-          livenessProbe:
-            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
-            httpGet:
-              path: /liveness
-              port: {{ .Values.env.targetPort }}
-          {{- if .Values.resources.enabled }}
-          resources:
-            {{- toYaml .Values.resources.value | nindent 12 }}
-          {{- end }}
       volumes:
-        {{- if .Values.caSecretName }}
-        - name: root-ca
-          secret:
-            secretName: {{ .Values.caSecretName }}
-        {{- end }}
-{{- end -}}
+      - name: ingestion-source-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.storage.ingestionSourcePvc.name }}
+      {{- if .Values.logsFilebeat.enabled }}
+      - name: logs
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: filebeat-config
+      {{- end }}
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image }}"
+        imagePullPolicy: IfNotPresent
+        volumeMounts: 
+            - name: ingestion-source-storage
+              mountPath: {{ .Values.storage.ingestionSourcePv.hostPath }}
+            {{- if .Values.logsFilebeat.enabled }}
+            - name: logs
+              mountPath: {{ .Values.logsFilebeat.mountPath }}
+            {{- end }}
+        env:
+        - name: SERVER_PORT
+          value: {{ .Values.service.targetPort | quote }}
+        - name: STORE_TRIGGER_URL
+          value: {{ tpl .Values.storeTrigger.url . | quote }}
+        - name: STORE_TRIGGER_SUB_URL
+          value: {{ tpl .Values.storeTrigger.subUrl . | quote }}
+        - name: LOOKUP_TABLES_URL
+          value: {{ tpl .Values.lookupTables.url . | quote }}
+        - name: LOOKUP_TABLES_SUB_URL
+          value: {{ tpl .Values.lookupTables.subUrl . | quote }}
+        - name: BASE_PATH
+          value: {{ tpl .Values.paths.basePath . | quote }}
+        - name: PV_PATH
+          value: {{ tpl .Values.storage.ingestionSourcePv.hostPath . | quote }}
+        - name: PERCENTAGE_LIMIT
+          value: {{ .Values.percentageLimit | quote }}
+      {{- if .Values.logsFilebeat.enabled }}
+        command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
+      - name: filebeat
+        image: {{ .Values.logsFilebeat.filebeatImage }}
+        args: [ "-c", "/etc/filebeat.yml", "-e" ]
+        volumeMounts:
+          - name: logs
+            mountPath: {{ .Values.logsFilebeat.mountPath }}
+          - name: config
+            mountPath: /etc/filebeat.yml
+            subPath: filebeat.yml
+      {{- end }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort | int }}
+        livenessProbe:
+          httpGet:
+            path: /liveness
+            port: {{ .Values.service.targetPort | int }}
+        # readinessProbe:
+        #   httpGet:
+        #     path: /readiness
+        #     port: {{ .Values.service.targetPort | int }}

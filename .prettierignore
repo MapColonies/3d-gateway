@@ -13,3 +13,4 @@ node_modules
 coverage
 helm
 reports
+tests/helpers/3DModels/Sphere/invalidTileset.json

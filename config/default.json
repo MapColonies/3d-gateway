@@ -1,6 +1,6 @@
 {
   "openapiConfig": {
-    "filePath": "./openapi3.yaml",
+    "filePath": "./bundledApi.yaml",
     "basePath": "/docs",
     "rawPath": "/api",
     "uiPath": "/api"
@@ -12,7 +12,7 @@
     }
   },
   "server": {
-    "port": "8080",
+    "port": "8082",
     "request": {
       "payload": {
         "limit": "1mb"
@@ -24,5 +24,24 @@
         "options": null
       }
     }
+  },
+  "storeTrigger": {
+    "url": "http://127.0.0.1:8081",
+    "subUrl": "ingestion"
+  },
+  "lookupTables": {
+    "url": "http://127.0.0.1:8085",
+    "subUrl": "lookup-tables/lookupData"
+  },
+  "catalog": {
+    "url": "http://127.0.0.1:8081",
+    "subUrl": "metadata"
+  },
+  "paths": {
+    "basePath": "\\\\domtest\\mimi\\archi\\maz\\silver\\libot",
+    "pvPath": "/home/3DModels"
+  },
+  "validation": {
+    "percentageLimit": 10
   }
 }

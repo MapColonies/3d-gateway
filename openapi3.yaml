@@ -1,58 +1,115 @@
 openapi: 3.0.1
 info:
-  title: service-name
-  description: basic template for map colonies service
+  title: 3d-middleware
+  description: Validating and routing requests
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 paths:
-  /anotherResource:
-    get:
-      operationId: getAnotherResource
-      tags:
-        - anotherResource
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/anotherResource'
-  /resourceName:
-    get:
-      operationId: getResourceName
-      tags:
-        - resourceName
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
+  /models/ingestion:
     post:
-      operationId: createResource
+      operationId: createModel
+      summary: Invokes a new model ingestion flow
       tags:
-        - resourceName
-      summary: creates a new record of type resource
+        - ingestion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/payload'
       responses:
         201:
-          description: created
+          description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource'
+                $ref: '#/components/schemas/job'
         400:
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+        '5XX':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /metadata/update/{identifier}:
+    post:
+      operationId: updateMetadata
+      summary: Updates metadata of a model
+      tags:
+        - update
+      parameters:
+        - $ref: '#/components/parameters/identifier'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updatePayload'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '5XX':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /metadata/update/status/{identifier}:
+    post:
+      operationId: updateStatus
+      summary: Updates metadata of a model
+      tags:
+        - update
+      parameters:
+        - $ref: '#/components/parameters/identifier'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updateStatus'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '5XX':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
 components:
+  parameters:
+    identifier:
+      in: path
+      name: identifier
+      required: true
+      schema:
+        type: string
+      description: Metadata record identifier
   schemas:
     error:
       type: object
@@ -61,27 +118,42 @@ components:
       properties:
         message:
           type: string
-    resource:
+    payload:
       type: object
+      description: 3d model payload
       required:
-        - id
-        - name
-        - description
+        - modelPath
+        - tilesetFilename
+        - metadata
       properties:
-        id:
-          type: number
-          format: int64
-        name:
+        modelPath:
           type: string
-        description:
+          description: Model files location path
+          example: '\\domtest\mimi\archi\maz\silver\libot\NewYork'
+        tilesetFilename:
           type: string
-    anotherResource:
+          description: Model tileset filename
+          example: 'tileset.json'
+        metadata:
+          $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/basic-payload'
+      additionalProperties: false
+    job:
       type: object
+      description: job for ingestion 3d model
       required:
-        - kind
-        - isAlive
+        - jobId
+        - status
       properties:
-        kind:
+        jobId:
           type: string
-        isAlive:
-          type: boolean
+          format: uuid
+          description: Ingestion job identifier
+        status:
+          type: string
+          enum:
+            - Completed
+            - In-Progress
+            - Pending
+            - Failed
+            - Expired
+            - Aborted

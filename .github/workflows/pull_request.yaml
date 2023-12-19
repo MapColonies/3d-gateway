@@ -32,7 +32,7 @@ jobs:
         uses: nwestfall/openapi-action@v1.0.2
         with:
          github_token: ${{ secrets.GITHUB_TOKEN }}
-         file: ./openapi3.yaml
+         file: ./bundledApi.yaml
 
   security:
     runs-on: ubuntu-latest
