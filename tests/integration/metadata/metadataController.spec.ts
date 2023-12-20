@@ -106,10 +106,7 @@ describe('MiddlewareController', function () {
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty(
-          'message',
-          `There is no good link in record, links: ${record.links}`
-        );
+        expect(response.body).toHaveProperty('message', `There is no good link in record, links: ${record.links}`);
       });
 
       it('should return 400 status code if startDate is later than endDate', async function () {

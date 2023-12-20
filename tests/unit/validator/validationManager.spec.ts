@@ -322,7 +322,7 @@ describe('ValidationManager', () => {
 
       const result = async () => {
         await validationManager['validateProductID'](productID);
-      }
+      };
 
       await expect(result).rejects.toThrow(new Error('error'));
     });
