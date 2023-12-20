@@ -178,7 +178,7 @@ describe('MiddlewareController', function () {
       it(`should return 400 status code if record does not exist in catalog`, async function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
         const response = await requestSender.updateStatus(identifier, payload);
 
@@ -188,17 +188,6 @@ describe('MiddlewareController', function () {
     });
 
     describe('Sad Path 😥', function () {
-      it(`should return 500 status code if during validation, catalog didn't return as expected`, async function () {
-        const identifier = createUuid();
-        const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
-
-        const response = await requestSender.updateStatus(identifier, payload);
-
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'Problem with the catalog during validation of record existence');
-      });
-
       it(`should return 500 status code if catalog is not working properly`, async function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
@@ -213,7 +202,7 @@ describe('MiddlewareController', function () {
       it(`should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
         const response = await requestSender.updateStatus(identifier, payload);
