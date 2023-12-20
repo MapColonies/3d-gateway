@@ -6,8 +6,8 @@ const metadataRouterFactory: FactoryFunction<Router> = (dependencyContainer) => 
   const router = Router();
   const controller = dependencyContainer.resolve(MetadataController);
 
-  router.post('/update/:identifier', controller.updateMetadata);
-  router.post('/update/status/:identifier', controller.updateStatus);
+  router.patch('/:identifier', controller.updateMetadata);
+  router.patch('/status/:identifier', controller.updateStatus);
 
   return router;
 };

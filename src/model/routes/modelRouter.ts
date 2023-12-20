@@ -6,7 +6,7 @@ const modelRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
   const controller = dependencyContainer.resolve(ModelController);
 
-  router.post('/ingestion', controller.createModel);
+  router.post('/', controller.createModel);
 
   return router;
 };

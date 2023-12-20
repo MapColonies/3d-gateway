@@ -32,7 +32,7 @@ describe('MiddlewareController', function () {
     mockAxios.reset();
   });
 
-  describe('POST /metadata/update/{identifier}', function () {
+  describe('PATCH /metadata/{identifier}', function () {
     describe('Happy Path 🙂', function () {
       it(`should return 200 status code and metadata if payload is valid`, async function () {
         const identifier = createUuid();
@@ -168,7 +168,7 @@ describe('MiddlewareController', function () {
     });
   });
 
-  describe('POST /metadata/update/status/{identifier}', function () {
+  describe('PATCH /metadata/status/{identifier}', function () {
     describe('Happy Path 🙂', function () {
       it(`should return 200 status code and metadata if payload is valid`, async function () {
         const identifier = createUuid();
