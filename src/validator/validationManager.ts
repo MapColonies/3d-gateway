@@ -69,6 +69,7 @@ export class ValidationManager {
     if (typeof result == 'string') {
       return result;
     }
+
     return true;
   }
 
@@ -82,16 +83,19 @@ export class ValidationManager {
       }
     }
 
-    if (payload.sourceDateEnd && payload.sourceDateStart != undefined) {
-      result = this.validateDates(payload.sourceDateStart, payload.sourceDateEnd);
+    const record = await this.catalog.getRecord(identifier);
+    
+    if (record === undefined) {
+      return `Record with identifier: ${identifier} doesn't exist!`;
+    }
+
+    if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
+      const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
+      const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
+      result = this.validateDates(sourceDateStart, sourceDateEnd);
       if (typeof result == 'string') {
         return result;
       }
-    }
-
-    result = await this.validateRecordExistence(identifier);
-    if (typeof result == 'string') {
-      return result;
     }
 
     if (payload.classification != undefined) {
@@ -100,6 +104,7 @@ export class ValidationManager {
         return result;
       }
     }
+
     return true;
   }
 
@@ -110,10 +115,6 @@ export class ValidationManager {
       return true;
     }
     return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${basePath}`;
-  }
-
-  public async validateRecordExistence(identifier: string): Promise<boolean | string> {
-    return (await this.catalog.isRecordExist(identifier)) ? true : `Record with identifier: ${identifier} doesn't exist!`;
   }
 
   private validateModelName(modelPath: string): boolean | string {

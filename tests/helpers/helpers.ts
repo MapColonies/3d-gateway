@@ -6,6 +6,7 @@ import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-col
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
+import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
 const maxResolutionMeter = 8000;
 const noData = 999;
@@ -126,6 +127,13 @@ export const createMetadata = (modelName = 'Sphere'): Layer3DMetadata => {
     productSource: randWord(),
   };
 };
+
+export const createRecord = (modelName = 'Sphere'): Record3D => {
+  return {
+    ...createMetadata(modelName),
+    id: createUuid()
+  };
+}
 
 export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload => {
   return {

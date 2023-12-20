@@ -10,6 +10,7 @@ import {
   createUpdateStatusPayload,
   createWrongFootprintCoordinates,
   createWrongFootprintSchema,
+  createRecord,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -37,8 +38,8 @@ describe('MiddlewareController', function () {
       it(`should return 200 status code and metadata if payload is valid`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        const expected = randSentence();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        const expected = randSentence()
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
@@ -54,7 +55,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
         const classification = randWord();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -85,7 +86,6 @@ describe('MiddlewareController', function () {
         payload.footprint = createWrongFootprintCoordinates();
 
         const response = await requestSender.updateMetadata(identifier, payload);
-        console.log(response.body);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
@@ -99,6 +99,7 @@ describe('MiddlewareController', function () {
         const payload = createUpdatePayload();
         payload.sourceDateEnd = randPastDate();
         payload.sourceDateStart = randFutureDate();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -109,7 +110,7 @@ describe('MiddlewareController', function () {
       it(`should return 400 status code if record does not exist in catalog`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -119,21 +120,10 @@ describe('MiddlewareController', function () {
     });
 
     describe('Sad Path 😥', function () {
-      it(`should return 500 status code if during validation, catalog didn't return as expected`, async function () {
-        const identifier = createUuid();
-        const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
-
-        const response = await requestSender.updateMetadata(identifier, payload);
-
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'Problem with the catalog during validation of record existence');
-      });
-
       it(`should return 500 status code if lookup-tables is not working properly`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockRejectedValueOnce(new Error('lookup-tables error'));
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -156,7 +146,7 @@ describe('MiddlewareController', function () {
       it(`should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
@@ -174,7 +164,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
         const expected = randSentence();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateStatus(identifier, payload);

@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
 import { IConfig, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
-import { CatalogConfig } from './interfaces';
+import { CatalogConfig, Record3D } from './interfaces';
 
 @injectable()
 export class CatalogCall {
@@ -15,24 +15,18 @@ export class CatalogCall {
     this.catalog = this.config.get<CatalogConfig>('catalog');
   }
 
-  public async isRecordExist(identifier: string): Promise<boolean> {
+  public async getRecord(identifier: string): Promise<Record3D | undefined> {
     this.logger.debug({
       msg: 'Get Record from catalog service (CRUD)',
     });
     try {
-      const response = await axios.get(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`);
-      if (response.status === StatusCodes.OK.valueOf()) {
-        return true;
-      }
-      if (response.status === StatusCodes.NOT_FOUND.valueOf()) {
-        return false;
-      }
-      this.logger.error({ msg: 'Got unexpected status-code form catalog', response });
-      throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during validation of record existence', true);
+      const response = await axios.get<Record3D | undefined>(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`);
+      this.logger.debug({
+        msg: 'Got Record from catalog service (CRUD)',
+        record: response.data
+      });
+      return response.data;
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       this.logger.error({ msg: 'Something went wrong in catalog', error });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is a problem with catalog', true);
     }
@@ -43,7 +37,7 @@ export class CatalogCall {
       msg: 'Find last version of product from catalog service (CRUD)',
     });
     try {
-      const response = await axios.get(`${this.catalog.url}/${this.catalog.subUrl}/lastVersion/${productId}`);
+      const response = await axios.get<Record3D>(`${this.catalog.url}/${this.catalog.subUrl}/lastVersion/${productId}`);
       if (response.status === StatusCodes.OK.valueOf()) {
         return true;
       }
@@ -61,26 +55,24 @@ export class CatalogCall {
     }
   }
 
-  public async patchMetadata(identifier: string, payload: UpdatePayload): Promise<unknown> {
+  public async patchMetadata(identifier: string, payload: UpdatePayload): Promise<Record3D> {
     this.logger.debug({
       msg: 'Send post request to catalog service (CRUD) in order to update metadata',
     });
-    const response = await axios.patch(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`, payload);
+    const response = await axios.patch<Record3D>(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`, payload);
     if (response.status === StatusCodes.OK.valueOf()) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return response.data;
     }
     this.logger.error({ msg: 'Got unexpected status-code from catalog', response });
     throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during send updatedMetadata', true);
   }
 
-  public async changeStatus(identifier: string, payload: UpdateStatusPayload): Promise<unknown> {
+  public async changeStatus(identifier: string, payload: UpdateStatusPayload): Promise<Record3D> {
     this.logger.debug({
       msg: 'Change status of model in catalog service (CRUD)',
     });
-    const response = await axios.patch(`${this.catalog.url}/${this.catalog.subUrl}/status/${identifier}`, payload);
+    const response = await axios.patch<Record3D>(`${this.catalog.url}/${this.catalog.subUrl}/status/${identifier}`, payload);
     if (response.status === StatusCodes.OK.valueOf()) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return response.data;
     }
     this.logger.error({ msg: 'Got unexpected status-code from catalog', response });

@@ -1,6 +1,5 @@
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
-import { Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import { randBoolean, randNumber, randWord } from '@ngneat/falso';
 import { StatusCodes } from 'http-status-codes';
@@ -16,6 +15,7 @@ import {
   createWrongFootprintSchema,
   createUuid,
   createUpdatePayload,
+  createRecord,
 } from '../../helpers/helpers';
 import { configMock, lookupTablesMock, jsLoggerMock, catalogMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
@@ -138,9 +138,9 @@ describe('ValidationManager', () => {
     });
 
     it('returns error string when the footPrint is not invalid schema', () => {
-      const footprint: unknown = createWrongFootprintSchema();
+      const footprint = createWrongFootprintSchema();
 
-      const result = validationManager['validateFootprint'](footprint as Polygon);
+      const result = validationManager['validateFootprint'](footprint);
       expect(result).toBe(
         `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
           footprint
@@ -410,8 +410,9 @@ describe('ValidationManager', () => {
     it('returns true when got all functions valid', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
+      const expected = createRecord();
+      catalogMock.getRecord.mockResolvedValue(expected);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
-      catalogMock.isRecordExist.mockResolvedValue([identifier]);
 
       const response = await validationManager.validateUpdate(identifier, payload);
 
@@ -421,7 +422,7 @@ describe('ValidationManager', () => {
     it('returns error string when has one invalid function', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
-      lookupTablesMock.getClassifications.mockResolvedValue([randWord()]);
+      catalogMock.getRecord.mockResolvedValue(undefined);
 
       const response = await validationManager.validateUpdate(identifier, payload);
 
@@ -431,7 +432,7 @@ describe('ValidationManager', () => {
     it('throws error when one of the external services does not properly responded', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
-      catalogMock.isRecordExist.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'catalog error', true));
+      catalogMock.getRecord.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'catalog error', true));
 
       const response = validationManager.validateUpdate(identifier, payload);
 
