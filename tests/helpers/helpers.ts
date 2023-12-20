@@ -63,6 +63,10 @@ export const getBasePath = (): string => {
   return basePath;
 };
 
+export const createLink = (tileset = 'tileset.json'): string => {
+  return `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${createUuid()}/${tileset}`;
+};
+
 export const createModelPath = (modelName = 'Sphere'): string => {
   return `${getBasePath()}\\${modelName}`;
 };
@@ -124,16 +128,17 @@ export const createMetadataWithoutProductSource = (modelName = 'Sphere'): Omit<L
 export const createMetadata = (modelName = 'Sphere'): Layer3DMetadata => {
   return {
     ...createMetadataWithoutProductSource(modelName),
-    productSource: randWord(),
+    productSource: createModelPath(modelName),
   };
 };
 
 export const createRecord = (modelName = 'Sphere'): Record3D => {
   return {
     ...createMetadata(modelName),
-    id: createUuid()
+    id: createUuid(),
+    links: createLink(),
   };
-}
+};
 
 export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload => {
   return {

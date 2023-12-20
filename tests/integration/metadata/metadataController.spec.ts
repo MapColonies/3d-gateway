@@ -38,7 +38,7 @@ describe('MiddlewareController', function () {
       it(`should return 200 status code and metadata if payload is valid`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        const expected = randSentence()
+        const expected = randSentence();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
@@ -68,6 +68,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
         payload.footprint = createWrongFootprintSchema();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -84,6 +85,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
         payload.footprint = createWrongFootprintCoordinates();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -91,6 +93,22 @@ describe('MiddlewareController', function () {
         expect(response.body).toHaveProperty(
           'message',
           `Wrong footprint: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
+        );
+      });
+
+      it(`Should return 400 status code if the link is not valid`, async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        const record = createRecord();
+        record.links = randWord();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty(
+          'message',
+          `There is no good link in record, links: ${record.links}`
         );
       });
 

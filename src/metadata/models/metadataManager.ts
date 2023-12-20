@@ -44,7 +44,7 @@ export class MetadataManager {
     this.logger.info({ msg: 'started update of metadata', modelId: identifier, payload });
     this.logger.debug({ msg: 'starting validating the payload', modelId: identifier });
     try {
-      if (await this.catalog.getRecord(identifier) === undefined) {
+      if ((await this.catalog.getRecord(identifier)) === undefined) {
         throw new AppError('badRequest', httpStatus.BAD_REQUEST, `Record with identifier: ${identifier} doesn't exist!`, true);
       }
       this.logger.info({ msg: 'model validated successfully', modelId: identifier });

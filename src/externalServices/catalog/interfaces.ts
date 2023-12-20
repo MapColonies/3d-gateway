@@ -1,4 +1,4 @@
-import { Layer3DMetadata } from "@map-colonies/mc-model-types";
+import { Layer3DMetadata } from '@map-colonies/mc-model-types';
 
 export interface CatalogConfig {
   url: string;
@@ -11,4 +11,5 @@ export interface MetadataParams {
 
 export interface Record3D extends Layer3DMetadata {
   id: string;
+  links: string;
 }

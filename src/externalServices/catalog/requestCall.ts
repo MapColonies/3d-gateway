@@ -23,7 +23,7 @@ export class CatalogCall {
       const response = await axios.get<Record3D | undefined>(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`);
       this.logger.debug({
         msg: 'Got Record from catalog service (CRUD)',
-        record: response.data
+        record: response.data,
       });
       return response.data;
     } catch (error) {

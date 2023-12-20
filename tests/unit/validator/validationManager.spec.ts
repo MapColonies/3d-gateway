@@ -1,6 +1,7 @@
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { ProductType } from '@map-colonies/mc-model-types';
+import { Polygon } from 'geojson';
 import { randBoolean, randNumber, randWord } from '@ngneat/falso';
 import { StatusCodes } from 'http-status-codes';
 import { ValidationManager } from '../../../src/validator/validationManager';
@@ -74,7 +75,7 @@ describe('ValidationManager', () => {
         metadata: createMetadata(),
       };
 
-      const result = validationManager['validateTilesetJson'](payload);
+      const result = validationManager['validateTilesetJson'](payload.modelPath, payload.tilesetFilename);
 
       expect(result).toBe(true);
     });
@@ -86,7 +87,7 @@ describe('ValidationManager', () => {
         metadata: createMetadata(),
       };
 
-      const result = validationManager['validateTilesetJson'](payload);
+      const result = validationManager['validateTilesetJson'](payload.modelPath, payload.tilesetFilename);
 
       expect(result).toBe(`Unknown tileset name! The tileset file wasn't found!, tileset: ${payload.tilesetFilename} doesn't exist`);
     });
@@ -97,7 +98,7 @@ describe('ValidationManager', () => {
         tilesetFilename: 'invalidTileset.json',
         metadata: createMetadata(),
       };
-      const result = validationManager['validateTilesetJson'](payload);
+      const result = validationManager['validateTilesetJson'](payload.modelPath, payload.tilesetFilename);
 
       expect(result).toBe(`${payload.tilesetFilename} file that was provided isn't in a valid json format!`);
     });
@@ -164,9 +165,10 @@ describe('ValidationManager', () => {
         tilesetFilename: 'invalidTileset.json',
         metadata: createMetadata(),
       };
+      const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
       const result = () => {
-        validationManager['validateIntersection'](payload);
+        validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
       };
 
       expect(result).toThrow(AppError);
@@ -179,8 +181,9 @@ describe('ValidationManager', () => {
           tilesetFilename: createTilesetFileName(),
           metadata: createMetadata(),
         };
+        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-        const result = validationManager['validateIntersection'](payload);
+        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
         expect(result).toBe(true);
       });
@@ -192,8 +195,9 @@ describe('ValidationManager', () => {
           metadata: createMetadata(),
         };
         payload.metadata.footprint = createFootprint('Region');
+        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-        const result = validationManager['validateIntersection'](payload);
+        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
 
         expect(result).toBe(`Wrong footprint! footprint's coordinates is not even close to the model!`);
       });
@@ -207,8 +211,9 @@ describe('ValidationManager', () => {
           metadata: createMetadata(),
         };
         payload.metadata.footprint = createFootprint('Region');
+        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-        const result = validationManager['validateIntersection'](payload);
+        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
 
         expect(result).toBe(true);
       });
@@ -220,8 +225,9 @@ describe('ValidationManager', () => {
           metadata: createMetadata(),
         };
         payload.metadata.footprint = createWrongFootprintCoordinates();
+        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-        const result = validationManager['validateIntersection'](payload);
+        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
 
         expect(result).toBe(`Wrong footprint! footprint's coordinates is not even close to the model!`);
       });
@@ -234,8 +240,9 @@ describe('ValidationManager', () => {
         metadata: createMetadata(),
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
+      const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-      const result = validationManager['validateIntersection'](payload);
+      const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
 
       expect(result).toBe(`BoundingVolume of box is not supported yet... Please contact 3D team.`);
     });
@@ -247,8 +254,9 @@ describe('ValidationManager', () => {
         metadata: createMetadata(),
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
+      const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-      const result = validationManager['validateIntersection'](payload);
+      const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
 
       expect(result).toBe(`Bad tileset format. Should be in 3DTiles format`);
     });
@@ -261,8 +269,9 @@ describe('ValidationManager', () => {
       };
       configMock.get.mockReturnValue(100);
       validationManager = new ValidationManager(configMock, jsLogger({ enabled: false }), lookupTablesMock as never, catalogMock as never);
+      const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-      const result = validationManager['validateIntersection'](payload);
+      const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
       expect(result).toContain('The footprint is not intersected enough with the model');
     });
@@ -285,6 +294,37 @@ describe('ValidationManager', () => {
       const result = validationManager['validateDates'](startDate, endDate);
 
       expect(result).toBe('sourceStartDate should not be later than sourceEndDate');
+    });
+  });
+
+  describe('validateProductID tests', () => {
+    it('returns string error when productID does not exist in catalog', async () => {
+      const productID = createUuid();
+      catalogMock.isProductIdExist.mockResolvedValue(false);
+
+      const result = await validationManager['validateProductID'](productID);
+
+      expect(result).toBe(`Record with productId: ${productID} doesn't exist!`);
+    });
+
+    it('returns true when productID exists in catalog', async () => {
+      const productID = createUuid();
+      catalogMock.isProductIdExist.mockResolvedValue(true);
+
+      const result = await validationManager['validateProductID'](productID);
+
+      expect(result).toBe(true);
+    });
+
+    it('throws error when there is a problem with catalog', async () => {
+      const productID = createUuid();
+      catalogMock.isProductIdExist.mockRejectedValue(new Error('error'));
+
+      const result = async () => {
+        await validationManager['validateProductID'](productID);
+      }
+
+      await expect(result).rejects.toThrow(new Error('error'));
     });
   });
 
