@@ -1,7 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { AppError } from '../../../../src/common/appError';
 import { UpdatePayload } from '../../../../src/common/interfaces';
-import { createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
+import { createRecord, createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
 import { catalogMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { MetadataManager } from '../../../../src/metadata/models/metadataManager';
 
@@ -63,7 +63,7 @@ describe('MetadataManager', () => {
     it('resolves without errors', async () => {
       const identifier = createUuid();
       const payload = createUpdateStatusPayload();
-      validationManagerMock.validateRecordExistence.mockReturnValue(true);
+      catalogMock.getRecord.mockResolvedValue(createRecord());
       catalogMock.changeStatus.mockResolvedValue(payload);
 
       const response = await metadataManager.updateStatus(identifier, payload);
@@ -74,7 +74,7 @@ describe('MetadataManager', () => {
     it(`rejects if update's validation failed`, async () => {
       const identifier = createUuid();
       const payload = createUpdateStatusPayload();
-      validationManagerMock.validateRecordExistence.mockReturnValue('Some Error');
+      catalogMock.getRecord.mockResolvedValue(undefined);
 
       const response = metadataManager.updateStatus(identifier, payload);
 
@@ -84,7 +84,7 @@ describe('MetadataManager', () => {
     it(`rejects if catalog is not available during validation`, async () => {
       const identifier = createUuid();
       const payload = createUpdateStatusPayload();
-      validationManagerMock.validateRecordExistence.mockRejectedValue(new Error('catalog service is not available'));
+      catalogMock.getRecord.mockRejectedValue(new Error('catalog service is not available'));
 
       const response = metadataManager.updateStatus(identifier, payload);
 
@@ -94,7 +94,7 @@ describe('MetadataManager', () => {
     it(`rejects if catalog is not available during update`, async () => {
       const identifier = createUuid();
       const payload = createUpdateStatusPayload();
-      validationManagerMock.validateRecordExistence.mockReturnValue(true);
+      catalogMock.getRecord.mockResolvedValue(createRecord());
       catalogMock.changeStatus.mockRejectedValue(new Error('catalog service is not available'));
 
       const response = metadataManager.updateStatus(identifier, payload);

@@ -2,9 +2,16 @@ import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
-import { randSentence, randWord } from '@ngneat/falso';
+import { randFutureDate, randPastDate, randSentence, randWord } from '@ngneat/falso';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
-import { createUuid, createUpdatePayload, createUpdateStatusPayload } from '../../helpers/helpers';
+import {
+  createUuid,
+  createUpdatePayload,
+  createUpdateStatusPayload,
+  createWrongFootprintCoordinates,
+  createWrongFootprintSchema,
+  createRecord,
+} from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { MetadataRequestSender } from './helpers/requestSender';
@@ -32,7 +39,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
         const expected = randSentence();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
@@ -48,7 +55,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
         const classification = randWord();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -57,10 +64,68 @@ describe('MiddlewareController', function () {
         expect(response.body).toHaveProperty('message', `classification is not a valid value.. Optional values: ${classification}`);
       });
 
+      it(`Should return 400 status code if the footprint is not in the footprint schema`, async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        payload.footprint = createWrongFootprintSchema();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty(
+          'message',
+          `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
+            payload.footprint
+          )}`
+        );
+      });
+
+      it(`Should return 400 status code if the first and the last coordinates of footprint are not the same`, async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        payload.footprint = createWrongFootprintCoordinates();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty(
+          'message',
+          `Wrong footprint: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
+        );
+      });
+
+      it(`Should return 400 status code if the link is not valid`, async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        const record = createRecord();
+        record.links = randWord();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `There is no good link in record, links: ${record.links}`);
+      });
+
+      it('should return 400 status code if startDate is later than endDate', async function () {
+        const identifier = createUuid();
+        const payload = createUpdatePayload();
+        payload.sourceDateEnd = randPastDate();
+        payload.sourceDateStart = randFutureDate();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `sourceStartDate should not be later than sourceEndDate`);
+      });
+
       it(`should return 400 status code if record does not exist in catalog`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -70,21 +135,10 @@ describe('MiddlewareController', function () {
     });
 
     describe('Sad Path 😥', function () {
-      it(`should return 500 status code if during validation, catalog didn't return as expected`, async function () {
-        const identifier = createUuid();
-        const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
-
-        const response = await requestSender.updateMetadata(identifier, payload);
-
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'Problem with the catalog during validation of record existence');
-      });
-
       it(`should return 500 status code if lookup-tables is not working properly`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockRejectedValueOnce(new Error('lookup-tables error'));
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -107,7 +161,7 @@ describe('MiddlewareController', function () {
       it(`should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
         const identifier = createUuid();
         const payload = createUpdatePayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
@@ -125,7 +179,7 @@ describe('MiddlewareController', function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
         const expected = randSentence();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateStatus(identifier, payload);
@@ -139,7 +193,7 @@ describe('MiddlewareController', function () {
       it(`should return 400 status code if record does not exist in catalog`, async function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
         const response = await requestSender.updateStatus(identifier, payload);
 
@@ -149,17 +203,6 @@ describe('MiddlewareController', function () {
     });
 
     describe('Sad Path 😥', function () {
-      it(`should return 500 status code if during validation, catalog didn't return as expected`, async function () {
-        const identifier = createUuid();
-        const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
-
-        const response = await requestSender.updateStatus(identifier, payload);
-
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'Problem with the catalog during validation of record existence');
-      });
-
       it(`should return 500 status code if catalog is not working properly`, async function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
@@ -174,7 +217,7 @@ describe('MiddlewareController', function () {
       it(`should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
         const identifier = createUuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
         const response = await requestSender.updateStatus(identifier, payload);

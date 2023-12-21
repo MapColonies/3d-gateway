@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
 import { CatalogCall } from '../../../../src/externalServices/catalog/requestCall';
 import { CatalogConfig } from '../../../../src/externalServices/catalog/interfaces';
-import { createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
+import { createRecord, createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
 
 let catalog: CatalogCall;
 
@@ -17,42 +17,33 @@ describe('catalogCall tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('isRecordExist Function', () => {
-    it('Returns true when identifier exists in DB', async () => {
+  describe('getRecord Function', () => {
+    it('Returns the record when identifier exists in DB', async () => {
       const identifier = createUuid();
-      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+      const expected = createRecord();
+      mockAxios.get.mockResolvedValueOnce({ data: expected });
 
-      const response = await catalog.isRecordExist(identifier);
+      const response = await catalog.getRecord(identifier);
 
       expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`);
-      expect(response).toBe(true);
+      expect(response).toBe(expected);
     });
 
-    it('Returns false when identifier does not exist in DB', async () => {
+    it('Returns undefined when identifier does not exist in DB', async () => {
       const identifier = createUuid();
-      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+      mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
-      const response = await catalog.isRecordExist(identifier);
+      const response = await catalog.getRecord(identifier);
 
       expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`);
-      expect(response).toBe(false);
-    });
-
-    it('Rejects if got unexpected response from catalog', async () => {
-      const identifier = createUuid();
-      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.INTERNAL_SERVER_ERROR });
-
-      const response = catalog.isRecordExist(identifier);
-
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`);
-      await expect(response).rejects.toThrow('Problem with the catalog during validation of record existence');
+      expect(response).toBeUndefined();
     });
 
     it('rejects if service is not available', async () => {
       const identifier = createUuid();
       mockAxios.get.mockRejectedValueOnce(new Error('catalog is not available'));
 
-      const response = catalog.isRecordExist(identifier);
+      const response = catalog.getRecord(identifier);
 
       await expect(response).rejects.toThrow('there is a problem with catalog');
     });

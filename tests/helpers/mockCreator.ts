@@ -20,10 +20,11 @@ export const lookupTablesMock = {
 
 export const jsLoggerMock = {
   warn: jest.fn(),
+  debug: jest.fn(),
 };
 
 export const catalogMock = {
-  isRecordExist: jest.fn(),
+  getRecord: jest.fn(),
   isProductIdExist: jest.fn(),
   patchMetadata: jest.fn(),
   changeStatus: jest.fn(),

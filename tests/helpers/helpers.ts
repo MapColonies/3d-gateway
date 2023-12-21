@@ -6,6 +6,7 @@ import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-col
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
+import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
 const maxResolutionMeter = 8000;
 const noData = 999;
@@ -60,6 +61,10 @@ export const createUuid = (): string => {
 
 export const getBasePath = (): string => {
   return basePath;
+};
+
+export const createLink = (tileset = 'tileset.json'): string => {
+  return `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${createUuid()}/${tileset}`;
 };
 
 export const createModelPath = (modelName = 'Sphere'): string => {
@@ -123,7 +128,15 @@ export const createMetadataWithoutProductSource = (modelName = 'Sphere'): Omit<L
 export const createMetadata = (modelName = 'Sphere'): Layer3DMetadata => {
   return {
     ...createMetadataWithoutProductSource(modelName),
-    productSource: randWord(),
+    productSource: createModelPath(modelName),
+  };
+};
+
+export const createRecord = (modelName = 'Sphere'): Record3D => {
+  return {
+    ...createMetadata(modelName),
+    id: createUuid(),
+    links: createLink(),
   };
 };
 
@@ -152,12 +165,17 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
   return lookupOptions;
 };
 
-export const createUpdatePayload = (): Partial<UpdatePayload> => {
+export const createUpdatePayload = (modelName = 'Sphere'): Partial<UpdatePayload> => {
   const minResolutionMeter = randNumber({ max: maxResolutionMeter });
+  const sourceDateStart = randPastDate();
+  const sourceDateEnd = randBetweenDate({ from: sourceDateStart, to: new Date() });
   const payload: UpdatePayload = {
     productName: randWord(),
     description: randWord(),
+    sourceDateStart: sourceDateStart,
+    sourceDateEnd: sourceDateEnd,
     creationDate: randPastDate(),
+    footprint: createFootprint(modelName),
     classification: randWord(),
     minResolutionMeter: minResolutionMeter,
     maxResolutionMeter: randNumber({ min: minResolutionMeter, max: maxResolutionMeter }),
