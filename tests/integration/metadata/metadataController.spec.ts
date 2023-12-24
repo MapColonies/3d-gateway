@@ -16,7 +16,7 @@ import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { MetadataRequestSender } from './helpers/requestSender';
 
-describe('MiddlewareController', function () {
+describe('MetadataController', function () {
   let requestSender: MetadataRequestSender;
   beforeEach(function () {
     const app = getApp({

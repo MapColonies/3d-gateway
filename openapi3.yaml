@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: 3d-middleware
+  title: 3d-gateway
   description: Validating and routing requests
   version: 1.0.0
   license:

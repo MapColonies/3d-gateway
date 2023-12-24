@@ -1,7 +1,7 @@
 {
-  "name": "3d-middleware",
+  "name": "3d-gateway",
   "version": "1.0.0",
-  "description": "A middleware betweem clients and interval services of 3D",
+  "description": "A gateway betweem clients and interval services of 3D",
   "main": "./src/index.ts",
   "scripts": {
     "test:unit": "jest --config=./tests/configurations/unit/jest.config.ts",

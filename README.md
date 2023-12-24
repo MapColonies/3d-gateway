@@ -1,21 +1,21 @@
-# Middleware
-The 3D-Middleware is the starting point of 3d-services and is responsible for validating incoming requests and routing them to the desired services. Once the validation is complete, it sends the request to the target service for further processing.
+# Gateway
+The 3D-Gateway is the starting point of 3d-services and is responsible for validating incoming requests and routing them to the desired services. Once the validation is complete, it sends the request to the target service for further processing.
 
 ## Functionality
-The Middleware service performs the following steps:
+The Gateway service performs the following steps:
 
 Request Validation: Upon receiving a request, the service validates the request to ensure it meets the required criteria. This validation step helps to ensure that only valid requests proceed to the next stage of the process.
 
-Request Forwarding: Once the request passes the validation, the middleware service forwards the request to the desired service:
+Request Forwarding: Once the request passes the validation, the gateway service forwards the request to the desired service:
 If it is an ingestion request -> The request will be forwarded to StoreTrigger service.
 The StoreTrigger service is responsible for creating jobs and initiating the synchronization process.
 If it is an update request -> The request will be forwarded to catalog service (CRUD).
 The catalog service is responsible for creating and updating metadata of models in postgres DB.
 
 ## Usage
-To utilize the Middleware service, you need to send a request to its endpoint with the required information. The service will then validate the request and forward it to the StoreTrigger/Catalog service.
+To utilize the Gateway service, you need to send a request to its endpoint with the required information. The service will then validate the request and forward it to the StoreTrigger/Catalog service.
 
-Ensure that both the Middleware service and the external services are running and properly configured to ensure the smooth flow of the process.
+Ensure that both the Gateway service and the external services are running and properly configured to ensure the smooth flow of the process.
 
 ## Installation
 
