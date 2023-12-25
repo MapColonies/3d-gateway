@@ -2,12 +2,15 @@ import { inject, injectable } from 'tsyringe';
 import { v4 as uuid } from 'uuid';
 import { Logger } from '@map-colonies/js-logger';
 import httpStatus from 'http-status-codes';
+import { RecordStatus } from '@map-colonies/mc-model-types';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/requestCall';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IngestionPayload } from '../../common/interfaces';
+import { CatalogCall } from '../../externalServices/catalog/requestCall';
+import { DeleteRequest, Record3D } from '../../externalServices/catalog/interfaces';
 import * as utils from './utilities';
 
 @injectable()
@@ -15,7 +18,8 @@ export class ModelManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(ValidationManager) private readonly validator: ValidationManager,
-    @inject(StoreTriggerCall) private readonly storeTrigger: StoreTriggerCall
+    @inject(StoreTriggerCall) private readonly storeTrigger: StoreTriggerCall,
+    @inject(CatalogCall) private readonly catalog: CatalogCall
   ) {}
 
   public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {
@@ -59,6 +63,49 @@ export class ModelManager {
     } catch (error) {
       this.logger.error({ msg: 'Error in creating a flow', modelId, modelName: payload.metadata.productName, error, payload });
       throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
+    }
+  }
+
+  public async deleteModel(identifier: string): Promise<StoreTriggerResponse> {
+    this.logger.debug({ msg: 'delete record', modelId: identifier });
+    try {
+      const record: Record3D | undefined = await this.catalog.getRecord(identifier);
+      if (record === undefined) {
+        this.logger.error({ msg: 'model identifier not found', modelId: identifier });
+        throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
+      }
+      if (record.productStatus != RecordStatus.UNPUBLISHED) {
+        this.logger.error({ msg: 'model with status PUBLISHED cannot be deleted', modelId: identifier });
+        throw new AppError(
+          'BAD_REQUEST',
+          httpStatus.BAD_REQUEST,
+          ` Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`,
+          true
+        );
+      }
+      this.logger.info({ msg: 'starting deleting record', modelId: identifier, modelName: record.productName });
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+    }
+    const record: Record3D | undefined = await this.catalog.getRecord(identifier);
+    if (record === undefined) {
+      this.logger.error({ msg: 'model identifier not found', modelId: identifier });
+      throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
+    } else {
+      const request: DeleteRequest = {
+        modelId: identifier,
+        modelLink: record.links,
+      };
+      try {
+        const response: StoreTriggerResponse = await this.storeTrigger.deleteModel(request);
+        console.log(response);
+        return response;
+      } catch (error) {
+        this.logger.error({ msg: 'Error in creating flow', identifier, modelName: record.producerName, error, record });
+        throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
+      }
     }
   }
 }

@@ -38,8 +38,8 @@
     "subUrl": "metadata"
   },
   "paths": {
-    "basePath": "\\\\domtest\\mimi\\archi\\maz\\silver\\libot",
-    "pvPath": "/home/3DModels"
+    "basePath": "/home/3DModels",
+    "pvPath": "/NewYork"
   },
   "validation": {
     "percentageLimit": 10

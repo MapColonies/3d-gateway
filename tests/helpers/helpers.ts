@@ -2,11 +2,11 @@ import * as fs from 'fs';
 import config from 'config';
 import { randBetweenDate, randNumber, randPastDate, randSentence, randUuid, randWord } from '@ngneat/falso';
 import { Polygon } from 'geojson';
-import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
+import { Layer3DMetadata, Link, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
-import { Record3D } from '../../src/externalServices/catalog/interfaces';
+import { DeleteRequest, Record3D } from '../../src/externalServices/catalog/interfaces';
 
 const maxResolutionMeter = 8000;
 const noData = 999;
@@ -18,6 +18,18 @@ const maxX = 3;
 const maxY = 4;
 const pvPath = config.get<string>('paths.pvPath');
 const basePath = config.get<string>('paths.basePath');
+const linksPattern = [
+  {
+    protocol: 'test',
+    url: 'http://test.test/wmts',
+  },
+  {
+    name: 'testLink',
+    description: 'test test test',
+    protocol: 'fulltest',
+    url: 'http://test.test/wms',
+  },
+];
 
 const createLookupOption = (): ILookupOption => {
   return {
@@ -157,6 +169,13 @@ export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerPa
   };
 };
 
+export const createFakeDeleteRequest = (): DeleteRequest => {
+  return {
+    modelId: createUuid(),
+    modelLink: linksToString(linksPattern),
+  };
+};
+
 export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): ILookupOption[] => {
   const lookupOptions: ILookupOption[] = [];
   for (let i = 0; i < amount; i++) {
@@ -198,4 +217,9 @@ export const createUpdateStatusPayload = (): UpdateStatusPayload => {
   return {
     productStatus: 'UNPUBLISHED',
   };
+};
+
+export const linksToString = (links: Link[]): string => {
+  const stringLinks = links.map((link) => `${link.name ?? ''},${link.description ?? ''},${link.protocol ?? ''},${link.url ?? ''}`);
+  return stringLinks.join('^');
 };
