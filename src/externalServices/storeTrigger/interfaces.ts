@@ -8,7 +8,6 @@ export interface StoreTriggerResponse {
 
 export interface StoreTriggerConfig {
   url: string;
-  subUrl: string;
 }
 
 export interface StoreTriggerPayload {

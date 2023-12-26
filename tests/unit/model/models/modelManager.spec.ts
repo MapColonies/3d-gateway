@@ -1,12 +1,12 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { StatusCodes } from 'http-status-codes';
 import { AppError } from '../../../../src/common/appError';
 import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
-import { createFakeDeleteRequest, createIngestionPayload, createRecord, createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
+import { createIngestionPayload, createRecord, createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
 import { catalogMock, storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
-import { DeleteRequest } from '../../../../src/externalServices/catalog/interfaces';
 
 let modelManager: ModelManager;
 
@@ -74,45 +74,58 @@ describe('ModelManager', () => {
 
   describe('deleteModel tests', () => {
     it('should send a delete request to storeTrigger successfully', async () => {
-      const request: DeleteRequest = createFakeDeleteRequest();
-      const expected: StoreTriggerResponse = {
-        jobID: createUuid(),
+      const identifier = createUuid();
+      const record = createRecord();
+      const expectedResponse: StoreTriggerResponse = {
+        jobID: 'testJobId',
         status: OperationStatus.IN_PROGRESS,
       };
 
-      catalogMock.getRecord.mockResolvedValue(createRecord(request.modelId));
-      storeTriggerMock.deleteModel.mockResolvedValue({ data: expected });
+      catalogMock.getRecord.mockResolvedValue(record);
+      storeTriggerMock.deleteModel.mockResolvedValue(expectedResponse);
 
-      const response: StoreTriggerResponse = await modelManager.deleteModel(request.modelId);
+      const response = await modelManager.deleteModel(identifier);
 
-      expect(response).toMatchObject(expected);
+      expect(response).toEqual(expectedResponse);
     });
 
     it('rejects with AppError if the identifier is not found in catalog', async () => {
-      const nonExistentId = createUuid();
+      const identifier = createUuid();
+      const expectedError = new AppError('NOT_FOUND', StatusCodes.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
+
       catalogMock.getRecord.mockResolvedValue(undefined);
+      storeTriggerMock.deleteModel.mockResolvedValue(expectedError);
 
-      const response = modelManager.deleteModel(nonExistentId);
+      const response = modelManager.deleteModel(identifier);
 
-      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toThrow(expectedError);
+    });
 
-      it('rejects if catalog is not available', async () => {
-        const request: DeleteRequest = createFakeDeleteRequest();
-        catalogMock.getRecord.mockRejectedValue(new Error('catalog service is not available'));
+    it('rejects if catalog is not available', async () => {
+      const identifier = createUuid();
+      catalogMock.getRecord.mockRejectedValue(new Error('Catalog service is not available'));
 
-        const response = modelManager.deleteModel(request.modelId);
+      const responsePromise = modelManager.deleteModel(identifier);
 
-        await expect(response).rejects.toThrow(AppError);
-      });
+      await expect(responsePromise).rejects.toThrow(Error);
+      await expect(responsePromise).rejects.toThrow(
+        new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Catalog service is not available', true)
+      );
+    });
 
-      it('rejects if storeTrigger is not available', async () => {
-        const request: DeleteRequest = createFakeDeleteRequest();
-        storeTriggerMock.postPayload.mockRejectedValue(new Error('store-trigger service is not available'));
+    it('rejects if storeTrigger is not available', async () => {
+      const identifier = createUuid();
+      const record = createRecord();
 
-        const response = modelManager.deleteModel(request.modelId);
+      catalogMock.getRecord.mockResolvedValue(record);
+      storeTriggerMock.deleteModel.mockRejectedValue(new Error('StoreTrigger service is not available'));
 
-        await expect(response).rejects.toThrow('store-trigger service is not available');
-      });
+      const responsePromise = modelManager.deleteModel(identifier);
+
+      await expect(responsePromise).rejects.toThrow(Error);
+      await expect(responsePromise).rejects.toThrow(
+        new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true)
+      );
     });
   });
 });

@@ -100,7 +100,6 @@ export class ModelManager {
       };
       try {
         const response: StoreTriggerResponse = await this.storeTrigger.deleteModel(request);
-        console.log(response);
         return response;
       } catch (error) {
         this.logger.error({ msg: 'Error in creating flow', identifier, modelName: record.producerName, error, record });

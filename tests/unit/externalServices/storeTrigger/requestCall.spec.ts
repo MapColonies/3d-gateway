@@ -29,7 +29,7 @@ describe('StoreTriggerCall', () => {
 
       const created = await storeTrigger.postPayload(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}/${storeTriggerConfig.subUrl}`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}`, request);
       expect(created).toMatchObject(expected);
     });
 
@@ -55,13 +55,13 @@ describe('StoreTriggerCall', () => {
 
       const created = await storeTrigger.deleteModel(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}/deleting`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}`, request);
       expect(created).toMatchObject(expected);
     });
 
     it('rejects if service is not available', async () => {
       const request = createFakeDeleteRequest();
-      mockAxios.post.mockResolvedValue(new Error('store-trigger is not available'));
+      mockAxios.post.mockRejectedValue(new Error('store-trigger is not available'));
 
       const createPromise = storeTrigger.deleteModel(request);
 

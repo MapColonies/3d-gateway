@@ -15,6 +15,9 @@ import {
   createWrongFootprintCoordinates,
   createWrongFootprintSchema,
   getBasePath,
+  createUuid,
+  createFakeDeleteRequest,
+  createRecord,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -369,4 +372,21 @@ describe('ModelController', function () {
       });
     });
   });
+
+  describe('DELETE/models/:identifier', function() {
+    describe('Happy Path 🙂', function () {
+      it('Should return 200 status code and the deleted model', async function () {
+        const expected = createFakeDeleteRequest();
+        const identifier = createUuid();
+        const record = createRecord();
+
+        mockAxios.get.mockResolvedValue({ status: StatusCodes.OK, data: record });
+        mockAxios.delete.mockResolvedValue({ status: StatusCodes.OK, data: expected });
+
+        const response = await requestSender.deleteModel(identifier);
+        expect(response.status).toBe(StatusCodes.OK);
+        expect(response.body).toEqual(expected);
+      })
+    })
+  })
 });

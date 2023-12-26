@@ -21,7 +21,7 @@ export class StoreTriggerCall {
       modelName: payload.metadata.productName,
       flowPayload: payload,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/${this.storeTrigger.subUrl}`, payload);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}`, payload);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
@@ -38,7 +38,7 @@ export class StoreTriggerCall {
       modelId: request.modelId,
       modelLink: request.modelLink,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/${this.storeTrigger.subUrl}`, request);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}`, request);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
