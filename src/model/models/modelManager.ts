@@ -87,7 +87,7 @@ export class ModelManager {
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
-      };
+      }
     }
     const record: Record3D | undefined = await this.catalog.getRecord(identifier);
     if (record === undefined) {
@@ -103,7 +103,7 @@ export class ModelManager {
       } catch (error) {
         this.logger.error({ msg: 'Error in creating flow', identifier, modelName: record.producerName, error, record });
         throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
-      };
-    };
-  };
+      }
+    }
+  }
 }
