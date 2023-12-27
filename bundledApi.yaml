@@ -37,6 +37,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /models/{identifier}:
+    post:
+      operationId: deleteModel
+      summary: Deletes model by given identifier
+      tags:
+        - models
+      parameters:
+        - $ref: '#/components/parameters/identifier'
+      responses:
+        '201':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/job'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        5XX:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+
   /metadata/{identifier}:
     patch:
       operationId: updateMetadata
@@ -137,6 +165,22 @@ components:
         metadata:
           $ref: '#/components/schemas/basic-payload'
       additionalProperties: false
+    # delete-response:
+    #   type: object
+    #   description: 3d response to delete model
+    #   required:
+    #     - modelId
+    #     - link
+    #   properties:
+    #     modelId:
+    #       type: string
+    #       nullable: false
+    #     modelLink:
+    #       type: string
+    #     minItems: 1
+    #     items:
+    #       $ref: '#/components/schemas/Link'
+    # additionalProperties: false
     job:
       type: object
       description: job for ingestion 3d model

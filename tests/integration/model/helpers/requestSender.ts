@@ -1,6 +1,5 @@
 import * as supertest from 'supertest';
 import { IngestionPayload } from '../../../../src/common/interfaces';
-import { DeleteRequest } from '../../../../src/externalServices/catalog/interfaces';
 
 export class ModelRequestSender {
   public constructor(private readonly app: Express.Application) {}
@@ -10,11 +9,6 @@ export class ModelRequestSender {
   }
 
   public async deleteModel(identifier: string): Promise<supertest.Response> {
-    const deleteRequest: DeleteRequest = {
-      modelId: identifier,
-      modelLink: 'example-link',
-    };
-
-    return supertest.agent(this.app).delete(`/deleteModel/${identifier}`).set('Content-Type', 'application/json').send(deleteRequest);
+    return supertest.agent(this.app).post(`/models/${identifier}`).set('Content-Type', 'application/json');
   }
 }

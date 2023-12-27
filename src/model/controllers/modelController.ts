@@ -10,7 +10,7 @@ import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interf
 import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
-type DeleteModelHandler = RequestHandler<MetadataParams, StoreTriggerResponse>;
+type DeleteModelHandler = RequestHandler<MetadataParams, StoreTriggerResponse, string>;
 
 @injectable()
 export class ModelController {
@@ -40,7 +40,7 @@ export class ModelController {
     try {
       const { identifier } = req.params;
       const response = await this.manager.deleteModel(identifier);
-      return res.sendStatus(httpStatus.OK).json(response);
+      return res.set(httpStatus.OK).json(response);
     } catch (error) {
       this.logger.error({ msg: `Couldn't delete a record`, error });
       return next(error);

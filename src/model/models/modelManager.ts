@@ -79,7 +79,7 @@ export class ModelManager {
         throw new AppError(
           'BAD_REQUEST',
           httpStatus.BAD_REQUEST,
-          ` Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`,
+          `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`,
           true
         );
       }

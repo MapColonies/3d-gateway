@@ -70,6 +70,7 @@ export class ServerBuilder {
   }
 
   private registerPostRoutesMiddleware(): void {
+    // this.serverInstance.use(logRes);
     this.serverInstance.use(getErrorHandlerMiddleware());
     this.serverInstance.use(handleError);
   }

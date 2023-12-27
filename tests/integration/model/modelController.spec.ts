@@ -1,7 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
-import { ProductType } from '@map-colonies/mc-model-types';
+import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
 import mockAxios from 'jest-mock-axios';
 import { randFutureDate, randNumber, randPastDate, randWord } from '@ngneat/falso';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
@@ -16,7 +16,7 @@ import {
   createWrongFootprintSchema,
   getBasePath,
   createUuid,
-  createFakeDeleteRequest,
+  createFakeDeleteResponse,
   createRecord,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
@@ -373,20 +373,76 @@ describe('ModelController', function () {
     });
   });
 
-  describe('DELETE/models/:identifier', function() {
+  describe('DELETE/models/:identifier', function () {
     describe('Happy Path 🙂', function () {
       it('Should return 200 status code and the deleted model', async function () {
-        const expected = createFakeDeleteRequest();
+        const expected = createFakeDeleteResponse();
         const identifier = createUuid();
         const record = createRecord();
 
         mockAxios.get.mockResolvedValue({ status: StatusCodes.OK, data: record });
-        mockAxios.delete.mockResolvedValue({ status: StatusCodes.OK, data: expected });
+        mockAxios.post.mockResolvedValue({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.deleteModel(identifier);
+
         expect(response.status).toBe(StatusCodes.OK);
         expect(response.body).toEqual(expected);
+      });
+    });
+
+    describe('Bad Path 😡', function () {
+      it('should return 400 status code if identifier does not exist in catalog', async function () {
+        const identifier = createUuid();
+
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: undefined });
+
+        const response = await requestSender.deleteModel(identifier);
+
+        expect(response.body).toHaveProperty('message', `Identifier ${identifier} wasn't found on DB`);
+        expect(response.status).toBe(StatusCodes.NOT_FOUND);
+      });
+
+      it('Should return 400 status code is product status is PUBLISHED', async function () {
+          const identifier = createUuid();
+          const record = createRecord();
+          record.productStatus = RecordStatus.PUBLISHED;
+        
+          mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        
+          const response = await requestSender.deleteModel(identifier);
+        
+          expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+          expect(response.body).toHaveProperty('message', `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`);
+        });
       })
-    })
-  })
-});
+    });
+
+    describe('Sad Path 😥', function () {
+      it('should return 500 status code if a network exception happens in store-trigger service', async function () {
+        const identifier = createUuid();
+        const record = createRecord();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
+
+        const response = await requestSender.deleteModel(identifier);
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'store-trigger service is not available');
+      });
+
+      it('should return 500 status code if exception happens in catalog service', async function () {
+        const identifier = createUuid();
+        const expected = createFakeDeleteResponse();
+        mockAxios.get.mockRejectedValueOnce({
+          response: { status: StatusCodes.INTERNAL_SERVER_ERROR, data: new Error('catalog service is not available') },
+        });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const response = await requestSender.deleteModel(identifier);
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
+      });
+    });
+  });
+
