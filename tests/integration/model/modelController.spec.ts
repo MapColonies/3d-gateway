@@ -403,46 +403,45 @@ describe('ModelController', function () {
       });
 
       it('Should return 400 status code is product status is PUBLISHED', async function () {
-          const identifier = createUuid();
-          const record = createRecord();
-          record.productStatus = RecordStatus.PUBLISHED;
-        
-          mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        
-          const response = await requestSender.deleteModel(identifier);
-        
-          expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-          expect(response.body).toHaveProperty('message', `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`);
-        });
-      })
-    });
-
-    describe('Sad Path 😥', function () {
-      it('should return 500 status code if a network exception happens in store-trigger service', async function () {
         const identifier = createUuid();
         const record = createRecord();
+        record.productStatus = RecordStatus.PUBLISHED;
+
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
 
         const response = await requestSender.deleteModel(identifier);
 
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'store-trigger service is not available');
-      });
-
-      it('should return 500 status code if exception happens in catalog service', async function () {
-        const identifier = createUuid();
-        const expected = createFakeDeleteResponse();
-        mockAxios.get.mockRejectedValueOnce({
-          response: { status: StatusCodes.INTERNAL_SERVER_ERROR, data: new Error('catalog service is not available') },
-        });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
-
-        const response = await requestSender.deleteModel(identifier);
-
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`);
       });
     });
   });
 
+  describe('Sad Path 😥', function () {
+    it('should return 500 status code if a network exception happens in store-trigger service', async function () {
+      const identifier = createUuid();
+      const record = createRecord();
+      mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+      mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
+
+      const response = await requestSender.deleteModel(identifier);
+
+      expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+      expect(response.body).toHaveProperty('message', 'store-trigger service is not available');
+    });
+
+    it('should return 500 status code if exception happens in catalog service', async function () {
+      const identifier = createUuid();
+      const expected = createFakeDeleteResponse();
+      mockAxios.get.mockRejectedValueOnce({
+        response: { status: StatusCodes.INTERNAL_SERVER_ERROR, data: new Error('catalog service is not available') },
+      });
+      mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+      const response = await requestSender.deleteModel(identifier);
+
+      expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+      expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
+    });
+  });
+});
