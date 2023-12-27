@@ -29,7 +29,7 @@ describe('StoreTriggerCall', () => {
 
       const created = await storeTrigger.postPayload(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}/ingestion`, request);
       expect(created).toMatchObject(expected);
     });
 
@@ -55,7 +55,7 @@ describe('StoreTriggerCall', () => {
 
       const created = await storeTrigger.deleteModel(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}/deleting`, request);
       expect(created).toMatchObject(expected);
     });
 

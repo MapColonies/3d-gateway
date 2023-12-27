@@ -16,12 +16,12 @@ export class StoreTriggerCall {
 
   public async postPayload(payload: StoreTriggerPayload): Promise<StoreTriggerResponse> {
     this.logger.debug({
-      msg: 'got a request for a new flow',
+      msg: 'sending the ingestion request to store-trigger',
       modelId: payload.modelId,
       modelName: payload.metadata.productName,
       flowPayload: payload,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}`, payload);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/ingestion`, payload);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
@@ -33,12 +33,12 @@ export class StoreTriggerCall {
   }
 
   public async deleteModel(request: DeleteRequest): Promise<StoreTriggerResponse> {
-    this.logger.debug({
-      msg: 'got a request for a new flow',
+    this.logger.info({
+      msg: 'sending the delete request to store-trigger',
       modelId: request.modelId,
       modelLink: request.modelLink,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}`, request);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/deleting`, request);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,

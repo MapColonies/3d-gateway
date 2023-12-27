@@ -4,10 +4,9 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload } from '../../common/interfaces';
+import { IngestionPayload, MetadataParams } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
-import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
 type DeleteModelHandler = RequestHandler<MetadataParams, StoreTriggerResponse, string>;

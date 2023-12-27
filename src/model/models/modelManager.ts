@@ -75,7 +75,7 @@ export class ModelManager {
         throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
       }
       if (record.productStatus != RecordStatus.UNPUBLISHED) {
-        this.logger.error({ msg: 'model with status PUBLISHED cannot be deleted', modelId: identifier });
+        this.logger.error({ msg: 'got UNPUBLISHED model', modelId: identifier });
         throw new AppError(
           'BAD_REQUEST',
           httpStatus.BAD_REQUEST,
