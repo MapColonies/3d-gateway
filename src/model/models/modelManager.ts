@@ -91,7 +91,6 @@ export class ModelManager {
     }
     const record: Record3D | undefined = await this.catalog.getRecord(identifier);
     if (record === undefined) {
-      this.logger.error({ msg: 'model identifier not found', modelId: identifier });
       throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
     } else {
       const request: DeleteRequest = {

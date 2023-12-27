@@ -1,6 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { StatusCodes } from 'http-status-codes';
+import { RecordStatus } from '@map-colonies/mc-model-types';
 import { AppError } from '../../../../src/common/appError';
 import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
@@ -99,6 +100,28 @@ describe('ModelManager', () => {
       const response = modelManager.deleteModel(identifier);
 
       await expect(response).rejects.toThrow(expectedError);
+      await expect(response).rejects.toThrow(Error);
+      await expect(response).rejects.toThrow(new AppError('NOT_FOUND', StatusCodes.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true));
+    });
+
+    it('rejects with AppError it productStatus is PUBLISHED', async () => {
+      const identifier = createUuid();
+      const record = createRecord();
+      const expectedError = new AppError(
+        'BAD_REQUEST',
+        StatusCodes.BAD_REQUEST,
+        `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`,
+        true
+      );
+      record.productStatus = RecordStatus.PUBLISHED;
+
+      catalogMock.getRecord.mockResolvedValue(record);
+      storeTriggerMock.deleteModel.mockResolvedValue(expectedError);
+
+      const response = modelManager.deleteModel(identifier);
+
+      await expect(response).rejects.toThrow(expectedError);
+      await expect(response).rejects.toThrow(AppError);
     });
 
     it('rejects if catalog is not available', async () => {
