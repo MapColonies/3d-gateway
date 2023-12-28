@@ -10,6 +10,11 @@ export interface StoreTriggerConfig {
   url: string;
 }
 
+export interface DeleteRequest {
+  modelId: string;
+  modelLink: string;
+}
+
 export interface StoreTriggerPayload {
   modelId: string;
   pathToTileset: string;

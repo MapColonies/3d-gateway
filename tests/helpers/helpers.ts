@@ -5,9 +5,9 @@ import { Polygon } from 'geojson';
 import { Layer3DMetadata, Link, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
-import { StoreTriggerPayload, StoreTriggerResponse } from '../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerPayload, StoreTriggerResponse, DeleteRequest } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
-import { DeleteRequest, Record3D } from '../../src/externalServices/catalog/interfaces';
+import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
 const maxResolutionMeter = 8000;
 const noData = 999;
@@ -21,14 +21,14 @@ const pvPath = config.get<string>('paths.pvPath');
 const basePath = config.get<string>('paths.basePath');
 const linksPattern = [
   {
-    protocol: 'test',
-    url: 'http://test.test/wmts',
+    protocol: randWord(),
+    url: `http://${randWord()}.test/wmts`,
   },
   {
-    name: 'testLink',
-    description: 'test test test',
-    protocol: 'fulltest',
-    url: 'http://test.test/wms',
+    name: randWord(),
+    description: randSentence(),
+    protocol: randWord(),
+    url: `http://${randWord()}.test/wms`,
   },
 ];
 

@@ -373,7 +373,7 @@ describe('ModelController', function () {
     });
   });
 
-  describe('DELETE/models/:identifier', function () {
+  describe('DELETE /models/:identifier', function () {
     describe('Happy Path 🙂', function () {
       it('Should return 200 status code and the deleted model', async function () {
         const expected = createFakeDeleteResponse();

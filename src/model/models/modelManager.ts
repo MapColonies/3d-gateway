@@ -4,13 +4,13 @@ import { Logger } from '@map-colonies/js-logger';
 import httpStatus from 'http-status-codes';
 import { RecordStatus } from '@map-colonies/mc-model-types';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/requestCall';
-import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
+import { StoreTriggerPayload, StoreTriggerResponse, DeleteRequest } from '../../externalServices/storeTrigger/interfaces';
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IngestionPayload } from '../../common/interfaces';
 import { CatalogCall } from '../../externalServices/catalog/requestCall';
-import { DeleteRequest, Record3D } from '../../externalServices/catalog/interfaces';
+import { Record3D } from '../../externalServices/catalog/interfaces';
 import * as utils from './utilities';
 
 @injectable()
@@ -68,8 +68,8 @@ export class ModelManager {
 
   public async deleteModel(identifier: string): Promise<StoreTriggerResponse> {
     this.logger.debug({ msg: 'delete record', modelId: identifier });
+    const record: Record3D | undefined = await this.catalog.getRecord(identifier);
     try {
-      const record: Record3D | undefined = await this.catalog.getRecord(identifier);
       if (record === undefined) {
         this.logger.error({ msg: 'model identifier not found', modelId: identifier });
         throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
@@ -89,7 +89,6 @@ export class ModelManager {
         throw error;
       }
     }
-    const record: Record3D | undefined = await this.catalog.getRecord(identifier);
     if (record === undefined) {
       throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
     } else {
@@ -98,7 +97,7 @@ export class ModelManager {
         modelLink: record.links,
       };
       try {
-        const response: StoreTriggerResponse = await this.storeTrigger.deleteModel(request);
+        const response: StoreTriggerResponse = await this.storeTrigger.deletePayload(request);
         return response;
       } catch (error) {
         this.logger.error({ msg: 'Error in creating flow', identifier, modelName: record.producerName, error, record });

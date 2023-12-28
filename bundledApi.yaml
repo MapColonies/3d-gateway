@@ -38,7 +38,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/error'
   /models/{identifier}:
-    post:
+    delete:
       operationId: deleteModel
       summary: Deletes model by given identifier
       tags:

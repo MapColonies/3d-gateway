@@ -83,7 +83,7 @@ describe('ModelManager', () => {
       };
 
       catalogMock.getRecord.mockResolvedValue(record);
-      storeTriggerMock.deleteModel.mockResolvedValue(expectedResponse);
+      storeTriggerMock.deletePayload.mockResolvedValue(expectedResponse);
 
       const response = await modelManager.deleteModel(identifier);
 
@@ -95,7 +95,7 @@ describe('ModelManager', () => {
       const expectedError = new AppError('NOT_FOUND', StatusCodes.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
 
       catalogMock.getRecord.mockResolvedValue(undefined);
-      storeTriggerMock.deleteModel.mockResolvedValue(expectedError);
+      storeTriggerMock.deletePayload.mockResolvedValue(expectedError);
 
       const response = modelManager.deleteModel(identifier);
 
@@ -116,7 +116,7 @@ describe('ModelManager', () => {
       record.productStatus = RecordStatus.PUBLISHED;
 
       catalogMock.getRecord.mockResolvedValue(record);
-      storeTriggerMock.deleteModel.mockResolvedValue(expectedError);
+      storeTriggerMock.deletePayload.mockResolvedValue(expectedError);
 
       const response = modelManager.deleteModel(identifier);
 
@@ -141,7 +141,7 @@ describe('ModelManager', () => {
       const record = createRecord();
 
       catalogMock.getRecord.mockResolvedValue(record);
-      storeTriggerMock.deleteModel.mockRejectedValue(new Error('StoreTrigger service is not available'));
+      storeTriggerMock.deletePayload.mockRejectedValue(new Error('StoreTrigger service is not available'));
 
       const responsePromise = modelManager.deleteModel(identifier);
 

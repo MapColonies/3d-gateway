@@ -9,6 +9,6 @@ export class ModelRequestSender {
   }
 
   public async deleteModel(identifier: string): Promise<supertest.Response> {
-    return supertest.agent(this.app).post(`/models/${identifier}`).set('Content-Type', 'application/json');
+    return supertest.agent(this.app).delete(`/models/${identifier}`).set('Content-Type', 'application/json');
   }
 }

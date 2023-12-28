@@ -13,8 +13,3 @@ export interface Record3D extends Layer3DMetadata {
   id: string;
   links: string;
 }
-
-export interface DeleteRequest {
-  modelId: string;
-  modelLink: string;
-}

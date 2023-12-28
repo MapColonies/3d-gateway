@@ -53,7 +53,7 @@ describe('StoreTriggerCall', () => {
       };
       mockAxios.post.mockResolvedValue({ data: expected });
 
-      const created = await storeTrigger.deleteModel(request);
+      const created = await storeTrigger.deletePayload(request);
 
       expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerConfig.url}/deleting`, request);
       expect(created).toMatchObject(expected);
@@ -63,7 +63,7 @@ describe('StoreTriggerCall', () => {
       const request = createFakeDeleteRequest();
       mockAxios.post.mockRejectedValue(new Error('store-trigger is not available'));
 
-      const createPromise = storeTrigger.deleteModel(request);
+      const createPromise = storeTrigger.deletePayload(request);
 
       await expect(createPromise).rejects.toThrow('store-trigger is not available');
     });
