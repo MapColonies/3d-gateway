@@ -36,14 +36,16 @@ export class StoreTriggerCall {
     this.logger.debug({
       msg: 'sending the delete request to store-trigger',
       modelId: request.modelId,
-      modelLink: request.modelLink,
+      pathToTileset: request.pathToTileSet,
+      modelName: request.modelName,
     });
     const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/deleting`, request);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
       modelId: request.modelId,
-      modelLink: request.modelLink,
+      pathToTileset: request.pathToTileSet,
+      modelName: request.modelName,
       request,
     });
     return response.data;

@@ -12,7 +12,8 @@ export interface StoreTriggerConfig {
 
 export interface DeleteRequest {
   modelId: string;
-  modelLink: string;
+  modelName: string | undefined;
+  pathToTileSet: string;
 }
 
 export interface StoreTriggerPayload {

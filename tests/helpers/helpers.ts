@@ -188,7 +188,8 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
 export const createFakeDeleteRequest = (): DeleteRequest => {
   return {
     modelId: createUuid(),
-    modelLink: linksToString(linksPattern),
+    modelName: randWord(),
+    pathToTileSet: linksToString(linksPattern),
   };
 };
 

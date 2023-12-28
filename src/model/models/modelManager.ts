@@ -88,12 +88,12 @@ export class ModelManager {
           true
         );
       }
-
       this.logger.info({ msg: 'starting deleting record', modelId: identifier, modelName: record.productName });
 
       const request: DeleteRequest = {
         modelId: identifier,
-        modelLink: record.links,
+        modelName: record.productName,
+        pathToTileSet: this.extractLink(record.links),
       };
 
       const response: StoreTriggerResponse = await this.storeTrigger.deletePayload(request);
@@ -106,5 +106,10 @@ export class ModelManager {
       this.logger.error({ msg: 'Error in deleting record', identifier, modelName: record?.producerName, error, record });
       throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
+  }
+
+  private extractLink(inputLink: string): string {
+    const b3dmPattern = /.*b3dm\/(.*?)\/tileset\.json/;
+    return inputLink.replace(b3dmPattern, '$1');
   }
 }
