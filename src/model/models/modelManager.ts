@@ -68,13 +68,18 @@ export class ModelManager {
 
   public async deleteModel(identifier: string): Promise<StoreTriggerResponse> {
     this.logger.debug({ msg: 'delete record', modelId: identifier });
-    const record: Record3D | undefined = await this.catalog.getRecord(identifier);
+
+    let record: Record3D | undefined;
+
     try {
+      const record: Record3D | undefined = await this.catalog.getRecord(identifier);
+
       if (record === undefined) {
         this.logger.error({ msg: 'model identifier not found', modelId: identifier });
         throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
       }
-      if (record.productStatus != RecordStatus.UNPUBLISHED) {
+
+      if (record.productStatus !== RecordStatus.UNPUBLISHED) {
         this.logger.error({ msg: 'got UNPUBLISHED model', modelId: identifier });
         throw new AppError(
           'BAD_REQUEST',
@@ -83,26 +88,23 @@ export class ModelManager {
           true
         );
       }
+
       this.logger.info({ msg: 'starting deleting record', modelId: identifier, modelName: record.productName });
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-    }
-    if (record === undefined) {
-      throw new AppError('NOT_FOUND', httpStatus.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
-    } else {
+
       const request: DeleteRequest = {
         modelId: identifier,
         modelLink: record.links,
       };
-      try {
-        const response: StoreTriggerResponse = await this.storeTrigger.deletePayload(request);
-        return response;
-      } catch (error) {
-        this.logger.error({ msg: 'Error in creating flow', identifier, modelName: record.producerName, error, record });
-        throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
+
+      const response: StoreTriggerResponse = await this.storeTrigger.deletePayload(request);
+      return response;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
       }
+
+      this.logger.error({ msg: 'Error in deleting record', identifier, modelName: record?.producerName, error, record });
+      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
   }
 }

@@ -126,11 +126,11 @@ describe('ModelManager', () => {
 
     it('rejects if catalog is not available', async () => {
       const identifier = createUuid();
-      catalogMock.getRecord.mockRejectedValue(new Error('Catalog service is not available'));
+      catalogMock.getRecord.mockRejectedValue(new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Catalog service is not available', true));
 
       const responsePromise = modelManager.deleteModel(identifier);
 
-      await expect(responsePromise).rejects.toThrow(Error);
+      await expect(responsePromise).rejects.toThrow(AppError);
       await expect(responsePromise).rejects.toThrow(
         new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Catalog service is not available', true)
       );
