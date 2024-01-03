@@ -1,5 +1,6 @@
 export const storeTriggerMock = {
   postPayload: jest.fn(),
+  deletePayload: jest.fn(),
 };
 
 export const validationManagerMock = {

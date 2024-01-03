@@ -2,9 +2,10 @@ import * as fs from 'fs';
 import config from 'config';
 import { randBetweenDate, randNumber, randPastDate, randSentence, randUuid, randWord } from '@ngneat/falso';
 import { Polygon } from 'geojson';
-import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
+import { Layer3DMetadata, Link, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
-import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerPayload, StoreTriggerResponse, DeleteRequest } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
 import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
@@ -18,6 +19,18 @@ const maxX = 3;
 const maxY = 4;
 const pvPath = config.get<string>('paths.pvPath');
 const basePath = config.get<string>('paths.basePath');
+const linksPattern = [
+  {
+    protocol: randWord(),
+    url: `http://${randWord()}.test/wmts`,
+  },
+  {
+    name: randWord(),
+    description: randSentence(),
+    protocol: randWord(),
+    url: `http://${randWord()}.test/wms`,
+  },
+];
 
 const createLookupOption = (): ILookupOption => {
   return {
@@ -157,12 +170,27 @@ export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerPa
   };
 };
 
+export const createFakeDeleteResponse = (): StoreTriggerResponse => {
+  return {
+    jobID: createUuid(),
+    status: OperationStatus.IN_PROGRESS,
+  };
+};
+
 export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): ILookupOption[] => {
   const lookupOptions: ILookupOption[] = [];
   for (let i = 0; i < amount; i++) {
     lookupOptions.push(createLookupOption());
   }
   return lookupOptions;
+};
+
+export const createFakeDeleteRequest = (): DeleteRequest => {
+  return {
+    modelId: createUuid(),
+    modelName: randWord(),
+    pathToTileSet: linksToString(linksPattern),
+  };
 };
 
 export const createUpdatePayload = (modelName = 'Sphere'): Partial<UpdatePayload> => {
@@ -198,4 +226,9 @@ export const createUpdateStatusPayload = (): UpdateStatusPayload => {
   return {
     productStatus: 'UNPUBLISHED',
   };
+};
+
+export const linksToString = (links: Link[]): string => {
+  const stringLinks = links.map((link) => `${link.name ?? ''},${link.description ?? ''},${link.protocol ?? ''},${link.url ?? ''}`);
+  return stringLinks.join('^');
 };

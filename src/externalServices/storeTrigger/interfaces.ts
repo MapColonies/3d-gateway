@@ -8,7 +8,12 @@ export interface StoreTriggerResponse {
 
 export interface StoreTriggerConfig {
   url: string;
-  subUrl: string;
+}
+
+export interface DeleteRequest {
+  modelId: string;
+  modelName: string | undefined;
+  pathToTileSet: string;
 }
 
 export interface StoreTriggerPayload {

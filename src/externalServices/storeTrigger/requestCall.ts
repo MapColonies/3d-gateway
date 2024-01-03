@@ -3,6 +3,7 @@ import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
+import { DeleteRequest } from '.././storeTrigger/interfaces';
 import { StoreTriggerResponse, StoreTriggerConfig, StoreTriggerPayload } from './interfaces';
 
 @injectable()
@@ -15,18 +16,37 @@ export class StoreTriggerCall {
 
   public async postPayload(payload: StoreTriggerPayload): Promise<StoreTriggerResponse> {
     this.logger.debug({
-      msg: 'got a request for a new flow',
+      msg: 'sending the ingestion request to store-trigger',
       modelId: payload.modelId,
       modelName: payload.metadata.productName,
       flowPayload: payload,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/${this.storeTrigger.subUrl}`, payload);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/ingestion`, payload);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
       modelId: payload.modelId,
       modelName: payload.metadata.productName,
       payload,
+    });
+    return response.data;
+  }
+
+  public async deletePayload(request: DeleteRequest): Promise<StoreTriggerResponse> {
+    this.logger.debug({
+      msg: 'sending the delete request to store-trigger',
+      modelId: request.modelId,
+      pathToTileset: request.pathToTileSet,
+      modelName: request.modelName,
+    });
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/deleting`, request);
+    this.logger.info({
+      msg: 'sent to store-trigger successfully',
+      jobId: response.data.jobID,
+      modelId: request.modelId,
+      pathToTileset: request.pathToTileSet,
+      modelName: request.modelName,
+      request,
     });
     return response.data;
   }

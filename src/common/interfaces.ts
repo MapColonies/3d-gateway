@@ -46,3 +46,7 @@ export interface UpdatePayload {
 export interface UpdateStatusPayload {
   productStatus: string;
 }
+
+export interface MetadataParams {
+  identifier: string;
+}

@@ -44,8 +44,6 @@ spec:
           value: {{ .Values.service.targetPort | quote }}
         - name: STORE_TRIGGER_URL
           value: {{ tpl .Values.storeTrigger.url . | quote }}
-        - name: STORE_TRIGGER_SUB_URL
-          value: {{ tpl .Values.storeTrigger.subUrl . | quote }}
         - name: LOOKUP_TABLES_URL
           value: {{ tpl .Values.lookupTables.url . | quote }}
         - name: LOOKUP_TABLES_SUB_URL
