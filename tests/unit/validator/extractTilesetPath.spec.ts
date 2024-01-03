@@ -15,6 +15,16 @@ describe('extractTilesetPath tests', () => {
     expect(result).toStrictEqual(expected);
   });
 
+  it('Should return the tilesetPath if links contains sub-paths', () => {
+    const links = createLink();
+    const productSource = `${createModelPath()}/sub/path`;
+    const expected = `${replaceBackQuotesWithQuotes(changeBasePathToPVPath(productSource))}/tileset.json`;
+
+    const result = extractTilesetPath(productSource, links);
+
+    expect(result).toStrictEqual(expected);
+  });
+
   it('Should throw an error when links is not valid', () => {
     const links = randWord();
     const productSource = createModelPath();
