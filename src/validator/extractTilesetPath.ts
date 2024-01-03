@@ -3,7 +3,7 @@ import { AppError } from '../common/appError';
 import { changeBasePathToPVPath, replaceBackQuotesWithQuotes } from '../model/models/utilities';
 
 export const extractTilesetPath = (productSource: string, links: string): string => {
-  const regex: RegExp = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/(?<tilesetPath>.+)/;
+  const regex: RegExp = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/(?<tilesetPath>.+\/)(?<tilesetFilename>[^/]+\.json)/;
   const match = links.match(regex);
 
   if (!match?.groups) {
