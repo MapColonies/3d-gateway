@@ -21,7 +21,7 @@ export class StoreTriggerCall {
       modelName: payload.metadata.productName,
       flowPayload: payload,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/ingestion`, payload);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/jobs/${this.storeTrigger.subUrl.ingestion}`, payload);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
@@ -36,15 +36,15 @@ export class StoreTriggerCall {
     this.logger.debug({
       msg: 'sending the delete request to store-trigger',
       modelId: request.modelId,
-      pathToTileset: request.pathToTileSet,
+      pathToTileset: request.pathToTileset,
       modelName: request.modelName,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/deleting`, request);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/jobs/${this.storeTrigger.subUrl.delete}`, request);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
       modelId: request.modelId,
-      pathToTileset: request.pathToTileSet,
+      pathToTileset: request.pathToTileset,
       modelName: request.modelName,
       request,
     });

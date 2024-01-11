@@ -26,14 +26,18 @@
     }
   },
   "storeTrigger": {
-    "url": "http://127.0.0.1:8081"
+    "url": "http://127.0.0.1:8081",
+    "subUrl": {
+      "ingestion": "ingestion",
+      "delete": "delete"
+    }
   },
   "lookupTables": {
     "url": "http://127.0.0.1:8085",
     "subUrl": "lookup-tables/lookupData"
   },
   "catalog": {
-    "url": "http://127.0.0.1:8081",
+    "url": "http://127.0.0.1:8083",
     "subUrl": "metadata"
   },
   "paths": {

@@ -189,7 +189,7 @@ export const createFakeDeleteRequest = (): DeleteRequest => {
   return {
     modelId: createUuid(),
     modelName: randWord(),
-    pathToTileSet: linksToString(linksPattern),
+    pathToTileset: linksToString(linksPattern),
   };
 };
 

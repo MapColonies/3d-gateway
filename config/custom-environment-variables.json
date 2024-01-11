@@ -40,7 +40,11 @@
     }
   },
   "storeTrigger": {
-    "url": "STORE_TRIGGER_URL"
+    "url": "STORE_TRIGGER_URL",
+    "subUrl": {
+      "ingestion": "STORE_TRIGGER_INGESTION_SUB_URL",
+      "delete": "STORE_TRIGGER_DELETE_SUB_URL"
+    }
   },
   "lookupTables": {
     "url": "LOOKUP_TABLES_URL",

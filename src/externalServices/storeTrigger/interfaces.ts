@@ -8,12 +8,16 @@ export interface StoreTriggerResponse {
 
 export interface StoreTriggerConfig {
   url: string;
+  subUrl: {
+    ingestion: string;
+    delete: string;
+  } 
 }
 
 export interface DeleteRequest {
   modelId: string;
+  pathToTileset: string;
   modelName: string | undefined;
-  pathToTileSet: string;
 }
 
 export interface StoreTriggerPayload {

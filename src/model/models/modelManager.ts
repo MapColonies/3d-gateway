@@ -92,8 +92,8 @@ export class ModelManager {
 
       const request: DeleteRequest = {
         modelId: identifier,
+        pathToTileset: this.extractLink(record.links),
         modelName: record.productName,
-        pathToTileSet: this.extractLink(record.links),
       };
 
       const response: StoreTriggerResponse = await this.storeTrigger.deletePayload(request);
