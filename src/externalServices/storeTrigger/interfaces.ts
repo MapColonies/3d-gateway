@@ -11,7 +11,7 @@ export interface StoreTriggerConfig {
   subUrl: {
     ingestion: string;
     delete: string;
-  } 
+  };
 }
 
 export interface DeleteRequest {

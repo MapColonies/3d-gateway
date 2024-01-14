@@ -1,6 +1,10 @@
 {
   "storeTrigger": {
-    "url": "http://127.0.0.1:8081"
+    "url": "http://127.0.0.1:8081",
+    "subUrl": {
+      "ingestion": "ingestion",
+      "delete": "delete"
+    }
   },
   "lookupTables": {
     "url": "http://127.0.0.1:8085",
