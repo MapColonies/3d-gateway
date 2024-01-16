@@ -3,8 +3,8 @@ import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
-import { DeleteRequest } from '.././storeTrigger/interfaces';
-import { StoreTriggerResponse, StoreTriggerConfig, StoreTriggerPayload } from './interfaces';
+import { StoreTriggerDeletePayload } from '.././storeTrigger/interfaces';
+import { StoreTriggerResponse, StoreTriggerConfig, StoreTriggerIngestionPayload } from './interfaces';
 
 @injectable()
 export class StoreTriggerCall {
@@ -14,7 +14,7 @@ export class StoreTriggerCall {
     this.storeTrigger = this.config.get<StoreTriggerConfig>('storeTrigger');
   }
 
-  public async postPayload(payload: StoreTriggerPayload): Promise<StoreTriggerResponse> {
+  public async postPayload(payload: StoreTriggerIngestionPayload): Promise<StoreTriggerResponse> {
     this.logger.debug({
       msg: 'sending the ingestion request to store-trigger',
       modelId: payload.modelId,
@@ -32,7 +32,7 @@ export class StoreTriggerCall {
     return response.data;
   }
 
-  public async deletePayload(request: DeleteRequest): Promise<StoreTriggerResponse> {
+  public async deletePayload(request: StoreTriggerDeletePayload): Promise<StoreTriggerResponse> {
     this.logger.debug({
       msg: 'sending the delete request to store-trigger',
       modelId: request.modelId,

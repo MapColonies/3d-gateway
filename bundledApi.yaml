@@ -165,22 +165,6 @@ components:
         metadata:
           $ref: '#/components/schemas/basic-payload'
       additionalProperties: false
-    # delete-response:
-    #   type: object
-    #   description: 3d response to delete model
-    #   required:
-    #     - modelId
-    #     - link
-    #   properties:
-    #     modelId:
-    #       type: string
-    #       nullable: false
-    #     modelLink:
-    #       type: string
-    #     minItems: 1
-    #     items:
-    #       $ref: '#/components/schemas/Link'
-    # additionalProperties: false
     job:
       type: object
       description: job for ingestion 3d model

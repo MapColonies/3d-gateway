@@ -7,7 +7,7 @@ import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
 import { createIngestionPayload, createRecord, createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
 import { catalogMock, storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
-import { StoreTriggerPayload, StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
 
 let modelManager: ModelManager;
 
@@ -22,7 +22,7 @@ describe('ModelManager', () => {
   describe('createModel tests', () => {
     it('resolves without errors', async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
-      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      const expected: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
       validationManagerMock.validateModelPath.mockReturnValue(true);
       validationManagerMock.validateIngestion.mockReturnValue(true);
       storeTriggerMock.postPayload.mockResolvedValue(expected);

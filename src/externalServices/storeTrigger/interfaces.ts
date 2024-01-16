@@ -14,13 +14,13 @@ export interface StoreTriggerConfig {
   };
 }
 
-export interface DeleteRequest {
+export interface StoreTriggerDeletePayload {
   modelId: string;
   pathToTileset: string;
   modelName: string | undefined;
 }
 
-export interface StoreTriggerPayload {
+export interface StoreTriggerIngestionPayload {
   modelId: string;
   pathToTileset: string;
   tilesetFilename: string;

@@ -4,7 +4,7 @@ import { Logger } from '@map-colonies/js-logger';
 import httpStatus from 'http-status-codes';
 import { RecordStatus } from '@map-colonies/mc-model-types';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/requestCall';
-import { StoreTriggerPayload, StoreTriggerResponse, DeleteRequest } from '../../externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse, StoreTriggerDeletePayload } from '../../externalServices/storeTrigger/interfaces';
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
@@ -51,7 +51,7 @@ export class ModelManager {
       throw new AppError('error', httpStatus.INTERNAL_SERVER_ERROR, String(error), true);
     }
 
-    const request: StoreTriggerPayload = {
+    const request: StoreTriggerIngestionPayload = {
       modelId: modelId,
       pathToTileset: utils.removePvPathFromModelPath(payload.modelPath),
       tilesetFilename: payload.tilesetFilename,
@@ -90,7 +90,7 @@ export class ModelManager {
       }
       this.logger.info({ msg: 'starting deleting record', modelId: identifier, modelName: record.productName });
 
-      const request: DeleteRequest = {
+      const request: StoreTriggerDeletePayload = {
         modelId: identifier,
         pathToTileset: this.extractLink(record.links),
         modelName: record.productName,

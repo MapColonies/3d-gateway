@@ -5,7 +5,7 @@ import { Polygon } from 'geojson';
 import { Layer3DMetadata, Link, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
-import { StoreTriggerPayload, StoreTriggerResponse, DeleteRequest } from '../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse, StoreTriggerDeletePayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
 import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
@@ -161,7 +161,7 @@ export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload =
   };
 };
 
-export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerPayload => {
+export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerIngestionPayload => {
   return {
     modelId: createUuid(),
     pathToTileset,
@@ -185,7 +185,7 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
   return lookupOptions;
 };
 
-export const createFakeDeleteRequest = (): DeleteRequest => {
+export const createFakeDeleteRequest = (): StoreTriggerDeletePayload => {
   return {
     modelId: createUuid(),
     modelName: randWord(),
