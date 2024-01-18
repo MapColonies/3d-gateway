@@ -92,7 +92,7 @@ export class ModelManager {
 
       const request: StoreTriggerDeletePayload = {
         modelId: identifier,
-        pathToTileset: this.extractLink(record.links),
+        pathToTileset: this.extractLink(record.links) as string,
         modelName: record.productName,
       };
 
@@ -108,8 +108,15 @@ export class ModelManager {
     }
   }
 
-  private extractLink(inputLink: string): string {
-    const b3dmPattern = /.*b3dm\/(.*?)\/tileset\.json/;
-    return inputLink.replace(b3dmPattern, '$1');
+  private extractLink(inputLink: string): string | null {
+    const uuidPattern = /.*b3dm\/(\w+)-(\w+)-(\w+)-(\w+)-(\w+)\//;
+    const match = inputLink.match(uuidPattern);
+
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    if (match && match.length === 6) {
+      return match.slice(1).join('-');
+    }
+
+    return null;
   }
 }
