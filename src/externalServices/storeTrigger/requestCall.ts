@@ -21,7 +21,7 @@ export class StoreTriggerCall {
       modelName: payload.metadata.productName,
       flowPayload: payload,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/jobs/${this.storeTrigger.subUrl.ingestion}`, payload);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/jobs/ingestion`, payload);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
@@ -39,7 +39,7 @@ export class StoreTriggerCall {
       pathToTileset: request.pathToTileset,
       modelName: request.modelName,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/jobs/${this.storeTrigger.subUrl.delete}`, request);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/jobs/delete`, request);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,

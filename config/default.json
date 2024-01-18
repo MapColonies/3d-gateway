@@ -26,19 +26,14 @@
     }
   },
   "storeTrigger": {
-    "url": "http://127.0.0.1:8081",
-    "subUrl": {
-      "ingestion": "ingestion",
-      "delete": "delete"
-    }
+    "url": "http://127.0.0.1:8081"
   },
   "lookupTables": {
     "url": "http://127.0.0.1:8085",
     "subUrl": "lookup-tables/lookupData"
   },
   "catalog": {
-    "url": "http://127.0.0.1:8083",
-    "subUrl": "metadata"
+    "url": "http://127.0.0.1:8083"
   },
   "paths": {
     "basePath": "\\\\domtest\\mimi\\archi\\maz\\silver\\libot",

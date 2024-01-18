@@ -7,12 +7,10 @@
     }
   },
   "lookupTables": {
-    "url": "http://127.0.0.1:8085",
-    "subUrl": "lookup-tables/lookupData"
+    "url": "http://127.0.0.1:8085"
   },
   "catalog": {
-    "url": "http://127.0.0.1:8085",
-    "subUrl": "metadata"
+    "url": "http://127.0.0.1:8085"
   },
   "paths": {
     "basePath": "\\\\tmp\\tilesets\\models",
