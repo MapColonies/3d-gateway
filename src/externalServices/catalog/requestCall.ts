@@ -37,7 +37,7 @@ export class CatalogCall {
       msg: 'Find last version of product from catalog service (CRUD)',
     });
     try {
-      const response = await axios.get<Record3D>(`${this.catalog.url}//lastVersion/${productId}`);
+      const response = await axios.get<Record3D>(`${this.catalog.url}/metadata/lastVersion/${productId}`);
       if (response.status === StatusCodes.OK.valueOf()) {
         return true;
       }

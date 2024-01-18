@@ -48,13 +48,12 @@
   },
   "catalog": {
     "url": "CATALOG_URL",
-  "paths": {
-    "basePath": "BASE_PATH",
-    "pvPath": "PV_SOURCE_PATH"
-  },
-  "validation": {
-    "percentageLimit": "PERCENTAGE_LIMIT"
-  }
+    "paths": {
+      "basePath": "BASE_PATH",
+      "pvPath": "PV_SOURCE_PATH"
+    },
+    "validation": {
+      "percentageLimit": "PERCENTAGE_LIMIT"
+    }
   }
 }
-
