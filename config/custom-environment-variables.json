@@ -47,13 +47,13 @@
     "subUrl": "LOOKUP_TABLES_SUB_URL"
   },
   "catalog": {
-    "url": "CATALOG_URL",
-    "paths": {
-      "basePath": "BASE_PATH",
-      "pvPath": "PV_SOURCE_PATH"
-    },
-    "validation": {
-      "percentageLimit": "PERCENTAGE_LIMIT"
-    }
+    "url": "CATALOG_URL"
+  },
+  "paths": {
+    "basePath": "BASE_PATH",
+    "pvPath": "PV_SOURCE_PATH"
+  },
+  "validation": {
+    "percentageLimit": "PERCENTAGE_LIMIT"
   }
 }
