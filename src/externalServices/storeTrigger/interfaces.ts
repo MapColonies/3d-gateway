@@ -8,10 +8,6 @@ export interface StoreTriggerResponse {
 
 export interface StoreTriggerConfig {
   url: string;
-  subUrl: {
-    ingestion: string;
-    delete: string;
-  };
 }
 
 export interface StoreTriggerDeletePayload {

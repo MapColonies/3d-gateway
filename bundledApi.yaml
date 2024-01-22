@@ -47,7 +47,7 @@ paths:
         - $ref: '#/components/parameters/identifier'
       responses:
         '201':
-          description: Deleted
+          description: Delete request is completed
           content:
             application/json:
               schema:

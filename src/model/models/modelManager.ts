@@ -80,7 +80,7 @@ export class ModelManager {
       }
 
       if (record.productStatus !== RecordStatus.UNPUBLISHED) {
-        this.logger.error({ msg: 'got UNPUBLISHED model', modelId: identifier });
+        this.logger.error({ msg: 'got PUBLISHED model', modelId: identifier });
         throw new AppError(
           'BAD_REQUEST',
           httpStatus.BAD_REQUEST,
@@ -103,20 +103,15 @@ export class ModelManager {
         throw error;
       }
 
-      this.logger.error({ msg: 'Error in deleting record', identifier, modelName: record?.producerName, error, record });
+      this.logger.error({ msg: 'Error in deleting record', identifier, modelName: record?.productName, error, record });
       throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
   }
 
   private extractLink(inputLink: string): string | null {
-    const uuidPattern = /.*b3dm\/(\w+)-(\w+)-(\w+)-(\w+)-(\w+)\//;
-    const match = inputLink.match(uuidPattern);
+    const regex = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/.+/;
+    const match = inputLink.match(regex);
 
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    if (match && match.length === 6) {
-      return match.slice(1).join('-');
-    }
-
-    return null;
+    return match?.groups ? match.groups.modelId : null;
   }
 }
