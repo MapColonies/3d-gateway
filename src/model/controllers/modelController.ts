@@ -41,7 +41,7 @@ export class ModelController {
       const response = await this.manager.deleteModel(identifier);
       return res.set(httpStatus.OK).json(response);
     } catch (error) {
-      this.logger.error({ msg: `Couldn't delete a record`, error });
+      this.logger.error({ msg: `Failed request deleting the model`, error });
       return next(error);
     }
   };

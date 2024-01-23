@@ -103,7 +103,7 @@ export class ModelManager {
         throw error;
       }
 
-      this.logger.error({ msg: 'Error in deleting record', identifier, modelName: record?.productName, error, record });
+      this.logger.error({ msg: 'Error in deleting record', identifier, error, record });
       throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
   }
@@ -112,6 +112,7 @@ export class ModelManager {
     const regex = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/.+/;
     const match = inputLink.match(regex);
 
-    return match?.groups ? match.groups.modelId : null;
+    const link = match?.groups ? match.groups.modelId : null;
+    return link;
   }
 }

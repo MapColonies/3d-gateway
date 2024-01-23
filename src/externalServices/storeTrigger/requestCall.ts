@@ -46,7 +46,6 @@ export class StoreTriggerCall {
       modelId: request.modelId,
       pathToTileset: request.pathToTileset,
       modelName: request.modelName,
-      request,
     });
     return response.data;
   }
