@@ -375,7 +375,7 @@ describe('ModelController', function () {
 
   describe('DELETE /models/:identifier', function () {
     describe('Happy Path 🙂', function () {
-      it('Should return 200 status code and the deleted model', async function () {
+      it('Should return 200 status code and the delete request', async function () {
         const expected = createFakeDeleteResponse();
         const identifier = createUuid();
         const record = createRecord();
@@ -402,7 +402,7 @@ describe('ModelController', function () {
         expect(response.status).toBe(StatusCodes.NOT_FOUND);
       });
 
-      it('Should return 400 status code is product status is PUBLISHED', async function () {
+      it('Should return 400 status code if product status is PUBLISHED', async function () {
         const identifier = createUuid();
         const record = createRecord();
         record.productStatus = RecordStatus.PUBLISHED;

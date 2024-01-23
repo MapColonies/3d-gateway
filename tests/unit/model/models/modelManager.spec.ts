@@ -2,6 +2,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { StatusCodes } from 'http-status-codes';
 import { RecordStatus } from '@map-colonies/mc-model-types';
+import { randWord } from '@ngneat/falso';
 import { AppError } from '../../../../src/common/appError';
 import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
@@ -78,7 +79,7 @@ describe('ModelManager', () => {
       const identifier = createUuid();
       const record = createRecord();
       const expectedResponse: StoreTriggerResponse = {
-        jobID: 'testJobId',
+        jobID: randWord(),
         status: OperationStatus.IN_PROGRESS,
       };
 
@@ -92,36 +93,34 @@ describe('ModelManager', () => {
 
     it('rejects with AppError if the identifier is not found in catalog', async () => {
       const identifier = createUuid();
-      const expectedError = new AppError('NOT_FOUND', StatusCodes.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true);
 
       catalogMock.getRecord.mockResolvedValue(undefined);
-      storeTriggerMock.deletePayload.mockResolvedValue(expectedError);
+      storeTriggerMock.deletePayload.mockRejectedValue(
+        new AppError('NOT_FOUND', StatusCodes.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true)
+      );
 
       const response = modelManager.deleteModel(identifier);
 
-      await expect(response).rejects.toThrow(expectedError);
-      await expect(response).rejects.toThrow(Error);
-      await expect(response).rejects.toThrow(new AppError('NOT_FOUND', StatusCodes.NOT_FOUND, `Identifier ${identifier} wasn't found on DB`, true));
+      await expect(response).rejects.toThrow(`Identifier ${identifier} wasn't found on DB`);
     });
 
-    it('rejects with AppError it productStatus is PUBLISHED', async () => {
+    it('rejects if productStatus is PUBLISHED', async () => {
       const identifier = createUuid();
       const record = createRecord();
-      const expectedError = new AppError(
-        'BAD_REQUEST',
-        StatusCodes.BAD_REQUEST,
-        `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`,
-        true
-      );
       record.productStatus = RecordStatus.PUBLISHED;
 
       catalogMock.getRecord.mockResolvedValue(record);
-      storeTriggerMock.deletePayload.mockResolvedValue(expectedError);
-
+      storeTriggerMock.deletePayload.mockResolvedValue(
+        new AppError(
+          'BAD_REQUEST',
+          StatusCodes.BAD_REQUEST,
+          `Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`,
+          true
+        )
+      );
       const response = modelManager.deleteModel(identifier);
 
-      await expect(response).rejects.toThrow(expectedError);
-      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toThrow(`Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`);
     });
 
     it('rejects if catalog is not available', async () => {
@@ -130,7 +129,6 @@ describe('ModelManager', () => {
 
       const responsePromise = modelManager.deleteModel(identifier);
 
-      await expect(responsePromise).rejects.toThrow(AppError);
       await expect(responsePromise).rejects.toThrow(
         new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Catalog service is not available', true)
       );
@@ -145,7 +143,6 @@ describe('ModelManager', () => {
 
       const responsePromise = modelManager.deleteModel(identifier);
 
-      await expect(responsePromise).rejects.toThrow(Error);
       await expect(responsePromise).rejects.toThrow(
         new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true)
       );

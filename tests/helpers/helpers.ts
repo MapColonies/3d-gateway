@@ -19,18 +19,6 @@ const maxX = 3;
 const maxY = 4;
 const pvPath = config.get<string>('paths.pvPath');
 const basePath = config.get<string>('paths.basePath');
-const linksPattern = [
-  {
-    protocol: randWord(),
-    url: `http://${randWord()}.test/wmts`,
-  },
-  {
-    name: randWord(),
-    description: randSentence(),
-    protocol: randWord(),
-    url: `http://${randWord()}.test/wms`,
-  },
-];
 
 const createLookupOption = (): ILookupOption => {
   return {
@@ -189,7 +177,7 @@ export const createFakeDeleteRequest = (): StoreTriggerDeletePayload => {
   return {
     modelId: createUuid(),
     modelName: randWord(),
-    pathToTileset: linksToString(linksPattern),
+    pathToTileset: `${randWord()},${randSentence()},${randWord()},http://${randWord()}.test/wms`,
   };
 };
 
