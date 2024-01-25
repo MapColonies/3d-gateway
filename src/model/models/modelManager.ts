@@ -99,7 +99,7 @@ export class ModelManager {
 
       const request: StoreTriggerDeletePayload = {
         modelId: identifier,
-        pathToTileset: pathToTileset,
+        pathToTileset,
         modelName: record.productName,
       };
 

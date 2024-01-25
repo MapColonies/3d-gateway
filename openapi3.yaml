@@ -19,19 +19,19 @@ paths:
             schema:
               $ref: '#/components/schemas/payload'
       responses:
-        '201':
+        201:
           description: Created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/job'
-        '400':
+        400:
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        '5XX':
           description: Unexpected Error
           content:
             application/json:
@@ -63,8 +63,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
-
+                $ref: '#/components/schemas/error'    
   /metadata/{identifier}:
     patch:
       operationId: updateMetadata
@@ -77,21 +76,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/updatePayload'
+              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updatePayload'
       responses:
-        '201':
+        201:
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/metadata'
-        '400':
+                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
+        400:
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        '5XX':
           description: Unexpected Error
           content:
             application/json:
@@ -109,21 +108,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/updateStatus'
+              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updateStatus'
       responses:
-        '201':
+        201:
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/metadata'
-        '400':
+                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
+        400:
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        '5XX':
           description: Unexpected Error
           content:
             application/json:
@@ -157,13 +156,13 @@ components:
         modelPath:
           type: string
           description: Model files location path
-          example: \\domtest\mimi\archi\maz\silver\libot\NewYork
+          example: '\\domtest\mimi\archi\maz\silver\libot\NewYork'
         tilesetFilename:
           type: string
           description: Model tileset filename
-          example: tileset.json
+          example: 'tileset.json'
         metadata:
-          $ref: '#/components/schemas/basic-payload'
+          $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/basic-payload'
       additionalProperties: false
     job:
       type: object
@@ -185,677 +184,3 @@ components:
             - Failed
             - Expired
             - Aborted
-    GeometryBase:
-      type: object
-      description: GeoJSon geometry
-      required:
-        - type
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#geometry-objects
-      properties:
-        type:
-          type: string
-          enum:
-            - Point
-            - LineString
-            - Polygon
-            - MultiPoint
-            - MultiLineString
-            - MultiPolygon
-          description: the geometry type
-    Point2D:
-      type: array
-      maxItems: 2
-      minItems: 2
-      items:
-        type: number
-        minimum: -180
-        maximum: 180
-    Point:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id2
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              $ref: '#/components/schemas/Point2D'
-    LineString:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id3
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                $ref: '#/components/schemas/Point2D'
-    Polygon:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id4
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Point2D'
-    MultiPoint:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id5
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                $ref: '#/components/schemas/Point2D'
-    MultiLineString:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id6
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Point2D'
-    MultiPolygon:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id6
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                type: array
-                items:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Point2D'
-    Geometry:
-      description: GeoJSon geometry
-      discriminator:
-        propertyName: type
-      type: object
-      anyOf:
-        - $ref: '#/components/schemas/Point'
-        - $ref: '#/components/schemas/LineString'
-        - $ref: '#/components/schemas/Polygon'
-        - $ref: '#/components/schemas/MultiPoint'
-        - $ref: '#/components/schemas/MultiLineString'
-        - $ref: '#/components/schemas/MultiPolygon'
-    basic-payload:
-      type: object
-      description: 3d tiles metadata payload
-      required:
-        - productName
-        - productType
-        - sourceDateStart
-        - sourceDateEnd
-        - maxAccuracyCE90
-        - absoluteAccuracyLE90
-        - sensors
-        - footprint
-        - srsId
-        - srsName
-        - region
-        - classification
-        - productionSystem
-        - productionSystemVer
-        - producerName
-      properties:
-        type:
-          type: string
-          nullable: true
-          default: RECORD_3D
-          description: Type of records
-        productId:
-          type: string
-          nullable: true
-          default: null
-          description: ID of product
-        productName:
-          type: string
-          maxLength: 50
-          description: Name of product
-        productType:
-          type: string
-          description: Type of product (3DPhotoRealistic)
-          example: 3DPhotoRealistic
-        description:
-          type: string
-          maxLength: 500
-          nullable: true
-          description: description and comments
-        creationDate:
-          type: string
-          format: date-time
-          nullable: true
-          description: Creation date
-        sourceDateStart:
-          type: string
-          format: date-time
-          description: Oldest date of taken photo
-        sourceDateEnd:
-          type: string
-          format: date-time
-          description: Newest date of taken photo
-        minResolutionMeter:
-          type: number
-          format: double
-          nullable: true
-          example: 1.1
-          minimum: 0.01
-          maximum: 8000
-          description: Minimum resolution in meters
-        maxResolutionMeter:
-          type: number
-          format: double
-          nullable: true
-          example: 1.5
-          minimum: 0.01
-          maximum: 8000
-          description: Maximum resolution in meters
-        maxAccuracyCE90:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 999
-          description: Maximum absolute horizontal accuracy
-        absoluteAccuracyLE90:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 999
-          description: Absolute vertical accuracy
-        accuracySE90:
-          type: number
-          format: double
-          minimum: 0
-          nullable: true
-          maximum: 250
-          description: Absolute spherical accuracy
-        relativeAccuracySE90:
-          type: number
-          format: double
-          nullable: true
-          minimum: 0
-          maximum: 100
-          description: Relative vertical accuracy
-        visualAccuracy:
-          type: number
-          format: double
-          nullable: true
-          minimum: 0
-          maximum: 100
-          description: Measure of visual quality
-        sensors:
-          type: array
-          items:
-            type: string
-          minItems: 1
-          description: Layer sensors list
-          example:
-            - OTHER
-        footprint:
-          allOf:
-            - $ref: '#/components/schemas/Geometry'
-            - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
-        heightRangeFrom:
-          type: number
-          format: double
-          nullable: true
-          description: Minimum height range of ground
-        heightRangeTo:
-          type: number
-          format: double
-          nullable: true
-          description: Maximum height range of ground
-        srsId:
-          type: string
-          example: 4326
-          description: ID of srs
-        srsName:
-          type: string
-          description: Name of the srsID
-          default: WGS84GEO
-        region:
-          type: array
-          items:
-            type: string
-          minItems: 1
-          description: regions included in the layer
-        classification:
-          type: string
-          example: '5'
-          description: Classification of the product
-        productionSystem:
-          type: string
-          description: Production system
-        productionSystemVer:
-          type: string
-          maxLength: 20
-          description: Version production system
-        producerName:
-          type: string
-          description: The name of the producer (product owner)
-          default: IDFMU
-        minFlightAlt:
-          type: number
-          format: double
-          description: Minimum height of the flight
-        maxFlightAlt:
-          type: number
-          nullable: true
-          format: double
-          description: Maximum height of the flight
-        geographicArea:
-          type: string
-          nullable: true
-          description: Area inside the region
-        productStatus:
-          type: string
-          pattern: ^(UNPUBLISHED|PUBLISHED)$
-          default: UNPUBLISHED
-          description: The status of the model
-        keywords:
-          type: string
-          nullable: true
-          description: The keywords of the product
-      additionalProperties: false
-    updatePayload:
-      type: object
-      description: 3d tiles metadata update payload
-      properties:
-        productName:
-          type: string
-          maxLength: 50
-          description: Name of product
-        description:
-          type: string
-          nullable: true
-          maxLength: 500
-          description: description and comments
-        creationDate:
-          type: string
-          format: date-time
-          nullable: true
-          description: Creation date
-        sourceDateStart:
-          type: string
-          format: date-time
-          description: Oldest date of taken photo
-        sourceDateEnd:
-          type: string
-          format: date-time
-          description: Newest date of taken photo
-        footprint:
-          allOf:
-            - $ref: '#/components/schemas/Geometry'
-            - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
-        minResolutionMeter:
-          type: number
-          format: double
-          nullable: true
-          example: 1.1
-          minimum: 0.01
-          maximum: 8000
-          description: Minimum resolution in meters
-        maxResolutionMeter:
-          type: number
-          format: double
-          nullable: true
-          example: 1.5
-          minimum: 0.01
-          maximum: 8000
-          description: Maximum resolution in meters
-        maxAccuracyCE90:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 999
-          description: Maximum absolute horizontal accuracy
-        absoluteAccuracyLE90:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 999
-          description: Absolute vertical accuracy
-        accuracySE90:
-          type: number
-          format: double
-          minimum: 0
-          nullable: true
-          maximum: 250
-          description: Absolute spherical accuracy
-        relativeAccuracySE90:
-          type: number
-          format: double
-          nullable: true
-          minimum: 0
-          maximum: 100
-          description: Relative vertical accuracy
-        visualAccuracy:
-          type: number
-          format: double
-          nullable: true
-          minimum: 0
-          maximum: 100
-          description: Measure of visual quality
-        sensors:
-          type: array
-          items:
-            type: string
-          minItems: 1
-          description: Layer sensors list
-          example:
-            - OTHER
-        heightRangeFrom:
-          type: number
-          format: double
-          nullable: true
-          description: Minimum height range of ground
-        heightRangeTo:
-          type: number
-          format: double
-          nullable: true
-          description: Maximum height range of ground
-        classification:
-          type: string
-          example: '5'
-          description: Classification of the product
-        producerName:
-          type: string
-          description: The name of the producer (product owner)
-          default: IDFMU
-        minFlightAlt:
-          type: number
-          format: double
-          description: Minimum height of the flight
-        maxFlightAlt:
-          type: number
-          nullable: true
-          format: double
-          description: Maximum height of the flight
-        geographicArea:
-          type: string
-          nullable: true
-          description: Area inside the region
-        keywords:
-          type: string
-          nullable: true
-          description: The keywords of the product
-      additionalProperties: false
-    Link:
-      type: object
-      description: layer meta data
-      required:
-        - protocol
-        - url
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        protocol:
-          type: string
-          description: link applicative protocol (WMS, WMTS, TMS, XYZ, etc...)
-        url:
-          type: string
-          description: link url template
-          pattern: ^https?:\/\/.*$
-      additionalProperties: false
-    catalog-payload:
-      type: object
-      description: 3d tiles ingestion payload with links
-      required:
-        - productName
-        - productType
-        - sourceDateStart
-        - sourceDateEnd
-        - maxAccuracyCE90
-        - absoluteAccuracyLE90
-        - sensors
-        - footprint
-        - srsId
-        - srsName
-        - region
-        - classification
-        - productionSystem
-        - productionSystemVer
-        - producerName
-        - links
-        - id
-      properties:
-        type:
-          type: string
-          nullable: true
-          default: RECORD_3D
-          description: Type of records
-        productId:
-          type: string
-          nullable: true
-          default: null
-          description: ID of product
-        productName:
-          type: string
-          maxLength: 50
-          description: Name of product
-        productType:
-          type: string
-          description: Type of product (3DPhotoRealistic)
-          example: 3DPhotoRealistic
-        description:
-          type: string
-          maxLength: 500
-          nullable: true
-          description: description and comments
-        creationDate:
-          type: string
-          format: date-time
-          nullable: true
-          description: Creation date
-        sourceDateStart:
-          type: string
-          format: date-time
-          description: Oldest date of taken photo
-        sourceDateEnd:
-          type: string
-          format: date-time
-          description: Newest date of taken photo
-        minResolutionMeter:
-          type: number
-          format: double
-          nullable: true
-          example: 1.1
-          minimum: 0.01
-          maximum: 8000
-          description: Minimum resolution in meters
-        maxResolutionMeter:
-          type: number
-          format: double
-          nullable: true
-          example: 1.5
-          minimum: 0.01
-          maximum: 8000
-          description: Maximum resolution in meters
-        maxAccuracyCE90:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 999
-          description: Maximum absolute horizontal accuracy
-        absoluteAccuracyLE90:
-          type: number
-          format: double
-          minimum: 0
-          maximum: 999
-          description: Absolute vertical accuracy
-        accuracySE90:
-          type: number
-          format: double
-          minimum: 0
-          nullable: true
-          maximum: 250
-          description: Absolute spherical accuracy
-        relativeAccuracySE90:
-          type: number
-          format: double
-          nullable: true
-          minimum: 0
-          maximum: 100
-          description: Relative vertical accuracy
-        visualAccuracy:
-          type: number
-          format: double
-          nullable: true
-          minimum: 0
-          maximum: 100
-          description: Measure of visual quality
-        sensors:
-          type: array
-          items:
-            type: string
-          minItems: 1
-          description: Layer sensors list
-          example:
-            - OTHER
-        footprint:
-          allOf:
-            - $ref: '#/components/schemas/Geometry'
-            - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
-        heightRangeFrom:
-          type: number
-          format: double
-          nullable: true
-          description: Minimum height range of ground
-        heightRangeTo:
-          type: number
-          format: double
-          nullable: true
-          description: Maximum height range of ground
-        srsId:
-          type: string
-          example: 4326
-          description: ID of srs
-        srsName:
-          type: string
-          description: Name of the srsID
-          default: WGS84GEO
-        region:
-          type: array
-          items:
-            type: string
-          minItems: 1
-          description: regions included in the layer
-        classification:
-          type: string
-          example: '5'
-          description: Classification of the product
-        productionSystem:
-          type: string
-          description: Production system
-        productionSystemVer:
-          type: string
-          maxLength: 20
-          description: Version production system
-        producerName:
-          type: string
-          description: The name of the producer (product owner)
-          default: IDFMU
-        minFlightAlt:
-          type: number
-          format: double
-          description: Minimum height of the flight
-        maxFlightAlt:
-          type: number
-          nullable: true
-          format: double
-          description: Maximum height of the flight
-        geographicArea:
-          type: string
-          nullable: true
-          description: Area inside the region
-        productStatus:
-          type: string
-          pattern: ^(UNPUBLISHED|PUBLISHED)$
-          default: UNPUBLISHED
-          description: The status of the model
-        productSource:
-          type: string
-          description: The path of the model
-        keywords:
-          type: string
-          nullable: true
-          description: The keywords of the product
-        id:
-          type: string
-          nullable: false
-        links:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/Link'
-      additionalProperties: false
-    metadata:
-      type: object
-      description: 3d tiles catalog metadata payload
-      allOf:
-        - $ref: '#/components/schemas/catalog-payload'
-        - properties:
-            productBoundingBox:
-              type: string
-              readOnly: true
-              pattern: ^([-+]?(0|[1-9]\d*)(\.\d+)?,){3}[-+]?(0|[1-9]\d*)(\.\d+)?$
-              description: The bounding box of the product
-            productVersion:
-              type: integer
-              example: 1
-              description: Number of version
-              readOnly: true
-            insertDate:
-              type: string
-              description: Insertion date
-              format: date-time
-              readOnly: true
-            updateDate:
-              type: string
-              description: Update date
-              format: date-time
-              readOnly: true
-              nullable: true
-    updateStatus:
-      type: object
-      description: 3d update status of record
-      required:
-        - productStatus
-      properties:
-        productStatus:
-          type: string
-          nullable: false
-          pattern: ^(UNPUBLISHED|PUBLISHED)$
-          description: The status of the model
-      additionalProperties: false
