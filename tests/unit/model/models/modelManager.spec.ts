@@ -1,14 +1,13 @@
 import jsLogger from '@map-colonies/js-logger';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { StatusCodes } from 'http-status-codes';
 import { RecordStatus } from '@map-colonies/mc-model-types';
 import { randWord } from '@ngneat/falso';
 import { AppError } from '../../../../src/common/appError';
 import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
-import { createIngestionPayload, createRecord, createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
+import { createFakeDeleteRequest, createIngestionPayload, createRecord, createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
 import { catalogMock, storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
-import { StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload } from '../../../../src/externalServices/storeTrigger/interfaces';
 
 let modelManager: ModelManager;
 
@@ -78,10 +77,7 @@ describe('ModelManager', () => {
     it('should send a delete request to storeTrigger successfully', async () => {
       const identifier = createUuid();
       const record = createRecord();
-      const expectedResponse: StoreTriggerResponse = {
-        jobID: randWord(),
-        status: OperationStatus.IN_PROGRESS,
-      };
+      const expectedResponse = createFakeDeleteRequest();
 
       catalogMock.getRecord.mockResolvedValue(record);
       storeTriggerMock.deletePayload.mockResolvedValue(expectedResponse);
@@ -91,7 +87,7 @@ describe('ModelManager', () => {
       expect(response).toEqual(expectedResponse);
     });
 
-    it('rejects with AppError if the identifier is not found in catalog', async () => {
+    it('rejects if the identifier is not found in catalog', async () => {
       const identifier = createUuid();
 
       catalogMock.getRecord.mockResolvedValue(undefined);
@@ -110,7 +106,7 @@ describe('ModelManager', () => {
       record.productStatus = RecordStatus.PUBLISHED;
 
       catalogMock.getRecord.mockResolvedValue(record);
-      storeTriggerMock.deletePayload.mockResolvedValue(
+      storeTriggerMock.deletePayload.mockRejectedValue(
         new AppError(
           'BAD_REQUEST',
           StatusCodes.BAD_REQUEST,
@@ -121,6 +117,21 @@ describe('ModelManager', () => {
       const response = modelManager.deleteModel(identifier);
 
       await expect(response).rejects.toThrow(`Model ${record.productName} is PUBLISHED. The model must be UNPUBLISHED to be deleted!`);
+    });
+
+    it('reject if link cannot be extracted', async () => {
+      const identifier = createUuid();
+      const record = createRecord();
+      record.links = randWord();
+
+      catalogMock.getRecord.mockResolvedValue(record);
+      storeTriggerMock.deletePayload.mockRejectedValue(
+        new AppError('BAD_REQUEST', StatusCodes.BAD_REQUEST, `link cannot be extracted ${record.links}`, true)
+      );
+
+      const response = modelManager.deleteModel(identifier);
+
+      await expect(response).rejects.toThrow(`link cannot be extracted ${record.links}`);
     });
 
     it('rejects if catalog is not available', async () => {

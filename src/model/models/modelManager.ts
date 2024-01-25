@@ -90,9 +90,16 @@ export class ModelManager {
       }
       this.logger.info({ msg: 'starting deleting record', modelId: identifier, modelName: record.productName });
 
+      const pathToTileset = this.extractLink(record.links);
+
+      if (pathToTileset === null) {
+        this.logger.error({ msg: `Error extracting link` });
+        throw new AppError('BAD_REQUEST', httpStatus.BAD_REQUEST, `link cannot be extracted ${record.links}`, true);
+      }
+
       const request: StoreTriggerDeletePayload = {
         modelId: identifier,
-        pathToTileset: this.extractLink(record.links) as string,
+        pathToTileset: pathToTileset,
         modelName: record.productName,
       };
 

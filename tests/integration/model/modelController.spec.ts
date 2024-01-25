@@ -375,7 +375,7 @@ describe('ModelController', function () {
 
   describe('DELETE /models/:identifier', function () {
     describe('Happy Path 🙂', function () {
-      it('Should return 200 status code and the delete request', async function () {
+      it('Should return 201 status code and the delete request', async function () {
         const expected = createFakeDeleteResponse();
         const identifier = createUuid();
         const record = createRecord();
