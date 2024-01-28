@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import config from 'config';
 import { randBetweenDate, randNumber, randPastDate, randSentence, randUuid, randWord } from '@ngneat/falso';
 import { Polygon } from 'geojson';
-import { Layer3DMetadata, Link, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
+import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerIngestionPayload, StoreTriggerResponse, StoreTriggerDeletePayload } from '../../src/externalServices/storeTrigger/interfaces';
@@ -214,9 +214,4 @@ export const createUpdateStatusPayload = (): UpdateStatusPayload => {
   return {
     productStatus: 'UNPUBLISHED',
   };
-};
-
-export const linksToString = (links: Link[]): string => {
-  const stringLinks = links.map((link) => `${link.name ?? ''},${link.description ?? ''},${link.protocol ?? ''},${link.url ?? ''}`);
-  return stringLinks.join('^');
 };
