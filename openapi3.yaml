@@ -37,6 +37,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /models/{identifier}:
+    delete:
+      operationId: deleteModel
+      summary: Deletes model by given identifier
+      tags:
+        - models
+      parameters:
+        - $ref: '#/components/parameters/identifier'
+      responses:
+        '201':
+          description: Delete request is completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/job'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        5XX:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
   /metadata/{identifier}:
     patch:
       operationId: updateMetadata

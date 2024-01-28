@@ -3,8 +3,9 @@ import config from 'config';
 import { randBetweenDate, randNumber, randPastDate, randSentence, randUuid, randWord } from '@ngneat/falso';
 import { Polygon } from 'geojson';
 import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
-import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse, StoreTriggerDeletePayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
 import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
@@ -148,12 +149,19 @@ export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload =
   };
 };
 
-export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerPayload => {
+export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerIngestionPayload => {
   return {
     modelId: createUuid(),
     pathToTileset,
     tilesetFilename: createTilesetFileName(),
     metadata: createMetadata(),
+  };
+};
+
+export const createFakeDeleteResponse = (): StoreTriggerResponse => {
+  return {
+    jobID: createUuid(),
+    status: OperationStatus.IN_PROGRESS,
   };
 };
 
@@ -163,6 +171,14 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
     lookupOptions.push(createLookupOption());
   }
   return lookupOptions;
+};
+
+export const createFakeDeleteRequest = (): StoreTriggerDeletePayload => {
+  return {
+    modelId: createUuid(),
+    modelName: randWord(),
+    pathToTileset: `${randWord()},${randSentence()},${randWord()},http://${randWord()}.test/wms`,
+  };
 };
 
 export const createUpdatePayload = (modelName = 'Sphere'): Partial<UpdatePayload> => {

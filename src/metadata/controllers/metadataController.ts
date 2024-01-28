@@ -4,9 +4,8 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
+import { UpdatePayload, UpdateStatusPayload, MetadataParams } from '../../common/interfaces';
 import { MetadataManager } from '../models/metadataManager';
-import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type UpdateMetadataHandler = RequestHandler<MetadataParams, unknown, UpdatePayload>;
 type UpdateStatusHandler = RequestHandler<MetadataParams, unknown, UpdateStatusPayload>;

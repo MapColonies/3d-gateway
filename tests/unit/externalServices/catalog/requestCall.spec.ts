@@ -25,7 +25,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.getRecord(identifier);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/${identifier}`);
       expect(response).toBe(expected);
     });
 
@@ -35,7 +35,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.getRecord(identifier);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/${identifier}`);
       expect(response).toBeUndefined();
     });
 
@@ -56,7 +56,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.isProductIdExist(productId);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/lastVersion/${productId}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/lastVersion/${productId}`);
       expect(response).toBe(true);
     });
 
@@ -66,7 +66,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.isProductIdExist(productId);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/lastVersion/${productId}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/lastVersion/${productId}`);
       expect(response).toBe(false);
     });
 
@@ -76,7 +76,7 @@ describe('catalogCall tests', () => {
 
       const response = catalog.isProductIdExist(productId);
 
-      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/lastVersion/${productId}`);
+      expect(mockAxios.get).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/lastVersion/${productId}`);
       await expect(response).rejects.toThrow('Problem with the catalog during validation of productId existence');
     });
 
@@ -98,7 +98,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.patchMetadata(identifier, payload);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/${identifier}`, payload);
       expect(response).toBe(payload);
     });
 
@@ -109,7 +109,7 @@ describe('catalogCall tests', () => {
 
       const response = catalog.patchMetadata(identifier, payload);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/${identifier}`, payload);
       await expect(response).rejects.toThrow('Problem with the catalog during send updatedMetadata');
     });
 
@@ -120,7 +120,7 @@ describe('catalogCall tests', () => {
 
       const response = catalog.patchMetadata(identifier, payload);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/${identifier}`, payload);
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/${identifier}`, payload);
       await expect(response).rejects.toThrow('catalog is not available');
     });
   });
@@ -133,7 +133,7 @@ describe('catalogCall tests', () => {
 
       const response = await catalog.changeStatus(identifier, payload);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/status/${identifier}`, payload);
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/status/${identifier}`, payload);
       expect(response).toBe(payload);
     });
 
@@ -144,7 +144,7 @@ describe('catalogCall tests', () => {
 
       const response = catalog.changeStatus(identifier, payload);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/status/${identifier}`, payload);
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/status/${identifier}`, payload);
       await expect(response).rejects.toThrow('Problem with the catalog during status change');
     });
 
@@ -155,7 +155,7 @@ describe('catalogCall tests', () => {
 
       const response = catalog.changeStatus(identifier, payload);
 
-      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/${catalogConfig.subUrl}/status/${identifier}`, payload);
+      expect(mockAxios.patch).toHaveBeenCalledWith(`${catalogConfig.url}/metadata/status/${identifier}`, payload);
       await expect(response).rejects.toThrow('catalog is not available');
     });
   });

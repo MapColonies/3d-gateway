@@ -5,7 +5,6 @@ service:
   externalPort: 80
 storeTrigger:
   url: https://nati-ingestion-services-store-trigger-route-3d-dev.apps.j1lk3njp.eastus.aroapp.io/
-  subUrl: ingestion
 lookupTables:
   url: https://lookupTable/
   subUrl: lookupData

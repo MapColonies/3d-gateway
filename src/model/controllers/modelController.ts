@@ -4,11 +4,12 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload } from '../../common/interfaces';
+import { IngestionPayload, MetadataParams } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
+type DeleteModelHandler = RequestHandler<MetadataParams, StoreTriggerResponse, string>;
 
 @injectable()
 export class ModelController {
@@ -30,6 +31,17 @@ export class ModelController {
       return res.status(httpStatus.CREATED).json(response);
     } catch (error) {
       this.logger.error({ msg: `Failed in ingesting a new model!`, error, modelName: req.body.metadata.productName });
+      return next(error);
+    }
+  };
+
+  public deleteModel: DeleteModelHandler = async (req, res, next) => {
+    try {
+      const { identifier } = req.params;
+      const response = await this.manager.deleteModel(identifier);
+      return res.set(httpStatus.OK).json(response);
+    } catch (error) {
+      this.logger.error({ msg: `Failed request deleting the model`, error });
       return next(error);
     }
   };
