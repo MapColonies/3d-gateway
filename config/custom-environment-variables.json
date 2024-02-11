@@ -57,5 +57,25 @@
   },
   "validation": {
     "percentageLimit": "PERCENTAGE_LIMIT"
+  },
+  "provider": "PROVIDER_TO",
+  "S3": {
+    "accessKeyId": "S3_DEST_ACCESS_KEY_ID",
+    "secretAccessKey": "S3_DEST_SECRET_ACCESS_KEY",
+    "endpointUrl": "S3_DEST_END_POINT_URL",
+    "bucket": "S3_DEST_BUCKET",
+    "region": "S3_DEST_REGION",
+    "forcePathStyle": {
+      "__name": "S3_DEST_FORCE_PATH_STYLE",
+      "__format": "boolean"
+    },
+    "sslEnabled": {
+      "__name": "S3_DEST_SSL_ENABLED",
+      "__format": "boolean"
+    },
+    "maxAttempts": {
+      "__name": "S3_DEST_MAX_ATTEMPTS",
+      "__format": "number"
+    }
   }
 }

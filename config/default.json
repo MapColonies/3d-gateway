@@ -43,5 +43,16 @@
   },
   "validation": {
     "percentageLimit": 10
+  },
+  "provider": "S3",
+  "S3": {
+    "accessKeyId": "raster",
+    "secretAccessKey": "rasterPassword",
+    "endpointUrl": "http://10.8.0.9:9000",
+    "bucket": "3dtiles",
+    "region": "ui-east-1",
+    "forcePathStyle": true,
+    "sslEnabled": false,
+    "maxAttempts": 3
   }
 }

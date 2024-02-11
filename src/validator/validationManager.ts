@@ -10,7 +10,7 @@ import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { SERVICES } from '../common/constants';
-import { IConfig, UpdatePayload } from '../common/interfaces';
+import { IConfig, Provider, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
 import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
@@ -18,7 +18,6 @@ import { LookupTablesCall } from '../externalServices/lookupTables/requestCall';
 import { CatalogCall } from '../externalServices/catalog/requestCall';
 import * as polygonCalculates from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
-import { extractTilesetPath } from './extractTilesetPath';
 
 @injectable()
 export class ValidationManager {
@@ -26,7 +25,8 @@ export class ValidationManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
-    @inject(CatalogCall) private readonly catalog: CatalogCall
+    @inject(CatalogCall) private readonly catalog: CatalogCall,
+    @inject(SERVICES.PROVIDER) private readonly provider: Provider
   ) {}
 
   public async validateIngestion(payload: IngestionPayload): Promise<boolean | string> {
@@ -53,7 +53,9 @@ export class ValidationManager {
       return result;
     }
     const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-    result = this.validateIntersection(tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
+    result = this.validateIntersection(file, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+
     if (typeof result == 'string') {
       return result;
     }
@@ -88,9 +90,13 @@ export class ValidationManager {
       if (typeof result == 'string') {
         return result;
       }
-      const tilesetPath = extractTilesetPath(record.productSource!, record.links);
+
+      const tilesetPath = this.extractLink(record.links);
       this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
-      result = this.validateIntersection(tilesetPath, payload.footprint, payload.productName!);
+      const fileBuffer: Buffer = await this.provider.getFile(tilesetPath);
+      const file: string = fileBuffer.toString('utf-8');
+
+      result = this.validateIntersection(file, payload.footprint, payload.productName!);
       if (typeof result == 'string') {
         return result;
       }
@@ -177,8 +183,7 @@ export class ValidationManager {
     return true;
   }
 
-  private validateIntersection(tilesetPath: string, footprint: Polygon, productName: string): boolean | string {
-    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
+  private validateIntersection(file: string, footprint: Polygon, productName: string): boolean | string {
     const limit: number = this.config.get<number>('validation.percentageLimit');
     let model: Polygon;
 
@@ -280,4 +285,17 @@ export class ValidationManager {
     const isPolygon = compiledSchema(footprint);
     return isPolygon;
   }
+
+private extractLink(inputLink: string): string {
+    const regex = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/(?<suffix>.+)/;
+    const match = inputLink.match(regex);
+
+    if (match?.groups) {
+        const { modelId, suffix } = match.groups;
+        return `${modelId}/${suffix}`;
+    } else {
+        throw new Error('Link extraction failed.');
+    }
+}
+
 }

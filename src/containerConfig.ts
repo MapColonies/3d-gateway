@@ -8,6 +8,8 @@ import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { modelRouterFactory, MODEL_ROUTER_SYMBOL } from './model/routes/modelRouter';
 import { METADATA_ROUTER_SYMBOL, metadataRouterFactory } from './metadata/routes/metadataRouter';
+import { getProvider, getProviderConfig } from './common/providers/getProviders';
+import { Provider, ProviderConfig } from './common/interfaces';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -15,6 +17,7 @@ export interface RegisterOptions {
 }
 
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
+  const provider = config.get<string>('provider');
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
 
@@ -38,6 +41,22 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
           useValue: async (): Promise<void> => {
             await Promise.all([tracing.stop(), metrics.stop()]);
           },
+        },
+      },
+    },
+    {
+      token: SERVICES.PROVIDER_CONFIG,
+      provider: {
+        useFactory: (): ProviderConfig => {
+          return getProviderConfig(provider);
+        },
+      },
+    },
+    {
+      token: SERVICES.PROVIDER,
+      provider: {
+        useFactory: (): Provider => {
+          return getProvider(provider);
         },
       },
     },
