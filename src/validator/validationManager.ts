@@ -2,23 +2,18 @@
 import * as fs from 'fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import httpStatus from 'http-status-codes';
-import union from '@turf/union';
-import intersect from '@turf/intersect';
-import area from '@turf/area';
-import { Feature, MultiPolygon, Polygon } from 'geojson';
+import * as turf from '@turf/turf'
+import { Polygon, } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { SERVICES } from '../common/constants';
 import { IConfig, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
-import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/requestCall';
 import { CatalogCall } from '../externalServices/catalog/requestCall';
 import * as polygonCalculates from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
-import { extractTilesetPath } from './extractTilesetPath';
 
 @injectable()
 export class ValidationManager {
@@ -30,7 +25,7 @@ export class ValidationManager {
   ) {}
 
   public async validateIngestion(payload: IngestionPayload): Promise<boolean | string> {
-    let result: boolean | string;
+    let result: boolean | string | Polygon;
 
     result = this.validateModelName(payload.modelPath);
     if (typeof result == 'string') {
@@ -48,12 +43,13 @@ export class ValidationManager {
     if (typeof result == 'string') {
       return result;
     }
-    result = this.validateFootprint(payload.metadata.footprint as Polygon);
-    if (typeof result == 'string') {
-      return result;
-    }
+    // result = this.validateFootprint(payload.metadata.footprint as Polygon);
+    // if (typeof result == 'string') {
+    //   return result;
+    // }
     const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-    result = this.validateIntersection(tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+    this.logger.debug("path", tilesetPath)
+    result = this.validateIntersection(payload,payload.metadata.productName!);
     if (typeof result == 'string') {
       return result;
     }
@@ -76,7 +72,7 @@ export class ValidationManager {
   }
 
   public async validateUpdate(identifier: string, payload: UpdatePayload): Promise<boolean | string> {
-    let result: boolean | string;
+    let result: boolean | string | Polygon;
     const record = await this.catalog.getRecord(identifier);
 
     if (record === undefined) {
@@ -88,12 +84,12 @@ export class ValidationManager {
       if (typeof result == 'string') {
         return result;
       }
-      const tilesetPath = extractTilesetPath(record.productSource!, record.links);
-      this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
-      result = this.validateIntersection(tilesetPath, payload.footprint, payload.productName!);
-      if (typeof result == 'string') {
-        return result;
-      }
+      // const tilesetPath = extractTilesetPath(record.productSource!, record.links);
+      // this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
+      // result = this.validateIntersection(payload,payload.productName!);
+      // if (typeof result == 'string') {
+      //   return result;
+      // }
     }
 
     if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
@@ -135,7 +131,7 @@ export class ValidationManager {
 
   private validateTilesetJson(modelPath: string, tilesetFilename: string): boolean | string {
     if (!fs.existsSync(`${modelPath}/${tilesetFilename}`)) {
-      return `Unknown tileset name! The tileset file wasn't found!, tileset: ${tilesetFilename} doesn't exist`;
+      return `Unknown tileset name! The tileset file wasn't found!, tileset: ${modelPath} doesn't exist`;
     }
     const fileContent: string = fs.readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
     try {
@@ -177,65 +173,101 @@ export class ValidationManager {
     return true;
   }
 
-  private validateIntersection(tilesetPath: string, footprint: Polygon, productName: string): boolean | string {
-    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
-    const limit: number = this.config.get<number>('validation.percentageLimit');
-    let model: Polygon;
+  private convertPolygonToBoundingBox(polygon: turf.Polygon): turf.Polygon {
+    const bbox = turf.bbox(polygon);
+    const boundingBox: turf.Polygon = {
+        type: 'Polygon',
+        coordinates: [
+            [
+                [bbox[0], bbox[1]],
+                [bbox[0], bbox[3]],
+                [bbox[2], bbox[3]],
+                [bbox[2], bbox[1]],
+                [bbox[0], bbox[1]] // Closing the polygon
+            ]
+        ]
+    };
+    return boundingBox;
+}
 
+  public validateIntersection(payload: IngestionPayload, productName: string): Polygon | string {
     try {
-      this.logger.debug({ msg: 'extract polygon of the model', modelName: productName });
-      const shape = (JSON.parse(file) as TileSetJson).root.boundingVolume;
+        this.logger.debug("blalalalalala")
+        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`
+        const file: string = fs.readFileSync(tilesetPath, 'utf8');
+        console.log("blalala")
+        const shape = JSON.parse(file).root.boundingVolume;
+        console.log("papapapa")
+        console.log("shape", shape)
 
-      if (shape.sphere != undefined) {
-        model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
-      } else if (shape.region != undefined) {
-        model = polygonCalculates.convertRegionFromRadianToDegrees(shape as BoundingRegion);
-      } else if (shape.box != undefined) {
-        return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
-      } else {
-        return 'Bad tileset format. Should be in 3DTiles format';
-      }
+        let model: Polygon;
 
-      this.logger.debug({ msg: 'extracted successfully polygon of the model', polygon: model, modelName: productName });
+        if (shape.sphere !== undefined) {
+            model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
+            console.log("model", model)
+        } else if (shape.region !== undefined) {
+            model = polygonCalculates.convertRegionFromRadianToDegrees(shape as BoundingRegion);
+            console.log("model", model)
+        } else if (shape.box !== undefined) {
+            return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
+        } else {
+            throw new Error('Bad tileset format. Should be in 3DTiles format');
+        }
 
-      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(footprint, model);
+        const boundingBoxCoordinates = this.convertPolygonToBoundingBox(model);
+        
 
-      this.logger.debug({
-        msg: 'intersected successfully between footprint and polygon of the model',
-        intersection,
-        modelName: productName,
-      });
+        this.logger.debug({ msg: 'extracted successfully polygon of the model' ,polygon: boundingBoxCoordinates, modelName: productName });
+        return model;
 
-      if (intersection == null) {
-        return `Wrong footprint! footprint's coordinates is not even close to the model!`;
-      }
-
-      const combined: Feature<Polygon | MultiPolygon> | null = union(footprint, model);
-
-      this.logger.debug({ msg: 'combined successfully footprint and polygon of the model', combined, modelName: productName });
-
-      const areaFootprint = area(footprint);
-      const areaCombined = area(combined!);
-      this.logger.debug({
-        msg: 'calculated successfully the areas',
-        footprint: areaFootprint,
-        combined: areaCombined,
-        modelName: productName,
-      });
-      const coverage = (100 * areaFootprint) / areaCombined;
-
-      if (coverage < limit) {
-        return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${limit}%`;
-      }
-      this.logger.debug({ msg: 'intersection validated successfully!' });
-      return true;
     } catch (error) {
-      this.logger.error({
-        msg: `An error caused during the validation of the intersection...`,
-        modelName: productName,
-        error,
-      });
-      throw new AppError('IntersectionError', httpStatus.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
+        if (error instanceof SyntaxError) {
+            return 'Bad tileset format. Should be in JSON format';
+        } else {
+            this.logger.error("reading error", error)
+            return 'Error reading tileset file';
+        }
+    
+
+
+
+    //   const intersection: Feature<Polygon | MultiPolygon> | null = intersect(footprint, model);
+
+    //   this.logger.debug({
+    //     msg: 'intersected successfully between footprint and polygon of the model',
+    //     intersection,
+    //     modelName: productName,
+    //   });
+
+    //   if (intersection == null) {
+    //     return `Wrong footprint! footprint's coordinates is not even close to the model!`;
+    //   }
+
+
+    //   this.logger.debug({ msg: 'combined successfully footprint and polygon of the model', combined, modelName: productName });
+
+    //   const areaFootprint = area(footprint);
+    //   const areaCombined = area(combined!);
+    //   this.logger.debug({
+    //     msg: 'calculated successfully the areas',
+    //     footprint: areaFootprint,
+    //     combined: areaCombined,
+    //     modelName: productName,
+    //   });
+    //   const coverage = (100 * areaFootprint) / areaCombined;
+
+    //   if (coverage < limit) {
+    //     return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${limit}%`;
+    //   }
+    //   this.logger.debug({ msg: 'intersection validated successfully!' });
+    //   return true;
+    // } catch (error) {
+    //   this.logger.error({
+    //     msg: `An error caused during the validation of the intersection...`,
+    //     modelName: productName,
+    //     error,
+    //   });
+    //   throw new AppError('IntersectionError', httpStatus.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
     }
   }
 

@@ -284,7 +284,7 @@ components:
         - maxAccuracyCE90
         - absoluteAccuracyLE90
         - sensors
-        - footprint
+        # - footprint
         - srsId
         - srsName
         - region
@@ -386,12 +386,12 @@ components:
           description: Layer sensors list
           example:
             - OTHER
-        footprint:
-          allOf:
-            - $ref: '#/components/schemas/Geometry'
-            - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+        # footprint:
+        #   allOf:
+        #     - $ref: '#/components/schemas/Geometry'
+        #     - description: Geographic demarcation of the product
+        #     - example: >-
+        #         {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
         heightRangeFrom:
           type: number
           format: double
@@ -480,12 +480,12 @@ components:
           type: string
           format: date-time
           description: Newest date of taken photo
-        footprint:
-          allOf:
-            - $ref: '#/components/schemas/Geometry'
-            - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+        # footprint:
+        #   allOf:
+        #     - $ref: '#/components/schemas/Geometry'
+        #     - description: Geographic demarcation of the product
+        #     - example: >-
+        #         {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
         minResolutionMeter:
           type: number
           format: double
@@ -609,7 +609,7 @@ components:
         - maxAccuracyCE90
         - absoluteAccuracyLE90
         - sensors
-        - footprint
+        # - footprint
         - srsId
         - srsName
         - region
@@ -713,12 +713,12 @@ components:
           description: Layer sensors list
           example:
             - OTHER
-        footprint:
-          allOf:
-            - $ref: '#/components/schemas/Geometry'
-            - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+        # footprint:
+        #   allOf:
+        #     - $ref: '#/components/schemas/Geometry'
+        #     - description: Geographic demarcation of the product
+        #     - example: >-
+        #         {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
         heightRangeFrom:
           type: number
           format: double

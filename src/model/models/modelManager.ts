@@ -9,6 +9,12 @@ import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IngestionPayload } from '../../common/interfaces';
 import * as utils from './utilities';
+import fs from 'fs';
+import * as polygonCalculates from '../../validator/calculatePolygonFromTileset';
+import intersect from '@turf/intersect';
+import union from '@turf/union';
+import GeoJSON, { Polygon, Feature, MultiPolygon } from 'geojson';
+import { TileSetJson, BoundingSphere, BoundingRegion } from '../../validator/interfaces';
 
 @injectable()
 export class ModelManager {
@@ -22,7 +28,8 @@ export class ModelManager {
     const modelId = uuid();
     this.logger.info({ msg: 'started ingestion of new model', modelId, modelName: payload.metadata.productName, payload });
     const productSource: string = payload.modelPath;
-    payload.metadata.footprint = utils.convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
+    // const footprint = this.validator.validateIntersection(payload.tilesetFilename, payload.metadata.productName as string)
+    // payload.metadata.footprint = utils.convertStringToGeojson(JSON.stringify(footprint));
 
     this.logger.debug({ msg: 'starting validating the payload', modelId, modelName: payload.metadata.productName });
     try {
