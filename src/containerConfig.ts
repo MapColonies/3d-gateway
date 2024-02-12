@@ -35,16 +35,6 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: MODEL_ROUTER_SYMBOL, provider: { useFactory: modelRouterFactory } },
     { token: METADATA_ROUTER_SYMBOL, provider: { useFactory: metadataRouterFactory } },
     {
-      token: 'onSignal',
-      provider: {
-        useValue: {
-          useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop(), metrics.stop()]);
-          },
-        },
-      },
-    },
-    {
       token: SERVICES.PROVIDER_CONFIG,
       provider: {
         useFactory: (): ProviderConfig => {
@@ -56,7 +46,17 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
       token: SERVICES.PROVIDER,
       provider: {
         useFactory: (): Provider => {
-          return getProvider(provider);
+          return getProvider();
+        },
+      },
+    },
+    {
+      token: 'onSignal',
+      provider: {
+        useValue: {
+          useValue: async (): Promise<void> => {
+            await Promise.all([tracing.stop(), metrics.stop()]);
+          },
         },
       },
     },

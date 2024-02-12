@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -15,18 +16,31 @@ import {
   createFootprint,
   createWrongFootprintSchema,
   createUuid,
-  createUpdatePayload,
   createRecord,
+  createUpdatePayload,
 } from '../../helpers/helpers';
-import { configMock, lookupTablesMock, jsLoggerMock, catalogMock } from '../../helpers/mockCreator';
+import { configMock, lookupTablesMock, jsLoggerMock, catalogMock, configProviderMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
+import { getApp } from '../../../src/app';
+import { SERVICES } from '../../../src/common/constants';
 
 describe('ValidationManager', () => {
   let validationManager: ValidationManager;
 
   beforeEach(() => {
-    validationManager = new ValidationManager(config, jsLogger({ enabled: false }), lookupTablesMock as never, catalogMock as never);
+    getApp({
+      override: [{ token: SERVICES.PROVIDER, provider: { useValue: configProviderMock } }],
+    });
+
+    validationManager = new ValidationManager(
+      config,
+      jsLogger({ enabled: false }),
+      lookupTablesMock as never,
+      catalogMock as never,
+      configProviderMock
+    );
   });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -106,7 +120,7 @@ describe('ValidationManager', () => {
 
   describe('validateProductType tests', () => {
     it('returns true without warnings when got valid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never);
+      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, configProviderMock);
       const modelName = createModelPath();
       const productType = ProductType.PHOTO_REALISTIC_3D;
 
@@ -117,7 +131,7 @@ describe('ValidationManager', () => {
     });
 
     it('returns true with warnings when got invalid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never);
+      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, configProviderMock);
       const modelName = createModelPath();
       const productType = ProductType.DSM;
       jsLoggerMock.warn.mockReturnValue('');
@@ -165,10 +179,10 @@ describe('ValidationManager', () => {
         tilesetFilename: 'invalidTileset.json',
         metadata: createMetadata(),
       };
-      const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+      const fileContent = randWord();
 
       const result = () => {
-        validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+        validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
       };
 
       expect(result).toThrow(AppError);
@@ -181,9 +195,11 @@ describe('ValidationManager', () => {
           tilesetFilename: createTilesetFileName(),
           metadata: createMetadata(),
         };
-        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
 
-        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+        const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+        const fileContent = fs.readFileSync(tilesetPath, 'utf8');
+
+        const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
         expect(result).toBe(true);
       });
@@ -196,8 +212,9 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint('Region');
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+        const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
-        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
+        const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
         expect(result).toBe(`Wrong footprint! footprint's coordinates is not even close to the model!`);
       });
@@ -212,8 +229,9 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint('Region');
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+        const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
-        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
+        const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
         expect(result).toBe(true);
       });
@@ -226,8 +244,9 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createWrongFootprintCoordinates();
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+        const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
-        const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
+        const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
         expect(result).toBe(`Wrong footprint! footprint's coordinates is not even close to the model!`);
       });
@@ -241,8 +260,9 @@ describe('ValidationManager', () => {
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+      const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
-      const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
+      const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
       expect(result).toBe(`BoundingVolume of box is not supported yet... Please contact 3D team.`);
     });
@@ -255,8 +275,9 @@ describe('ValidationManager', () => {
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+      const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
-      const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint, payload.metadata.productName!);
+      const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
       expect(result).toBe(`Bad tileset format. Should be in 3DTiles format`);
     });
@@ -268,10 +289,17 @@ describe('ValidationManager', () => {
         metadata: createMetadata(),
       };
       configMock.get.mockReturnValue(100);
-      validationManager = new ValidationManager(configMock, jsLogger({ enabled: false }), lookupTablesMock as never, catalogMock as never);
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        lookupTablesMock as never,
+        catalogMock as never,
+        configProviderMock
+      );
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
+      const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
-      const result = validationManager['validateIntersection'](tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+      const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
       expect(result).toContain('The footprint is not intersected enough with the model');
     });
@@ -451,8 +479,12 @@ describe('ValidationManager', () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
       const expected = createRecord();
+
+      const tilesetPath = validationManager.extractLink(expected.links);
+
       catalogMock.getRecord.mockResolvedValue(expected);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
+      configProviderMock.getFile.mockResolvedValue(tilesetPath);
 
       const response = await validationManager.validateUpdate(identifier, payload);
 

@@ -14,6 +14,7 @@ import {
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
+import { configProviderMock } from '../../helpers/mockCreator';
 import { MetadataRequestSender } from './helpers/requestSender';
 
 describe('MetadataController', function () {
@@ -23,8 +24,8 @@ describe('MetadataController', function () {
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+        { token: SERVICES.PROVIDER_CONFIG, provider: { useValue: configProviderMock } },
       ],
-      useChild: true,
     });
     requestSender = new MetadataRequestSender(app);
   });
@@ -184,8 +185,8 @@ describe('MetadataController', function () {
 
         const response = await requestSender.updateStatus(identifier, payload);
 
-        expect(response.status).toBe(StatusCodes.OK);
         expect(response.body).toBe(expected);
+        expect(response.status).toBe(StatusCodes.OK);
       });
     });
 

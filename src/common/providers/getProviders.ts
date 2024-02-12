@@ -5,7 +5,7 @@ import { AppError } from '../appError';
 import { ProviderConfig } from '../interfaces';
 import { S3Provider } from './s3Provider';
 
-function getProvider(provider: string): S3Provider {
+function getProvider(): S3Provider {
   return container.resolve(S3Provider);
 }
 function getProviderConfig(provider: string): ProviderConfig {

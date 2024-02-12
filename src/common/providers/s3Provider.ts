@@ -1,5 +1,4 @@
 import { Logger } from '@map-colonies/js-logger';
-import { S3 } from 'aws-sdk';
 import { inject, injectable } from 'tsyringe';
 import { GetObjectCommandInput, GetObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { SERVICES } from '../constants';
@@ -13,7 +12,18 @@ export class S3Provider implements Provider {
     @inject(SERVICES.PROVIDER_CONFIG) protected readonly s3Config: S3Config,
     @inject(SERVICES.LOGGER) protected readonly logger: Logger
   ) {
-    this.s3 = this.createS3Instance(s3Config);
+    const s3ClientConfig: S3ClientConfig = {
+      endpoint: this.s3Config.endpointUrl,
+      forcePathStyle: this.s3Config.forcePathStyle,
+      credentials: {
+        accessKeyId: this.s3Config.accessKeyId,
+        secretAccessKey: this.s3Config.secretAccessKey,
+      },
+      region: this.s3Config.region,
+      maxAttempts: this.s3Config.maxAttempts,
+      tls: this.s3Config.sslEnabled,
+    };
+    this.s3 = new S3Client(s3ClientConfig);
   }
   public async getFile(filePath: string): Promise<Buffer> {
     /* eslint-disable @typescript-eslint/naming-convention */
@@ -27,19 +37,5 @@ export class S3Provider implements Provider {
     const response = await this.s3.send(new GetObjectCommand(getParams));
 
     return response.Body?.transformToString() as unknown as Buffer;
-  }
-
-  private createS3Instance(config: S3Config): S3Client {
-    return new S3Client({
-      endpoint: config.endpointUrl,
-      credentials: {
-        accessKeyId: config.accessKeyId,
-        secretAccessKey: config.secretAccessKey,
-      },
-      region: config.region,
-      maxAttempts: config.maxAttempts,
-      tls: config.tls,
-      forcePathStyle: config.forcePathStyle,
-    });
   }
 }

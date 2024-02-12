@@ -1,5 +1,4 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
-import { S3 } from 'aws-sdk';
 import { Polygon } from 'geojson';
 
 export interface IConfig {
@@ -54,7 +53,7 @@ export interface IConfig {
 }
 
 export interface Provider {
-  getFile: (fileName: string) => Promise<Buffer>;
+  getFile: (filePath: string) => Promise<Buffer>;
 }
 
 export type ProviderConfig = S3Config;
@@ -65,9 +64,7 @@ export interface S3Config {
   endpointUrl: string;
   bucket: string;
   region: string;
-  tls: boolean;
+  sslEnabled: boolean;
   forcePathStyle: boolean;
   maxAttempts: number;
-  sigVersion: string;
-  storageClass?: S3.StorageClass;
 }

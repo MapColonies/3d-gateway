@@ -93,8 +93,8 @@ export class ValidationManager {
 
       const tilesetPath = this.extractLink(record.links);
       this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
-      const fileBuffer: Buffer = await this.provider.getFile(tilesetPath);
-      const file: string = fileBuffer.toString('utf-8');
+      const fileContent = await this.provider.getFile(tilesetPath);
+      const file: string = fileContent.toString('utf-8');
 
       result = this.validateIntersection(file, payload.footprint, payload.productName!);
       if (typeof result == 'string') {
@@ -119,6 +119,18 @@ export class ValidationManager {
     }
 
     return true;
+  }
+
+  public extractLink(inputLink: string): string {
+    const regex = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/(?<suffix>.+)/;
+    const match = inputLink.match(regex);
+
+    if (match?.groups) {
+      const { modelId, suffix } = match.groups;
+      return `${modelId}/${suffix}`;
+    } else {
+      throw new Error('Link extraction failed.');
+    }
   }
 
   public validateModelPath(sourcePath: string): boolean | string {
@@ -183,13 +195,13 @@ export class ValidationManager {
     return true;
   }
 
-  private validateIntersection(file: string, footprint: Polygon, productName: string): boolean | string {
+  private validateIntersection(fileContent: string, footprint: Polygon, productName: string): boolean | string {
     const limit: number = this.config.get<number>('validation.percentageLimit');
     let model: Polygon;
 
     try {
       this.logger.debug({ msg: 'extract polygon of the model', modelName: productName });
-      const shape = (JSON.parse(file) as TileSetJson).root.boundingVolume;
+      const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
 
       if (shape.sphere != undefined) {
         model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
@@ -285,17 +297,4 @@ export class ValidationManager {
     const isPolygon = compiledSchema(footprint);
     return isPolygon;
   }
-
-private extractLink(inputLink: string): string {
-    const regex = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/(?<suffix>.+)/;
-    const match = inputLink.match(regex);
-
-    if (match?.groups) {
-        const { modelId, suffix } = match.groups;
-        return `${modelId}/${suffix}`;
-    } else {
-        throw new Error('Link extraction failed.');
-    }
-}
-
 }
