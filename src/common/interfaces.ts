@@ -46,3 +46,20 @@ export interface UpdatePayload {
 export interface UpdateStatusPayload {
   productStatus: string;
 }
+
+export interface Provider {
+  getFile: (filePath: string) => Promise<string>;
+}
+
+export type ProviderConfig = S3Config;
+
+export interface S3Config {
+  accessKeyId: string;
+  secretAccessKey: string;
+  endpointUrl: string;
+  bucket: string;
+  region: string;
+  sslEnabled: boolean;
+  forcePathStyle: boolean;
+  maxAttempts: number;
+}

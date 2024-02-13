@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as fs from 'fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
@@ -10,7 +9,7 @@ import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { SERVICES } from '../common/constants';
-import { IConfig, UpdatePayload } from '../common/interfaces';
+import { IConfig, Provider, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
 import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
@@ -18,7 +17,7 @@ import { LookupTablesCall } from '../externalServices/lookupTables/requestCall';
 import { CatalogCall } from '../externalServices/catalog/requestCall';
 import * as polygonCalculates from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
-import { extractTilesetPath } from './extractTilesetPath';
+import { extractLink } from './extractPathFromLink';
 
 @injectable()
 export class ValidationManager {
@@ -26,7 +25,8 @@ export class ValidationManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
-    @inject(CatalogCall) private readonly catalog: CatalogCall
+    @inject(CatalogCall) private readonly catalog: CatalogCall,
+    @inject(SERVICES.PROVIDER) private readonly provider: Provider
   ) {}
 
   public async validateIngestion(payload: IngestionPayload): Promise<boolean | string> {
@@ -53,7 +53,9 @@ export class ValidationManager {
       return result;
     }
     const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-    result = this.validateIntersection(tilesetPath, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
+    result = this.validateIntersection(file, payload.metadata.footprint as Polygon, payload.metadata.productName!);
+
     if (typeof result == 'string') {
       return result;
     }
@@ -83,23 +85,24 @@ export class ValidationManager {
       return `Record with identifier: ${identifier} doesn't exist!`;
     }
 
-    if (payload.footprint != undefined) {
-      result = this.validateFootprint(payload.footprint);
-      if (typeof result == 'string') {
-        return result;
-      }
-      const tilesetPath = extractTilesetPath(record.productSource!, record.links);
-      this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
-      result = this.validateIntersection(tilesetPath, payload.footprint, payload.productName!);
+    if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
+      const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
+      const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
+      result = this.validateDates(sourceDateStart, sourceDateEnd);
       if (typeof result == 'string') {
         return result;
       }
     }
 
-    if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
-      const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
-      const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
-      result = this.validateDates(sourceDateStart, sourceDateEnd);
+    if (payload.footprint != undefined) {
+      result = this.validateFootprint(payload.footprint);
+      if (typeof result == 'string') {
+        return result;
+      }
+      const tilesetPath = extractLink(record.links);
+      this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
+      const file = await this.provider.getFile(tilesetPath);
+      result = this.validateIntersection(file, payload.footprint, payload.productName!);
       if (typeof result == 'string') {
         return result;
       }
@@ -177,14 +180,13 @@ export class ValidationManager {
     return true;
   }
 
-  private validateIntersection(tilesetPath: string, footprint: Polygon, productName: string): boolean | string {
-    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
+  private validateIntersection(fileContent: string, footprint: Polygon, productName: string): boolean | string {
     const limit: number = this.config.get<number>('validation.percentageLimit');
     let model: Polygon;
 
     try {
       this.logger.debug({ msg: 'extract polygon of the model', modelName: productName });
-      const shape = (JSON.parse(file) as TileSetJson).root.boundingVolume;
+      const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
 
       if (shape.sphere != undefined) {
         model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
@@ -222,6 +224,7 @@ export class ValidationManager {
         combined: areaCombined,
         modelName: productName,
       });
+      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       const coverage = (100 * areaFootprint) / areaCombined;
 
       if (coverage < limit) {

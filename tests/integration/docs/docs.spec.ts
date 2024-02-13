@@ -13,7 +13,6 @@ describe('docs', function () {
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
       ],
-      useChild: true,
     });
     requestSender = new DocsRequestSender(app);
   });

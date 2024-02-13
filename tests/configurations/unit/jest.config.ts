@@ -15,6 +15,7 @@ module.exports = {
     '!**/routes/**',
     '!<rootDir>/src/*',
   ],
+  coveragePathIgnorePatterns: ['<rootDir>/src/providers'],
   coverageDirectory: '<rootDir>/coverage',
   reporters: [
     'default',

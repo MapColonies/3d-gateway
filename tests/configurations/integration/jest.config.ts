@@ -29,4 +29,6 @@ module.exports = {
       statements: -13,
     },
   },
+  globalSetup: '<rootDir>/tests/configurations/runContainers/global-setup.js',
+  globalTeardown: '<rootDir>/tests/configurations/runContainers/global-teardown.js',
 };
