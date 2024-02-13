@@ -1,8 +1,8 @@
 import config from 'config';
 import httpStatus from 'http-status-codes';
 import { container } from 'tsyringe';
-import { AppError } from '../appError';
-import { ProviderConfig } from '../interfaces';
+import { AppError } from '../common/appError';
+import { ProviderConfig } from '../common/interfaces';
 import { S3Provider } from './s3Provider';
 
 function getProvider(): S3Provider {

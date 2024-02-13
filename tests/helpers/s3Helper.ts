@@ -17,6 +17,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { randSentence } from '@ngneat/falso';
 import { S3Config } from '../../src/common/interfaces';
+import { getTileset } from './helpers';
 
 export class S3Helper {
   private readonly s3: S3Client;
@@ -58,11 +59,11 @@ export class S3Helper {
     await this.s3.send(command);
   }
 
-  public async createFileOfModel(model: string, file: string): Promise<Buffer> {
-    const data = Buffer.from(randSentence());
+  public async createFile(filePath: string, readFromTileset = false): Promise<Buffer> {
+    const data: Buffer = readFromTileset ? getTileset() : Buffer.from(randSentence());
     const params: PutObjectCommandInput = {
       Bucket: this.s3Config.bucket,
-      Key: `${model}/${file}`,
+      Key: `${filePath}`,
       Body: data,
     };
     await this.s3.send(new PutObjectCommand(params));

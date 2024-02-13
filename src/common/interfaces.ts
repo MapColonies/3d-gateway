@@ -47,13 +47,8 @@ export interface UpdateStatusPayload {
   productStatus: string;
 }
 
-export interface IConfig {
-  get: <T>(setting: string) => T;
-  has: (setting: string) => boolean;
-}
-
 export interface Provider {
-  getFile: (filePath: string) => Promise<Buffer>;
+  getFile: (filePath: string) => Promise<string>;
 }
 
 export type ProviderConfig = S3Config;

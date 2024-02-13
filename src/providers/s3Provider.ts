@@ -1,8 +1,10 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { GetObjectCommandInput, GetObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
-import { SERVICES } from '../constants';
-import { Provider, S3Config } from '../interfaces';
+import { StatusCodes } from 'http-status-codes';
+import { SERVICES } from '../common/constants';
+import { Provider, S3Config } from '../common/interfaces';
+import { AppError } from '../common/appError';
 
 @injectable()
 export class S3Provider implements Provider {
@@ -25,7 +27,7 @@ export class S3Provider implements Provider {
     };
     this.s3 = new S3Client(s3ClientConfig);
   }
-  public async getFile(filePath: string): Promise<Buffer> {
+  public async getFile(filePath: string): Promise<string> {
     /* eslint-disable @typescript-eslint/naming-convention */
     const getParams: GetObjectCommandInput = {
       Bucket: this.s3Config.bucket,
@@ -34,8 +36,12 @@ export class S3Provider implements Provider {
     /* eslint-enable @typescript-eslint/naming-convention */
 
     this.logger.debug({ msg: 'Starting getFile', filePath });
-    const response = await this.s3.send(new GetObjectCommand(getParams));
-
-    return response.Body?.transformToString() as unknown as Buffer;
+    try {
+      const response = await this.s3.send(new GetObjectCommand(getParams));
+      return await response.Body!.transformToString();
+    } catch (error) {
+      this.logger.error({ mag: 'Problem during get file from S3', bucket: this.s3Config.bucket, path: filePath, error });
+      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
+    }
   }
 }

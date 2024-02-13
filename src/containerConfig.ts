@@ -8,7 +8,7 @@ import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { modelRouterFactory, MODEL_ROUTER_SYMBOL } from './model/routes/modelRouter';
 import { METADATA_ROUTER_SYMBOL, metadataRouterFactory } from './metadata/routes/metadataRouter';
-import { getProvider, getProviderConfig } from './common/providers/getProviders';
+import { getProvider, getProviderConfig } from './providers/getProviders';
 import { Provider, ProviderConfig } from './common/interfaces';
 
 export interface RegisterOptions {

@@ -29,7 +29,7 @@ export const configMock = {
   has: jest.fn(),
 };
 
-export const configProviderMock = {
+export const providerMock = {
   getFile: jest.fn(),
 };
 

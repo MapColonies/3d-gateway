@@ -3,7 +3,7 @@ import httpStatus from 'http-status-codes';
 import { randWord } from '@ngneat/falso';
 import { AppError } from '../../../src/common/appError';
 import { S3Config } from '../../../src/common/interfaces';
-import { getProvider, getProviderConfig } from '../../../src/common/providers/getProviders';
+import { getProvider, getProviderConfig } from '../../../src/providers/getProviders';
 
 describe('getProviderConfig tests', () => {
   it('should return the S3 config when the provider is S3', () => {

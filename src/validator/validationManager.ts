@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 import * as fs from 'fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
@@ -18,6 +17,7 @@ import { LookupTablesCall } from '../externalServices/lookupTables/requestCall';
 import { CatalogCall } from '../externalServices/catalog/requestCall';
 import * as polygonCalculates from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
+import { extractLink } from './extractPathFromLink';
 
 @injectable()
 export class ValidationManager {
@@ -85,27 +85,24 @@ export class ValidationManager {
       return `Record with identifier: ${identifier} doesn't exist!`;
     }
 
-    if (payload.footprint != undefined) {
-      result = this.validateFootprint(payload.footprint);
-      if (typeof result == 'string') {
-        return result;
-      }
-
-      const tilesetPath = this.extractLink(record.links);
-      this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
-      const fileContent = await this.provider.getFile(tilesetPath);
-      const file: string = fileContent.toString('utf-8');
-
-      result = this.validateIntersection(file, payload.footprint, payload.productName!);
+    if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
+      const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
+      const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
+      result = this.validateDates(sourceDateStart, sourceDateEnd);
       if (typeof result == 'string') {
         return result;
       }
     }
 
-    if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
-      const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
-      const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
-      result = this.validateDates(sourceDateStart, sourceDateEnd);
+    if (payload.footprint != undefined) {
+      result = this.validateFootprint(payload.footprint);
+      if (typeof result == 'string') {
+        return result;
+      }
+      const tilesetPath = extractLink(record.links);
+      this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
+      const file = await this.provider.getFile(tilesetPath);
+      result = this.validateIntersection(file, payload.footprint, payload.productName!);
       if (typeof result == 'string') {
         return result;
       }
@@ -119,18 +116,6 @@ export class ValidationManager {
     }
 
     return true;
-  }
-
-  public extractLink(inputLink: string): string {
-    const regex = /api\/3d\/v1\/b3dm\/(?<modelId>[a-fA-F0-9-]+)\/(?<suffix>.+)/;
-    const match = inputLink.match(regex);
-
-    if (match?.groups) {
-      const { modelId, suffix } = match.groups;
-      return `${modelId}/${suffix}`;
-    } else {
-      throw new Error('Link extraction failed.');
-    }
   }
 
   public validateModelPath(sourcePath: string): boolean | string {
@@ -239,6 +224,7 @@ export class ValidationManager {
         combined: areaCombined,
         modelName: productName,
       });
+      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       const coverage = (100 * areaFootprint) / areaCombined;
 
       if (coverage < limit) {

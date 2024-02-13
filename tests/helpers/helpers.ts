@@ -55,6 +55,10 @@ export const createWrongFootprintSchema = (): Polygon => {
   } as unknown as Polygon;
 };
 
+export const getTileset = (model = 'Sphere'): Buffer => {
+  return fs.readFileSync(`${pvPath}/${model}/tileset.json`);
+};
+
 export const createUuid = (): string => {
   return randUuid();
 };

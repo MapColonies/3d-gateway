@@ -18,26 +18,21 @@ import {
   createUuid,
   createRecord,
   createUpdatePayload,
+  getTileset,
 } from '../../helpers/helpers';
-import { configMock, lookupTablesMock, jsLoggerMock, catalogMock, configProviderMock } from '../../helpers/mockCreator';
+import { configMock, lookupTablesMock, jsLoggerMock, catalogMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
-import { getApp } from '../../../src/app';
-import { SERVICES } from '../../../src/common/constants';
 
 describe('ValidationManager', () => {
   let validationManager: ValidationManager;
 
   beforeEach(() => {
-    getApp({
-      override: [{ token: SERVICES.PROVIDER, provider: { useValue: configProviderMock } }],
-    });
-
     validationManager = new ValidationManager(
       config,
       jsLogger({ enabled: false }),
       lookupTablesMock as never,
       catalogMock as never,
-      configProviderMock
+      providerMock as never
     );
   });
 
@@ -120,7 +115,7 @@ describe('ValidationManager', () => {
 
   describe('validateProductType tests', () => {
     it('returns true without warnings when got valid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, configProviderMock);
+      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, providerMock);
       const modelName = createModelPath();
       const productType = ProductType.PHOTO_REALISTIC_3D;
 
@@ -131,7 +126,7 @@ describe('ValidationManager', () => {
     });
 
     it('returns true with warnings when got invalid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, configProviderMock);
+      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, providerMock);
       const modelName = createModelPath();
       const productType = ProductType.DSM;
       jsLoggerMock.warn.mockReturnValue('');
@@ -294,7 +289,7 @@ describe('ValidationManager', () => {
         jsLogger({ enabled: false }),
         lookupTablesMock as never,
         catalogMock as never,
-        configProviderMock
+        providerMock
       );
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
       const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
@@ -478,13 +473,10 @@ describe('ValidationManager', () => {
     it('returns true when got all functions valid', async () => {
       const identifier = createUuid();
       const payload = createUpdatePayload();
-      const expected = createRecord();
-
-      const tilesetPath = validationManager.extractLink(expected.links);
-
-      catalogMock.getRecord.mockResolvedValue(expected);
+      const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
-      configProviderMock.getFile.mockResolvedValue(tilesetPath);
+      providerMock.getFile.mockResolvedValue(getTileset());
 
       const response = await validationManager.validateUpdate(identifier, payload);
 
