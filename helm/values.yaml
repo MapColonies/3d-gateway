@@ -1,0 +1,140 @@
+global:
+  ca:
+    enabled: false
+    useExternal: true
+    secretName: "root-ca"
+    path: "/usr/local/share/ca-certificates"
+    key: "ca.crt"
+  
+  filebeat:
+    enabled: false
+    image: docker.elastic.co/beats/filebeat:7.12.1
+    mountPath: /usr/src/app/logs
+    pycsw:
+      mountPath: /var/log/pycsw
+      logFile: pycsw.log
+    nginxS3Gateway: 
+      mountPath: /var/log/nginx
+    elastic:
+      host: 10.8.0.8
+      port: 9200
+      protocol: http
+      username: 
+      password:
+      index: 3d-np
+      sslEnabled: false
+    kibana:
+      host: 10.8.0.8:5601
+
+  ingestion:
+    providers:
+      source: NFS
+      destination: S3
+    NFS:
+      source:
+        name: 3d-pvc-source
+        pv_path: /Source3DModels
+        sub_path: ''
+      destination:
+        name: 3d-pvc-dest
+        pv_path: /Destination3DModels
+        sub_path: ''
+    splunk:
+      enabled: false
+      annotations:
+        collectord.io/index: SPLUNK_INDEX
+        collectord.io/logs-output: splunk
+      
+ca:
+  enabled: false
+  useExternal: true
+  secretName: ""
+  path: /
+  key: ""
+
+filebeat:
+  enabled: false
+  image: ''
+  mountPath: /
+  pycsw:
+    mountPath: /
+    logFile: 
+  nginxS3Gateway: 
+    mountPath: /
+  elastic:
+    host: 10.8.0.8
+    port: 9200
+    protocol: ''
+    username: 
+    password:
+    index: ''
+    sslEnabled: false
+  kibana:
+    host: ''
+ingestion:
+  providers:
+    source: NFS
+    destination: S3
+  NFS:
+    source:
+      name: 3d-pvc-source
+      pv_path: /Source3DModels
+      sub_path: ''
+    destination:
+      name: 3d-pvc-dest
+      pv_path: /Destination3DModels
+      sub_path: ''
+  splunk:
+    enabled: false
+    annotations:
+      collectord.io/index: SPLUNK_INDEX
+      collectord.io/logs-output: splunk
+replicaCount: 1
+initialDelaySeconds: 20
+nodePort: 30030
+
+image:
+  repository: 3d-gateway
+  tag: ''
+
+validations:
+  percentageLimit: 10
+  lookupTables:
+    url: http://lookup-tables-3d-dev
+    subUrl: lookup-tables/lookupData
+
+env:
+  basePath: \\domtest\mimi\archi\maz\silver\libot
+  port: 80
+  targetPort: 8080
+  protocol: TCP
+  logLevel: info
+  logPrettyPrintEnabled: false
+  responseCompressionEnabled: true
+  requestPayloadLimit: 1mb
+  tracing:
+    enabled: false
+    url: 'http://localhost:55681/v1/trace'
+  metrics:
+    enabled: false
+    url: 'http://localhost:55681/v1/metrics'
+
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+route:
+  enabled: false
+  path: /
+  https: true
+  host:
+  useCert: false
+  timeout:
+    enabled: false # defaults to 30s by openshift
+    duration: 60s # supported units (us, ms, s, m, h, d)

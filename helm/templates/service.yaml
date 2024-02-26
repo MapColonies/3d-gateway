@@ -1,16 +1,29 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "gateway.name" . -}}
+{{- $cloudProviderFlavor := include "gateway.cloudProviderFlavor" . -}}
 apiVersion: v1
 kind: Service
 metadata: {{ $fullname := printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
-  name: {{ $fullname }}
+  name: {{ $releaseName }}-{{ $chartName }}
   labels:
-    app: {{ $fullname }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: "{{ .Release.Name }}"
+    app: {{ $chartName }}-gateway
+    component: {{ $chartName }}-gateway
+    environment: {{ include "gateway.environment" . }}
+    release: {{ $releaseName }}
+    {{- include "gateway.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  {{- if eq $cloudProviderFlavor "minikube" }}
+  type: NodePort
+  {{- end }}
   ports:
-  - port: {{ .Values.service.port }}
-    targetPort: {{ .Values.service.targetPort }}
-    protocol: TCP
+    - port: {{ .Values.env.port }}
+      targetPort: {{ .Values.env.targetPort }}
+      protocol: {{ .Values.env.protocol }}
+      {{- if eq $cloudProviderFlavor "minikube" }}
+      nodePort: {{ .Values.nodePort }}
+      {{- end }}
   selector:
-    app: {{ $fullname }}
+    app: {{ $chartName }}-gateway
+    release: {{ $releaseName }}
+    run: {{ $releaseName }}-{{ $chartName }}
+    {{- include "gateway.selectorLabels" . | nindent 4 }}

@@ -1,21 +1,32 @@
-{{- if .Values.route.enabled -}}
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "gateway.name" . -}}
+{{- $cloudProviderFlavor := include "gateway.cloudProviderFlavor" . -}}
+{{- if and (eq $cloudProviderFlavor "openshift") (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
-metadata: {{ $fullname := printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
-  name: {{ $fullname }}
-  labels:
-    app: {{ $fullname }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
+metadata:
+  name: {{ $releaseName }}-{{ $chartName }}-route
   annotations:
-    {{- range $key, $value := .Values.route.annotations }}
-      {{ $key }}: {{ tpl $value $ | quote }}
+    haproxy.router.openshift.io/rewrite-target: /
+    {{- if .Values.route.timeout.enabled }}
+    haproxy.router.openshift.io/timeout: {{ .Values.route.timeout.duration }}
     {{- end }}
 spec:
+  {{- if .Values.route.host }}
+  host: {{ .Values.route.host }}
+  {{- end }}
+  path: {{ .Values.route.path | default "/" }}
   to:
     kind: Service
-    name: {{ $fullname }}
+    name: {{ $releaseName }}-{{ $chartName }}
+  {{- if .Values.route.https }}
   tls:
-    termination: edge  
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    {{- if .Values.route.useCert }}
+    certificate: {{ .Files.Get "config/certificate.pem" | quote }}
+    key: {{ .Files.Get "config/key.pem" | quote }}
+    caCertificate: {{ .Files.Get "config/caCertificate.pem" | quote }}
+    {{- end }}
+  {{- end }}
 {{- end -}}

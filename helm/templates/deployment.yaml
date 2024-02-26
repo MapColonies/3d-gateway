@@ -1,80 +1,121 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "gateway.name" . -}}
+{{- $cloudProviderFlavor := include "gateway.cloudProviderFlavor" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "gateway.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "gateway.cloudProviderImagePullSecretName" . -}}
 apiVersion: apps/v1
 kind: Deployment
-metadata: {{ $fullname := printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
-  name: {{ $fullname }}
+metadata: 
+  name: {{ $releaseName }}-gateway
   labels:
-    app: {{ $fullname }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: "{{ .Release.Name }}"
+    app: {{ $chartName }}-gateway
+    chart: {{ $chartName }}-gateway
+    release: {{ $releaseName }}
+{{- $splunk := (include "common.splunk.merged" . ) | fromYaml }}
+{{- if $splunk.enabled}}
+{{- with $splunk.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{- end }}
 spec:
+  replicas: {{ default 1 .Values.replicaCount | int }}
   selector:
     matchLabels:
-      app: {{ $fullname }}
-  replicas: {{ default 1 .Values.replicaCount | int }}
+      app: {{ $chartName }}-gateway
+      release: {{ $releaseName }}
+      run: {{ $releaseName }}-gateway
+      {{- include "gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ $fullname }}
+        app: {{ $chartName }}-gateway
+        release: {{ $releaseName }}
+        run: {{ $releaseName }}-gateway
+        {{- include "gateway.selectorLabels" . | nindent 8 }}
+      {{- if .Values.resetOnConfigChange }}
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
     spec:
-      volumes:
-      - name: ingestion-source-storage
-        persistentVolumeClaim:
-          claimName: {{ .Values.storage.ingestionSourcePvc.name }}
-      {{- if .Values.logsFilebeat.enabled }}
-      - name: logs
-        emptyDir: {}
-      - name: config
-        configMap:
-          name: filebeat-config
-      {{- end }}
-      terminationGracePeriodSeconds: 30
+    {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
+    {{- end }}
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image }}"
-        imagePullPolicy: IfNotPresent
-        volumeMounts: 
+        - name: {{ $releaseName }}-gateway-deployment
+          {{- with .Values.image }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ .tag }}
+          {{- end }}
+          volumeMounts: 
+          {{- $providers := (include "common.providers.merged" . ) | fromYaml }}
+            {{- if eq $providers.source "NFS" }}
+            {{- $NFS := (include "common.NFS.merged" . ) | fromYaml }}
             - name: ingestion-source-storage
-              mountPath: {{ .Values.storage.ingestionSourcePv.hostPath }}
-            {{- if .Values.logsFilebeat.enabled }}
-            - name: logs
-              mountPath: {{ .Values.logsFilebeat.mountPath }}
+              mountPath: {{ $NFS.source.pv_path }}
+              subPath: {{ $NFS.source.sub_path }}
             {{- end }}
-        env:
-        - name: SERVER_PORT
-          value: {{ .Values.service.targetPort | quote }}
-        - name: STORE_TRIGGER_URL
-          value: {{ tpl .Values.storeTrigger.url . | quote }}
-        - name: STORE_TRIGGER_SUB_URL
-          value: {{ tpl .Values.storeTrigger.subUrl . | quote }}
-        - name: LOOKUP_TABLES_URL
-          value: {{ tpl .Values.lookupTables.url . | quote }}
-        - name: LOOKUP_TABLES_SUB_URL
-          value: {{ tpl .Values.lookupTables.subUrl . | quote }}
-        - name: BASE_PATH
-          value: {{ tpl .Values.paths.basePath . | quote }}
-        - name: PV_PATH
-          value: {{ tpl .Values.storage.ingestionSourcePv.hostPath . | quote }}
-        - name: PERCENTAGE_LIMIT
-          value: {{ .Values.percentageLimit | quote }}
-      {{- if .Values.logsFilebeat.enabled }}
-        command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
-      - name: filebeat
-        image: {{ .Values.logsFilebeat.filebeatImage }}
-        args: [ "-c", "/etc/filebeat.yml", "-e" ]
-        volumeMounts:
-          - name: logs
-            mountPath: {{ .Values.logsFilebeat.mountPath }}
-          - name: config
-            mountPath: /etc/filebeat.yml
-            subPath: filebeat.yml
-      {{- end }}
-        ports:
-        - containerPort: {{ .Values.service.targetPort | int }}
-        livenessProbe:
-          httpGet:
-            path: /liveness
-            port: {{ .Values.service.targetPort | int }}
-        # readinessProbe:
-        #   httpGet:
-        #     path: /readiness
-        #     port: {{ .Values.service.targetPort | int }}
+            {{- $filebeat := (include "common.filebeat.merged" . ) | fromYaml }}
+            {{- if $filebeat.enabled }}
+            - name: logs
+              mountPath: {{ $filebeat.mountPath }}
+            {{- end }}
+            {{- $ca := (include "common.ca.merged" . ) | fromYaml }}
+            {{- if $ca.enabled }}
+            - mountPath: {{ printf "%s/%s" $ca.path $ca.key | quote }}
+              name: root-ca
+              subPath: {{ quote $ca.key }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ $releaseName }}-ingestion-configmap
+            - configMapRef:
+                name: {{ .Release.Name }}-{{ $chartName }}-configmap
+          ports:
+            - containerPort: {{ .Values.env.targetPort | int }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+            httpGet: 
+              path: /liveness
+              port: {{ .Values.env.targetPort }}
+            timeoutSeconds: 20
+            periodSeconds: 30
+          # readinessProbe:
+          #   httpGet:
+          #     path: /readiness
+          #     port: {{ .Values.env.targetPort }}
+          {{- if .Values.resources.enabled }}
+          resources:
+            {{- toYaml .Values.resources.value | nindent 12 }}
+          {{- end }}
+        {{- if $filebeat.enabled }}
+          command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
+        - name: filebeat
+          image: {{ $filebeat.image }}
+          args: [ "-c", "/etc/filebeat.yml", "-e" ]
+          volumeMounts:
+            - name: logs
+              mountPath: {{ $filebeat.mountPath }}
+            - name: config
+              mountPath: /etc/filebeat.yml
+              subPath: filebeat.yml
+        {{- end }}
+      volumes:
+        {{- if eq $providers.source "NFS" }}
+        - name: ingestion-source-storage
+        {{- $NFS := (include "common.NFS.merged" . ) | fromYaml }}
+          persistentVolumeClaim:
+            claimName: {{ $NFS.source.name }}
+        {{- end }}
+        {{- if $ca.enabled }}
+        - name: root-ca
+          secret:
+            secretName: {{ $ca.secretName }}
+        {{- end }}
+        {{- if $filebeat.enabled }}
+        - name: logs
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: filebeat-config-{{ .Release.Name }}
+        {{- end }}
