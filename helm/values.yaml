@@ -85,9 +85,9 @@ S3:
     maxAttempts: 3
     sigVersion: 4
     storageClass: 'STANDARD'
-    
+
 filebeat:
-  enabled: true
+  enabled: false
   image: ''
   mountPath: ''
   pycsw:
