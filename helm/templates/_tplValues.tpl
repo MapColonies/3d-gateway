@@ -64,3 +64,15 @@ Custom definitions
 {{- define "common.splunk.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.splunk .Values.global.ingestion.splunk ) "context" . ) }}
 {{- end -}}
+
+{{- define "common.store-trigger.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.storeTrigger .Values.global.ingestion.storeTrigger ) "context" . ) }}
+{{- end -}}
+
+{{- define "common.catalog.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.catalog .Values.global.ingestion.catalog ) "context" . ) }}
+{{- end -}}
+
+{{- define "common.S3.merged" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.S3.destination .Values.global.S3.destination ) "context" . ) }}
+{{- end -}}

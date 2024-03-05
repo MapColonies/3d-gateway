@@ -6,6 +6,21 @@ global:
     path: "/usr/local/share/ca-certificates"
     key: "ca.crt"
   
+  S3:
+    destination:
+      accessKey: vector
+      secretAccessKey: vectorPassword
+      server: 10.8.0.9
+      serverPort: 9000
+      serverProto: http
+      bucket: 3dtiles
+      region: "us-east-1"
+      style: path
+      sslEnabled: false
+      maxAttempts: 3
+      sigVersion: 4
+      storageClass: 'STANDARD'
+
   filebeat:
     enabled: false
     image: docker.elastic.co/beats/filebeat:7.12.1
@@ -30,6 +45,10 @@ global:
     providers:
       source: NFS
       destination: S3
+    catalog:
+      subUrl: metadata
+    storeTrigger:
+      subUrl: ingestion
     NFS:
       source:
         name: 3d-pvc-source
@@ -52,15 +71,30 @@ ca:
   path: /
   key: ""
 
+S3:
+  destination:
+    accessKey: vector
+    secretAccessKey: vectorPassword
+    server: 10.8.0.9
+    serverPort: 9000
+    serverProto: http
+    bucket: 3dtiles
+    region: "us-east-1"
+    style: path
+    sslEnabled: false
+    maxAttempts: 3
+    sigVersion: 4
+    storageClass: 'STANDARD'
+    
 filebeat:
-  enabled: false
+  enabled: true
   image: ''
-  mountPath: /
+  mountPath: ''
   pycsw:
-    mountPath: /
+    mountPath: ''
     logFile: 
   nginxS3Gateway: 
-    mountPath: /
+    mountPath: ''
   elastic:
     host: 10.8.0.8
     port: 9200
@@ -71,10 +105,27 @@ filebeat:
     sslEnabled: false
   kibana:
     host: ''
+
+sidecars:
+  filebeat:
+    name: filebeat
+    image: docker.elastic.co/beats/filebeat:7.12.1
+    args: [ "-c", "/etc/filebeat.yml", "-e" ]
+    volumeMounts:
+      - name: ''
+        mountPath: ''
+      - name: ''
+        mountPath: ''
+        subPath: ''
+
 ingestion:
   providers:
     source: NFS
     destination: S3
+  catalog:
+      subUrl: metadata
+  storeTrigger:
+      subUrl: ingestion
   NFS:
     source:
       name: 3d-pvc-source
@@ -89,6 +140,7 @@ ingestion:
     annotations:
       collectord.io/index: SPLUNK_INDEX
       collectord.io/logs-output: splunk
+
 replicaCount: 1
 initialDelaySeconds: 20
 nodePort: 30030

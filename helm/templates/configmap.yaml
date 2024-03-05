@@ -27,3 +27,26 @@ data:
   BASE_PATH: {{ tpl .Values.env.basePath . | quote }}
   PERCENTAGE_LIMIT: {{ .Values.validations.percentageLimit | quote }}
   SERVER_PORT: {{ .Values.env.targetPort | quote }}
+  STORE_TRIGGER_URL: http://{{ .Release.Name }}-store-trigger
+  {{- $storeTrigger := (include "common.store-trigger.merged" . ) | fromYaml }}
+  STORE_TRIGGER_SUB_URL: {{ $storeTrigger.subUrl | quote }}
+  CATALOG_URL: http://{{ .Release.Name }}-catalog
+  {{- $catalog := (include "common.catalog.merged" . ) | fromYaml }}
+  CATALOG_SUB_URL: {{ $catalog.subUrl | quote }}
+  {{- $providers := (include "common.providers.merged" . ) | fromYaml }}
+  {{ if eq $providers.source "NFS" }}
+  {{- $NFS := (include "common.NFS.merged" . ) | fromYaml }}
+  PV_SOURCE_PATH: {{ $NFS.source.pv_path | quote }}
+  {{ end }}
+  {{ if eq $providers.destination "S3" }}
+  {{- $S3 := (include "common.S3.merged" . ) | fromYaml }}
+  S3_DEST_ACCESS_KEY_ID: {{ $S3.accessKey | quote }}
+  S3_DEST_SECRET_ACCESS_KEY: {{ $S3.secretAccessKey | quote }}
+  S3_DEST_END_POINT_URL: "{{ $S3.serverProto }}://{{ $S3.server }}:{{ $S3.serverPort }}"
+  S3_DEST_BUCKET: {{ $S3.bucket | quote }}
+  S3_DEST_REGION: {{ $S3.region | quote }}
+  S3_DEST_STORAGE_CLASS: {{ $S3.storageClass | quote }} 
+  S3_DEST_FORCE_PATH_STYLE: {{ eq $S3.style "path" | ternary "true" "false" | quote }}
+  S3_DEST_SSL_ENABLED: {{ $S3.sslEnabled | quote}}
+  S3_DEST_MAX_ATTEMPTS: {{ $S3.maxAttempts | quote}}
+  {{ end }}

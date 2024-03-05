@@ -68,7 +68,7 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ $releaseName }}-ingestion-configmap
+                name: {{ .Release.Name }}-{{ $chartName }}-configmap  
             - configMapRef:
                 name: {{ .Release.Name }}-{{ $chartName }}-configmap
           ports:
