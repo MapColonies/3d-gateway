@@ -173,7 +173,7 @@ export class ValidationManager {
     return true;
   }
 
-  private convertPolygonToBoundingBox(polygon: turf.Polygon): turf.Polygon {
+  private convertPolygonToBoundingBox(polygon: turf.Polygon): string {
     const bbox = turf.bbox(polygon);
     const boundingBox: turf.Polygon = {
         type: 'Polygon',
@@ -187,27 +187,21 @@ export class ValidationManager {
             ]
         ]
     };
-    return boundingBox;
+    return JSON.stringify(boundingBox);
 }
 
   public validateIntersection(payload: IngestionPayload, productName: string): Polygon | string {
     try {
-        this.logger.debug("blalalalalala")
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`
         const file: string = fs.readFileSync(tilesetPath, 'utf8');
-        console.log("blalala")
         const shape = JSON.parse(file).root.boundingVolume;
-        console.log("papapapa")
-        console.log("shape", shape)
 
         let model: Polygon;
 
         if (shape.sphere !== undefined) {
             model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
-            console.log("model", model)
         } else if (shape.region !== undefined) {
             model = polygonCalculates.convertRegionFromRadianToDegrees(shape as BoundingRegion);
-            console.log("model", model)
         } else if (shape.box !== undefined) {
             return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
         } else {
@@ -215,9 +209,10 @@ export class ValidationManager {
         }
 
         const boundingBoxCoordinates = this.convertPolygonToBoundingBox(model);
-        
+        console.log('bounding box', boundingBoxCoordinates)
 
         this.logger.debug({ msg: 'extracted successfully polygon of the model' ,polygon: boundingBoxCoordinates, modelName: productName });
+        console.log("model bounding box", JSON.stringify(model))
         return model;
 
     } catch (error) {
@@ -227,10 +222,10 @@ export class ValidationManager {
             this.logger.error("reading error", error)
             return 'Error reading tileset file';
         }
+
+
+        
     
-
-
-
     //   const intersection: Feature<Polygon | MultiPolygon> | null = intersect(footprint, model);
 
     //   this.logger.debug({
