@@ -21,3 +21,7 @@ jobs:
           echo "Docker_Repository=${Docker_Repository,,}" >>${GITHUB_ENV}
       - run: docker build . -t ${{ env.Docker_Repository }}
       - run: docker push ${{ env.Docker_Repository }}
+
+  build_and_push_helm:
+      uses: MapColonies/shared-workflows/.github/workflows/build-and-push-helm.yaml@master
+      secrets: inherit
