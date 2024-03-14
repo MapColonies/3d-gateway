@@ -9,6 +9,7 @@ metadata:
   name: {{ $releaseName }}-gateway
   labels:
     app: {{ $chartName }}-gateway
+    environment: {{ include "gateway.environment" . }}
     chart: {{ $chartName }}-gateway
     release: {{ $releaseName }}
 {{- $splunk := (include "common.splunk.merged" . ) | fromYaml }}
