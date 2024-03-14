@@ -2,44 +2,44 @@ global:
   ca:
     enabled: false
     useExternal: true
-    secretName: "root-ca"
-    path: "/usr/local/share/ca-certificates"
-    key: "ca.crt"
+    secretName: ''
+    path: ''
+    key: ''
   
   S3:
     destination:
-      accessKey: vector
-      secretAccessKey: vectorPassword
-      server: 10.8.0.9
+      accessKey: ''
+      secretAccessKey: ''
+      server: ''
       serverPort: 9000
-      serverProto: http
-      bucket: 3dtiles
-      region: "us-east-1"
-      style: path
+      serverProto: ''
+      bucket: ''
+      region: ''
+      style: ''
       sslEnabled: false
       maxAttempts: 3
       sigVersion: 4
-      storageClass: 'STANDARD'
+      storageClass: ''
 
   filebeat:
     enabled: false
     image: docker.elastic.co/beats/filebeat:7.12.1
-    mountPath: /usr/src/app/logs
+    mountPath: 
     pycsw:
-      mountPath: /var/log/pycsw
-      logFile: pycsw.log
+      mountPath: 
+      logFile: 
     nginxS3Gateway: 
-      mountPath: /var/log/nginx
+      mountPath: 
     elastic:
-      host: 10.8.0.8
+      host:
       port: 9200
-      protocol: http
+      protocol: 
       username: 
       password:
-      index: 3d-np
+      index: 
       sslEnabled: false
     kibana:
-      host: 10.8.0.8:5601
+      host:
 
   ingestion:
     providers:
@@ -51,12 +51,12 @@ global:
       subUrl: ingestion
     NFS:
       source:
-        name: 3d-pvc-source
-        pv_path: /Source3DModels
+        name: 
+        pv_path: ''
         sub_path: ''
       destination:
-        name: 3d-pvc-dest
-        pv_path: /Destination3DModels
+        name: ''
+        pv_path: 
         sub_path: ''
     splunk:
       enabled: false
@@ -68,23 +68,23 @@ ca:
   enabled: false
   useExternal: true
   secretName: ""
-  path: /
+  path: ''
   key: ""
 
 S3:
   destination:
-    accessKey: vector
-    secretAccessKey: vectorPassword
-    server: 10.8.0.9
+    accessKey: ''
+    secretAccessKey: ''
+    server: ''
     serverPort: 9000
-    serverProto: http
-    bucket: 3dtiles
-    region: "us-east-1"
-    style: path
+    serverProto: ''
+    bucket: ''
+    region: ''
+    style: ''
     sslEnabled: false
     maxAttempts: 3
     sigVersion: 4
-    storageClass: 'STANDARD'
+    storageClass: ''
 
 filebeat:
   enabled: false
@@ -96,7 +96,7 @@ filebeat:
   nginxS3Gateway: 
     mountPath: ''
   elastic:
-    host: 10.8.0.8
+    host: 
     port: 9200
     protocol: ''
     username: 
@@ -128,12 +128,12 @@ ingestion:
       subUrl: ingestion
   NFS:
     source:
-      name: 3d-pvc-source
-      pv_path: /Source3DModels
+      name: ''
+      pv_path: ''
       sub_path: ''
     destination:
-      name: 3d-pvc-dest
-      pv_path: /Destination3DModels
+      name: ''
+      pv_path: ''
       sub_path: ''
   splunk:
     enabled: false
@@ -147,19 +147,18 @@ nodePort: 30030
 
 image:
   repository: 3d-gateway
-  tag: ''
+  tag: v2.0.0
 
 validations:
   percentageLimit: 10
   lookupTables:
-    url: http://lookup-tables-3d-dev
-    subUrl: lookup-tables/lookupData
-
+    url: ''
+    subUrl: ''
 env:
-  basePath: \\domtest\mimi\archi\maz\silver\libot
+  basePath: ''
   port: 80
   targetPort: 8080
-  protocol: TCP
+  protocol: ''
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
@@ -183,7 +182,7 @@ resources:
 
 route:
   enabled: false
-  path: /
+  path: 
   https: true
   host:
   useCert: false
