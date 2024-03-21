@@ -1,0 +1,27 @@
+name: Build and push artifacts
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+env:
+  HELM_EXPERIMENTAL_OCI: 1
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build_and_push_docker:
+      uses: MapColonies/shared-workflows/.github/workflows/build-and-push-docker.yaml@master
+      secrets: inherit
+  
+  build_and_push_helm:
+      uses: MapColonies/shared-workflows/.github/workflows/build-and-push-helm.yaml@master
+      secrets: inherit
