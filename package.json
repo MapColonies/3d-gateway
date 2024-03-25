@@ -16,7 +16,7 @@
     "release": "standard-version",
     "test": "npm run test:unit && npm run test:integration",
     "prebuild": "npm run clean",
-    "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
+    "build": "tsc --project tsconfig.build.json && npm run bundleOpenApi && npm run assets:copy",
     "start": "npm run build && cd dist && node ./index.js",
     "start:dev": "npm run build && cd dist && node --enable-source-maps ./index.js",
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./bundledApi.yaml ./dist/ && copyfiles ./package.json dist",
