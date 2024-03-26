@@ -95,7 +95,7 @@ spec:
         - name: root-ca
           secret:
             secretName: {{ $ca.secretName }}
+      {{- end }}
       {{- if .Values.sidecars }}
       {{ tpl (.Values.sidecars) . | nindent 8 }}
       {{- end }}
-    {{- end }}
