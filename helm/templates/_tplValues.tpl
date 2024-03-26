@@ -49,10 +49,6 @@ Custom definitions
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ca .Values.global.ca ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.filebeat.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.filebeat .Values.global.filebeat ) "context" . ) }}
-{{- end -}}
-
 {{- define "common.providers.merged" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.providers .Values.global.ingestion.providers ) "context" . ) }}
 {{- end -}}

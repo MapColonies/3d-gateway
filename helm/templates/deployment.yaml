@@ -56,11 +56,6 @@ spec:
               mountPath: {{ $NFS.source.pv_path }}
               subPath: {{ $NFS.source.sub_path }}
             {{- end }}
-            {{- $filebeat := (include "common.filebeat.merged" . ) | fromYaml }}
-            {{- if $filebeat.enabled }}
-            - name: logs
-              mountPath: {{ $filebeat.mountPath }}
-            {{- end }}
             {{- $ca := (include "common.ca.merged" . ) | fromYaml }}
             {{- if $ca.enabled }}
             - mountPath: {{ printf "%s/%s" $ca.path $ca.key | quote }}
@@ -89,18 +84,6 @@ spec:
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
-        {{- if $filebeat.enabled }}
-          command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
-        - name: filebeat
-          image: {{ $filebeat.image }}
-          args: [ "-c", "/etc/filebeat.yml", "-e" ]
-          volumeMounts:
-            - name: logs
-              mountPath: {{ $filebeat.mountPath }}
-            - name: config
-              mountPath: /etc/filebeat.yml
-              subPath: filebeat.yml
-        {{- end }}
       volumes:
         {{- if eq $providers.source "NFS" }}
         - name: ingestion-source-storage
@@ -112,11 +95,4 @@ spec:
         - name: root-ca
           secret:
             secretName: {{ $ca.secretName }}
-        {{- end }}
-        {{- if $filebeat.enabled }}
-        - name: logs
-          emptyDir: {}
-        - name: config
-          configMap:
-            name: filebeat-config-{{ .Release.Name }}
         {{- end }}
