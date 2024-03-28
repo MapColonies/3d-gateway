@@ -66,8 +66,6 @@ S3:
     sigVersion: 4
     storageClass: ''
 
-
-
 # Add side car to the Deployment, for example
 # sidecars: |-
 #   - name: sidecar
