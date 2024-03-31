@@ -17,8 +17,8 @@ global:
       region: ''
       style: ''
       sslEnabled: false
-      maxAttempts: 3
-      sigVersion: 4
+      maxAttempts: 
+      sigVersion: 
       storageClass: ''
 
   ingestion:
@@ -26,9 +26,9 @@ global:
       source: NFS
       destination: S3
     catalog:
-      subUrl: metadata
+      subUrl: ''
     storeTrigger:
-      subUrl: ingestion
+      subUrl: ''
     NFS:
       source:
         name: 
@@ -62,8 +62,8 @@ S3:
     region: ''
     style: ''
     sslEnabled: false
-    maxAttempts: 3
-    sigVersion: 4
+    maxAttempts: 
+    sigVersion: 
     storageClass: ''
 
 # Add side car to the Deployment, for example
@@ -82,9 +82,9 @@ ingestion:
     source: NFS
     destination: S3
   catalog:
-      subUrl: metadata
+      subUrl: ''
   storeTrigger:
-      subUrl: ingestion
+      subUrl: ''
   NFS:
     source:
       name: ''
