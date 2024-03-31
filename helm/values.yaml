@@ -11,7 +11,7 @@ global:
       accessKey: ''
       secretAccessKey: ''
       server: ''
-      serverPort: 9000
+      serverPort: 
       serverProto: ''
       bucket: ''
       region: ''
@@ -56,7 +56,7 @@ S3:
     accessKey: ''
     secretAccessKey: ''
     server: ''
-    serverPort: 9000
+    serverPort: 
     serverProto: ''
     bucket: ''
     region: ''
@@ -130,7 +130,7 @@ env:
     url: 'http://localhost:55681/v1/metrics'
 
 resources:
-  enabled: true
+  enabled: false
   value:
     limits:
       cpu: 100m
@@ -142,7 +142,7 @@ resources:
 route:
   enabled: false
   path: 
-  https: true
+  https: false
   host:
   useCert: false
   timeout:
