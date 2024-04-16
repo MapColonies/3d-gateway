@@ -10,7 +10,7 @@ export class StoreTriggerCall {
   private readonly storeTrigger: StoreTriggerConfig;
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
-    this.storeTrigger = this.config.get<StoreTriggerConfig>('storeTrigger');
+    this.storeTrigger = this.config.get<StoreTriggerConfig>('externalServices.storeTrigger');
   }
 
   public async postPayload(payload: StoreTriggerPayload): Promise<StoreTriggerResponse> {
@@ -18,9 +18,9 @@ export class StoreTriggerCall {
       msg: 'got a request for a new flow',
       modelId: payload.modelId,
       modelName: payload.metadata.productName,
-      flowPayload: payload,
+      payload,
     });
-    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/${this.storeTrigger.subUrl}`, payload);
+    const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger.url}/ingestion`, payload);
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       jobId: response.data.jobID,
@@ -28,6 +28,21 @@ export class StoreTriggerCall {
       modelName: payload.metadata.productName,
       payload,
     });
+    if (this.storeTrigger.dr.enabled) {
+      this.logger.debug({
+        msg: 'sending also to DR',
+        modelId: payload.modelId,
+        modelName: payload.metadata.productName,
+      });
+      await axios.post<StoreTriggerResponse>(`${this.storeTrigger.dr.url}/ingestion`, payload);
+      this.logger.info({
+        msg: 'sent to DR successfully',
+        jobId: response.data.jobID,
+        modelId: payload.modelId,
+        modelName: payload.metadata.productName,
+        payload,
+      });
+    }
     return response.data;
   }
 }
