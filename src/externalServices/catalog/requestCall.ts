@@ -5,14 +5,14 @@ import { StatusCodes } from 'http-status-codes';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
 import { IConfig, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
-import { CatalogConfig, Record3D } from './interfaces';
+import { Record3D } from './interfaces';
 
 @injectable()
 export class CatalogCall {
-  private readonly catalog: CatalogConfig;
+  private readonly catalog: string;
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
-    this.catalog = this.config.get<CatalogConfig>('catalog');
+    this.catalog = this.config.get<string>('externalServices.catalog');
   }
 
   public async getRecord(identifier: string): Promise<Record3D | undefined> {
@@ -20,7 +20,7 @@ export class CatalogCall {
       msg: 'Get Record from catalog service (CRUD)',
     });
     try {
-      const response = await axios.get<Record3D | undefined>(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`);
+      const response = await axios.get<Record3D | undefined>(`${this.catalog}/metadata/${identifier}`);
       this.logger.debug({
         msg: 'Got Record from catalog service (CRUD)',
         record: response.data,
@@ -37,7 +37,7 @@ export class CatalogCall {
       msg: 'Find last version of product from catalog service (CRUD)',
     });
     try {
-      const response = await axios.get<Record3D>(`${this.catalog.url}/${this.catalog.subUrl}/lastVersion/${productId}`);
+      const response = await axios.get<Record3D>(`${this.catalog}/metadata/lastVersion/${productId}`);
       if (response.status === StatusCodes.OK.valueOf()) {
         return true;
       }
@@ -59,7 +59,7 @@ export class CatalogCall {
     this.logger.debug({
       msg: 'Send post request to catalog service (CRUD) in order to update metadata',
     });
-    const response = await axios.patch<Record3D>(`${this.catalog.url}/${this.catalog.subUrl}/${identifier}`, payload);
+    const response = await axios.patch<Record3D>(`${this.catalog}/metadata/${identifier}`, payload);
     if (response.status === StatusCodes.OK.valueOf()) {
       return response.data;
     }
@@ -71,7 +71,7 @@ export class CatalogCall {
     this.logger.debug({
       msg: 'Change status of model in catalog service (CRUD)',
     });
-    const response = await axios.patch<Record3D>(`${this.catalog.url}/${this.catalog.subUrl}/status/${identifier}`, payload);
+    const response = await axios.patch<Record3D>(`${this.catalog}/metadata/status/${identifier}`, payload);
     if (response.status === StatusCodes.OK.valueOf()) {
       return response.data;
     }

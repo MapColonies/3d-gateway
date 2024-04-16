@@ -1,10 +1,5 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
 
-export interface CatalogConfig {
-  url: string;
-  subUrl: string;
-}
-
 export interface MetadataParams {
   identifier: string;
 }

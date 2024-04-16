@@ -1,15 +1,17 @@
 {
-  "storeTrigger": {
-    "url": "http://127.0.0.1:8081",
-    "subUrl": "ingestion"
-  },
-  "lookupTables": {
-    "url": "http://127.0.0.1:8085",
-    "subUrl": "lookup-tables/lookupData"
-  },
-  "catalog": {
-    "url": "http://127.0.0.1:8085",
-    "subUrl": "metadata"
+  "externalServices": {
+    "storeTrigger": {
+      "url": "http://127.0.0.1:8080",
+      "dr": {
+        "enabled": false,
+        "url": "http://127.0.0.1:8080"
+      }
+    },
+    "catalog": "http://127.0.0.1:8080",
+    "lookupTables": {
+      "url": "http://127.0.0.1:8080",
+      "subUrl": "lookup-tables/lookupData"
+    }
   },
   "paths": {
     "basePath": "\\\\tmp\\tilesets\\models",

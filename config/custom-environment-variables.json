@@ -39,17 +39,22 @@
       }
     }
   },
-  "storeTrigger": {
-    "url": "STORE_TRIGGER_URL",
-    "subUrl": "STORE_TRIGGER_SUB_URL"
-  },
-  "lookupTables": {
-    "url": "LOOKUP_TABLES_URL",
-    "subUrl": "LOOKUP_TABLES_SUB_URL"
-  },
-  "catalog": {
-    "url": "CATALOG_URL",
-    "subUrl": "CATALOG_SUB_URL"
+  "externalServices": {
+    "storeTrigger": {
+      "url": "STORE_TRIGGER_URL",
+      "dr": {
+        "enabled": {
+          "__name": "STORE_TRIGGER_DR_ENABLED",
+          "__format": "boolean"
+        },
+        "url": "STORE_TRIGGER_DR_URL"
+      }
+    },
+    "catalog": "CATALOG_URL",
+    "lookupTables": {
+      "url": "LOOKUP_TABLES_URL",
+      "subUrl": "LOOKUP_TABLES_SUB_URL"
+    }
   },
   "paths": {
     "basePath": "BASE_PATH",
