@@ -1,5 +1,4 @@
 import { Logger } from '@map-colonies/js-logger';
-import { BoundCounter, Meter } from '@opentelemetry/api-metrics';
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
@@ -13,15 +12,10 @@ type UpdateStatusHandler = RequestHandler<MetadataParams, unknown, UpdateStatusP
 
 @injectable()
 export class MetadataController {
-  private readonly createdResourceCounter: BoundCounter;
-
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(MetadataManager) private readonly manager: MetadataManager,
-    @inject(SERVICES.METER) private readonly meter: Meter
-  ) {
-    this.createdResourceCounter = meter.createCounter('created_resource');
-  }
+  ) {}
 
   public updateMetadata: UpdateMetadataHandler = async (req, res, next) => {
     const { identifier } = req.params;
