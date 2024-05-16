@@ -12,7 +12,7 @@ export class LookupTablesCall {
   private readonly lookupTables: LookupTablesConfig;
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
-    this.lookupTables = this.config.get<LookupTablesConfig>('lookupTables');
+    this.lookupTables = this.config.get<LookupTablesConfig>('externalServices.lookupTables');
   }
 
   public async getClassifications(): Promise<string[]> {
