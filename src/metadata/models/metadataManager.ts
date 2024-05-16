@@ -5,13 +5,12 @@ import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { CatalogCall } from '../../externalServices/catalog/requestCall';
-import { IConfig, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
+import { UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
 
 @injectable()
 export class MetadataManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(ValidationManager) private readonly validator: ValidationManager,
     @inject(CatalogCall) private readonly catalog: CatalogCall
   ) {}
