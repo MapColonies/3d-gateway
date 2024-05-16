@@ -46,6 +46,7 @@
               "type": "value"
             }
           ],
+          "noValue": "OFF",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -262,7 +263,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "sum(http_request_duration_seconds_count{method=\"POST\"})",
+          "expr": "sum(http_request_duration_seconds_count{service_name=\"3d-gateway\", method=\"POST\"})",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -348,7 +349,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "sum(http_request_duration_seconds_count{method=\"PATCH\"})",
+          "expr": "sum(http_request_duration_seconds_count{service_name=\"3d-gateway\", method=\"PATCH\"})",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -489,7 +490,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Gateway",
-  "uid": "edlsm7kr8j474d",
-  "version": 11,
+  "uid": "edlsm7kr8j474df",
+  "version": 1,
   "weekStart": ""
 }
