@@ -8,7 +8,7 @@ import { inject, injectable } from 'tsyringe';
 import getStorageExplorerMiddleware from '@map-colonies/storage-explorer-middleware';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
-import { metricsMiddleware } from '@map-colonies/telemetry';
+import { collectMetricsExpressMiddleware } from '@map-colonies/telemetry';
 import { Registry } from 'prom-client';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
@@ -57,7 +57,7 @@ export class ServerBuilder {
 
   private registerPreRoutesMiddleware(): void {
     if (this.metricsRegistry) {
-      this.serverInstance.use('/metrics', metricsMiddleware(this.metricsRegistry));
+      this.serverInstance.use(collectMetricsExpressMiddleware({ registry: this.metricsRegistry, collectNodeMetrics: true }));
     }
 
     this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/metrics'] }));

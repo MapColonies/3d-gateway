@@ -11,10 +11,7 @@ type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, Ingest
 
 @injectable()
 export class ModelController {
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(ModelManager) private readonly manager: ModelManager,
-  ) {}
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger, @inject(ModelManager) private readonly manager: ModelManager) {}
 
   public createModel: CreateModelHandler = async (req, res, next) => {
     try {

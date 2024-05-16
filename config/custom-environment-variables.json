@@ -27,7 +27,7 @@
       "buckets": {
         "__name": "TELEMETRY_METRICS_BUCKETS",
         "__format": "json"
-      }    
+      }
     }
   },
   "server": {
