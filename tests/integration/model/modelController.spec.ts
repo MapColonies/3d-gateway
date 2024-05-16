@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { ProductType } from '@map-colonies/mc-model-types';
 import mockAxios from 'jest-mock-axios';
 import { randFutureDate, randNumber, randPastDate, randWord } from '@ngneat/falso';
+import { register } from 'prom-client';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
   createMetadata,
@@ -35,6 +36,7 @@ describe('ModelController', function () {
 
   afterEach(function () {
     mockAxios.reset();
+    register.clear();
   });
 
   describe('POST /models', function () {
