@@ -79,7 +79,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "docker-compose": "^0.24.3",
+    "docker-compose": "^0.24.8",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^17.6.6",
     "@map-colonies/eslint-config": "^4.0.0",
