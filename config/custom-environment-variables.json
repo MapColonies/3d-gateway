@@ -39,17 +39,13 @@
       }
     }
   },
-  "storeTrigger": {
-    "url": "STORE_TRIGGER_URL",
-    "subUrl": "STORE_TRIGGER_SUB_URL"
-  },
-  "lookupTables": {
-    "url": "LOOKUP_TABLES_URL",
-    "subUrl": "LOOKUP_TABLES_SUB_URL"
-  },
-  "catalog": {
-    "url": "CATALOG_URL",
-    "subUrl": "CATALOG_SUB_URL"
+  "externalServices": {
+    "storeTrigger": "STORE_TRIGGER_URL",
+    "catalog": "CATALOG_URL",
+    "lookupTables": {
+      "url": "LOOKUP_TABLES_URL",
+      "subUrl": "LOOKUP_TABLES_SUB_URL"
+    }
   },
   "paths": {
     "basePath": "BASE_PATH",
