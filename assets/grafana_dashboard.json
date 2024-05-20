@@ -11,6 +11,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -20,11 +26,12 @@
   "graphTooltip": 0,
   "id": 2,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bdisjmdjha41sc"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -88,15 +95,15 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.2",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bdisjmdjha41sc"
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
+          "editorMode": "code",
           "exemplar": false,
           "expr": "up{service_name=\"3d-gateway\"}",
           "fullMetaSearch": false,
@@ -114,7 +121,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bdisjmdjha41sc"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -122,7 +129,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "millicores",
@@ -136,7 +142,6 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -194,14 +199,15 @@
       "targets": [
         {
           "datasource": {
-            "uid": "Prometheus"
+            "type": "prometheus",
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "rate(process_cpu_user_seconds_total{service_name=\"3d-gateway\"}[3m])*1000",
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{pod}}",
           "refId": "A"
         }
       ],
@@ -211,7 +217,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bdisjmdjha41sc"
+        "uid": "prometheus"
       },
       "description": "Represents request for creating a new model",
       "fieldConfig": {
@@ -220,12 +226,17 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "super-light-green",
                 "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 0
               }
             ]
           }
@@ -254,12 +265,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.2",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bdisjmdjha41sc"
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -276,7 +287,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bdisjmdjha41sc"
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -297,7 +308,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bdisjmdjha41sc"
+        "uid": "prometheus"
       },
       "description": "Represents update metadata of a model",
       "fieldConfig": {
@@ -306,6 +317,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -340,12 +352,12 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.2",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bdisjmdjha41sc"
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -362,7 +374,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bdisjmdjha41sc"
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
           "editorMode": "code",
@@ -383,7 +395,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bdisjmdjha41sc"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -391,7 +403,6 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -405,7 +416,6 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -464,7 +474,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bdisjmdjha41sc"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "sum(rate(http_request_duration_seconds_count{service_name=\"3d-gateway\"}[2m])) by(method)",
@@ -478,7 +488,10 @@
       "type": "timeseries"
     }
   ],
-  "schemaVersion": 39,
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 38,
+  "style": "dark",
   "tags": [],
   "templating": {
     "list": []
