@@ -1,6 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
+import { register } from 'prom-client';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { DocsRequestSender } from './helpers/docsRequestSender';
@@ -8,6 +9,7 @@ import { DocsRequestSender } from './helpers/docsRequestSender';
 describe('docs', function () {
   let requestSender: DocsRequestSender;
   beforeEach(function () {
+    register.clear();
     const app = getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
