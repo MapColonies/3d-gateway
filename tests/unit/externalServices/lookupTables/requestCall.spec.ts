@@ -1,6 +1,7 @@
 import mockAxios from 'jest-mock-axios';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { LookupTablesCall } from '../../../../src/externalServices/lookupTables/requestCall';
 import { ILookupOption, LookupTablesConfig } from '../../../../src/externalServices/lookupTables/interfaces';
 import { createLookupOptions } from '../../../helpers/helpers';
@@ -9,7 +10,7 @@ let lookupTables: LookupTablesCall;
 
 describe('lookupTablesCall', () => {
   beforeEach(() => {
-    lookupTables = new LookupTablesCall(config, jsLogger({ enabled: false }));
+    lookupTables = new LookupTablesCall(config, trace.getTracer('testTracer'), jsLogger({ enabled: false }));
   });
   afterEach(() => {
     jest.clearAllMocks();

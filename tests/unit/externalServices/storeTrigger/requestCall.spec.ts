@@ -3,6 +3,7 @@ import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { randWord } from '@ngneat/falso';
+import { trace } from '@opentelemetry/api';
 import { createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
 import { StoreTriggerCall } from '../../../../src/externalServices/storeTrigger/requestCall';
 import { StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
@@ -11,7 +12,7 @@ let storeTrigger: StoreTriggerCall;
 
 describe('StoreTriggerCall', () => {
   beforeEach(() => {
-    storeTrigger = new StoreTriggerCall(config, jsLogger({ enabled: false }));
+    storeTrigger = new StoreTriggerCall(config, trace.getTracer('testTracer'), jsLogger({ enabled: false }));
   });
   afterEach(() => {
     jest.clearAllMocks();

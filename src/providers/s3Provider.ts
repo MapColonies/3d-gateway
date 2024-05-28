@@ -2,6 +2,8 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { GetObjectCommandInput, GetObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import { StatusCodes } from 'http-status-codes';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../common/constants';
 import { Provider, S3Config } from '../common/interfaces';
 import { AppError } from '../common/appError';
@@ -12,7 +14,8 @@ export class S3Provider implements Provider {
 
   public constructor(
     @inject(SERVICES.PROVIDER_CONFIG) protected readonly s3Config: S3Config,
-    @inject(SERVICES.LOGGER) protected readonly logger: Logger
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
     const s3ClientConfig: S3ClientConfig = {
       endpoint: this.s3Config.endpointUrl,
@@ -27,6 +30,8 @@ export class S3Provider implements Provider {
     };
     this.s3 = new S3Client(s3ClientConfig);
   }
+
+  @withSpanAsyncV4
   public async getFile(filePath: string): Promise<string> {
     /* eslint-disable @typescript-eslint/naming-convention */
     const getParams: GetObjectCommandInput = {

@@ -2,6 +2,8 @@ import axios from 'axios';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
 import { IConfig } from '../../common/interfaces';
@@ -11,10 +13,15 @@ import { ILookupOption, LookupTablesConfig } from './interfaces';
 export class LookupTablesCall {
   private readonly lookupTables: LookupTablesConfig;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
+  ) {
     this.lookupTables = this.config.get<LookupTablesConfig>('externalServices.lookupTables');
   }
 
+  @withSpanAsyncV4
   public async getClassifications(): Promise<string[]> {
     this.logger.debug({
       msg: 'Get Classifications from lookup-tables service',

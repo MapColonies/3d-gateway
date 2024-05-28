@@ -2,6 +2,8 @@ import axios from 'axios';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
 import { IConfig, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
@@ -11,10 +13,15 @@ import { Record3D } from './interfaces';
 export class CatalogCall {
   private readonly catalog: string;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     this.catalog = this.config.get<string>('externalServices.catalog');
   }
 
+  @withSpanAsyncV4
   public async getRecord(identifier: string): Promise<Record3D | undefined> {
     this.logger.debug({
       msg: 'Get Record from catalog service (CRUD)',
@@ -32,6 +39,7 @@ export class CatalogCall {
     }
   }
 
+  @withSpanAsyncV4
   public async isProductIdExist(productId: string): Promise<boolean> {
     this.logger.debug({
       msg: 'Find last version of product from catalog service (CRUD)',
@@ -55,6 +63,7 @@ export class CatalogCall {
     }
   }
 
+  @withSpanAsyncV4
   public async patchMetadata(identifier: string, payload: UpdatePayload): Promise<Record3D> {
     this.logger.debug({
       msg: 'Send post request to catalog service (CRUD) in order to update metadata',
@@ -67,6 +76,7 @@ export class CatalogCall {
     throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during send updatedMetadata', true);
   }
 
+  @withSpanAsyncV4
   public async changeStatus(identifier: string, payload: UpdateStatusPayload): Promise<Record3D> {
     this.logger.debug({
       msg: 'Change status of model in catalog service (CRUD)',

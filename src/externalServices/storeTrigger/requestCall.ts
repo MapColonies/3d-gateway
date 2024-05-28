@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { StoreTriggerResponse, StoreTriggerPayload } from './interfaces';
@@ -9,10 +11,15 @@ import { StoreTriggerResponse, StoreTriggerPayload } from './interfaces';
 export class StoreTriggerCall {
   private readonly storeTrigger: string;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
+  ) {
     this.storeTrigger = this.config.get<string>('externalServices.storeTrigger');
   }
 
+  @withSpanAsyncV4
   public async postPayload(payload: StoreTriggerPayload): Promise<StoreTriggerResponse> {
     this.logger.debug({
       msg: 'got a request for a new flow',

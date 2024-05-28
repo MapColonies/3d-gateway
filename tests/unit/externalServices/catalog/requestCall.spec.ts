@@ -2,6 +2,7 @@ import mockAxios from 'jest-mock-axios';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
+import { trace } from '@opentelemetry/api';
 import { CatalogCall } from '../../../../src/externalServices/catalog/requestCall';
 import { createRecord, createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
 
@@ -10,7 +11,7 @@ let catalog: CatalogCall;
 describe('catalogCall tests', () => {
   const catalogUrl = `${config.get<string>('externalServices.catalog')}/metadata`;
   beforeEach(() => {
-    catalog = new CatalogCall(config, jsLogger({ enabled: false }));
+    catalog = new CatalogCall(config, jsLogger({ enabled: false }), trace.getTracer('testTracer'));
   });
   afterEach(() => {
     jest.clearAllMocks();
