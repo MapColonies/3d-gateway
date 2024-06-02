@@ -11,9 +11,9 @@ let metadataManager: MetadataManager;
 describe('MetadataManager', () => {
   beforeEach(() => {
     metadataManager = new MetadataManager(
-      jsLogger({ enabled: false }), 
+      jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
-      validationManagerMock as never, 
+      validationManagerMock as never,
       catalogMock as never
     );
   });

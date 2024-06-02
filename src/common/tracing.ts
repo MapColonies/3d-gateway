@@ -1,12 +1,19 @@
 import { Tracing } from '@map-colonies/telemetry';
-import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
+import * as api from '@opentelemetry/api';
+import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { SEMRESATTRS_PROCESS_RUNTIME_NAME, SEMRESATTRS_PROCESS_RUNTIME_VERSION } from '@opentelemetry/semantic-conventions';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { IGNORED_INCOMING_TRACE_ROUTES, IGNORED_OUTGOING_TRACE_ROUTES } from './constants';
+import { NODE_VERSION } from './constants';
 
-export const tracing = new Tracing([
-  new HttpInstrumentation({
-    ignoreIncomingPaths: IGNORED_INCOMING_TRACE_ROUTES,
-    ignoreOutgoingUrls: IGNORED_OUTGOING_TRACE_ROUTES,
-  }),
-  new ExpressInstrumentation(),
-]);
+const contextManager = new AsyncHooksContextManager();
+contextManager.enable();
+api.context.setGlobalContextManager(contextManager);
+
+export const tracing = new Tracing(
+  [new HttpInstrumentation({ requireParentforOutgoingSpans: true })],
+  {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    '@opentelemetry/instrumentation-express': { enabled: false },
+  },
+  { [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'nodejs', [SEMRESATTRS_PROCESS_RUNTIME_VERSION]: NODE_VERSION }
+);

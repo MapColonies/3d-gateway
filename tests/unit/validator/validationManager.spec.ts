@@ -117,7 +117,14 @@ describe('ValidationManager', () => {
 
   describe('validateProductType tests', () => {
     it('returns true without warnings when got valid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, trace.getTracer('testTracer'), lookupTablesMock as never, catalogMock as never, providerMock);
+      validationManager = new ValidationManager(
+        config,
+        jsLoggerMock as never,
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        providerMock
+      );
       const modelName = createModelPath();
       const productType = ProductType.PHOTO_REALISTIC_3D;
 
@@ -128,7 +135,14 @@ describe('ValidationManager', () => {
     });
 
     it('returns true with warnings when got invalid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, trace.getTracer('testTracer'), lookupTablesMock as never, catalogMock as never, providerMock);
+      validationManager = new ValidationManager(
+        config,
+        jsLoggerMock as never,
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        providerMock
+      );
       const modelName = createModelPath();
       const productType = ProductType.DSM;
       jsLoggerMock.warn.mockReturnValue('');

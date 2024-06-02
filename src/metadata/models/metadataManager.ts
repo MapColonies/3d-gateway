@@ -22,6 +22,7 @@ export class MetadataManager {
   public async updateMetadata(identifier: string, payload: UpdatePayload): Promise<unknown> {
     this.logger.info({ msg: 'started update of metadata', modelId: identifier, payload });
     this.logger.debug({ msg: 'starting validating the payload', modelId: identifier });
+    
     try {
       const validated: boolean | string = await this.validator.validateUpdate(identifier, payload);
       if (typeof validated == 'string') {
@@ -48,6 +49,7 @@ export class MetadataManager {
   public async updateStatus(identifier: string, payload: UpdateStatusPayload): Promise<unknown> {
     this.logger.info({ msg: 'started update of metadata', modelId: identifier, payload });
     this.logger.debug({ msg: 'starting validating the payload', modelId: identifier });
+
     try {
       if ((await this.catalog.getRecord(identifier)) === undefined) {
         throw new AppError('badRequest', httpStatus.BAD_REQUEST, `Record with identifier: ${identifier} doesn't exist!`, true);

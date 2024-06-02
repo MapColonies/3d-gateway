@@ -14,7 +14,7 @@ describe('ModelManager', () => {
     modelManager = new ModelManager(
       jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
-      validationManagerMock as never, 
+      validationManagerMock as never,
       storeTriggerMock as never
     );
   });
