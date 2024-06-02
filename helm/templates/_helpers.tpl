@@ -39,13 +39,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Returns the tag of the chart.
-*/}}
-{{- define "gateway.tag" -}}
-{{- default (printf "v%s" .Chart.AppVersion) .Values.image.tag }}
-{{- end }}
-
-{{/*
 Selector labels
 */}}
 {{- define "gateway.selectorLabels" -}}
@@ -54,70 +47,52 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Returns the environment from global if exists or from the chart's values, defaults to development
+Returns the environment from the chart's values if exists or from global, defaults to development
 */}}
 {{- define "gateway.environment" -}}
-{{- if .Values.global.environment }}
-    {{- .Values.global.environment -}}
+{{- if .Values.environment }}
+    {{- .Values.environment -}}
 {{- else -}}
-    {{- .Values.environment | default "development" -}}
+    {{- .Values.global.environment | default "development" -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the cloud provider name from global if exists or from the chart's values, defaults to minikube
+Returns the cloud provider name from the chart's values if exists or from global, defaults to minikube
 */}}
 {{- define "gateway.cloudProviderFlavor" -}}
-{{- if .Values.global.cloudProvider.flavor }}
-    {{- .Values.global.cloudProvider.flavor -}}
-{{- else if .Values.cloudProvider -}}
-    {{- .Values.cloudProvider.flavor | default "minikube" -}}
+{{- if .Values.cloudProvider.flavor }}
+    {{- .Values.cloudProvider.flavor -}}
 {{- else -}}
-    {{ "minikube" }}
+    {{- .Values.global.cloudProvider.flavor | default "minikube" -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the cloud provider docker registry url from global if exists or from the chart's values
+Returns the tag of the chart.
+*/}}
+{{- define "gateway.tag" -}}
+{{- default (printf "v%s" .Chart.AppVersion) .Values.image.tag }}
+{{- end }}
+
+{{/*
+Returns the cloud provider docker registry url from the chart's values if exists or from global
 */}}
 {{- define "gateway.cloudProviderDockerRegistryUrl" -}}
-{{- if .Values.global.cloudProvider.dockerRegistryUrl }}
-    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
-{{- else if .Values.cloudProvider.dockerRegistryUrl -}}
+{{- if .Values.cloudProvider.dockerRegistryUrl }}
     {{- printf "%s/" .Values.cloudProvider.dockerRegistryUrl -}}
 {{- else -}}
+    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the cloud provider image pull secret name from global if exists or from the chart's values
+Returns the cloud provider image pull secret name from the chart's values if exists or from global
 */}}
 {{- define "gateway.cloudProviderImagePullSecretName" -}}
-{{- if .Values.global.cloudProvider.imagePullSecretName }}
-    {{- .Values.global.cloudProvider.imagePullSecretName -}}
-{{- else if .Values.cloudProvider.imagePullSecretName -}}
+{{- if .Values.cloudProvider.imagePullSecretName }}
     {{- .Values.cloudProvider.imagePullSecretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Returns the tracing url from global if exists or from the chart's values
-*/}}
-{{- define "gateway.tracingUrl" -}}
-{{- if .Values.global.tracing.url }}
-    {{- .Values.global.tracing.url -}}
-{{- else if .Values.cloudProvider -}}
-    {{- .Values.env.tracing.url -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Returns the tracing url from global if exists or from the chart's values
-*/}}
-{{- define "gateway.metricsUrl" -}}
-{{- if .Values.global.metrics.url }}
-    {{- .Values.global.metrics.url -}}
-{{- else -}}
-    {{- .Values.env.metrics.url -}}
+{{- else if .Values.global.cloudProvider.imagePullSecretName -}}
+    {{- .Values.global.cloudProvider.imagePullSecretName -}}
 {{- end -}}
 {{- end -}}

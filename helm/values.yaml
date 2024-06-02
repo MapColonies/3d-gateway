@@ -1,58 +1,18 @@
 global:
-  ca:
-    enabled: false
-    useExternal: true
-    secretName: ''
-    path: ''
-    key: ''
+  cloudProvider:
+    dockerRegistryUrl: 
+    flavor: openshift
+    imagePullSecretName: 
+  imagePullPolicy: IfNotPresent
+  tracing: {}
+  metrics: {}
+  environment: development
   
+  providers:
+    source: NFS
+    destination: S3 
+
   S3:
-    destination:
-      accessKey: ''
-      secretAccessKey: ''
-      server: ''
-      serverPort: 
-      serverProto: ''
-      bucket: ''
-      region: ''
-      style: ''
-      sslEnabled: false
-      maxAttempts: 
-      sigVersion: 
-      storageClass: ''
-
-  ingestion:
-    providers:
-      source: NFS
-      destination: S3
-    catalog:
-      subUrl: ''
-    storeTrigger:
-      subUrl: ''
-    NFS:
-      source:
-        name: 
-        pv_path: ''
-        sub_path: ''
-      destination:
-        name: ''
-        pv_path: 
-        sub_path: ''
-    splunk:
-      enabled: false
-      annotations:
-        collectord.io/index: SPLUNK_INDEX
-        collectord.io/logs-output: splunk
-      
-ca:
-  enabled: false
-  useExternal: true
-  secretName: ""
-  path: ''
-  key: ""
-
-S3:
-  destination:
     accessKey: ''
     secretAccessKey: ''
     server: ''
@@ -64,73 +24,106 @@ S3:
     sslEnabled: false
     maxAttempts: 
     sigVersion: 
-    storageClass: ''
 
-# Add side car to the Deployment, for example
-# sidecars: |-
-#   - name: sidecar
-#     image: "{{ .Values.sidecar.image }}:{{ .Values.sidecar.imageTag }}"
-#     volumeMounts: []
-#     args: []
-#     ports: []
-#     resources:
-#     {{- toYaml .Values.sidecar.resources.value | nindent 12 }}
-sidecars: ''
+  NFS:  
+    name: ''
+    pv_path: ''
+    sub_path: ''
 
-ingestion:
-  providers:
-    source: NFS
-    destination: S3
-  catalog:
-      subUrl: ''
-  storeTrigger:
-      subUrl: ''
-  NFS:
-    source:
-      name: ''
-      pv_path: ''
-      sub_path: ''
-    destination:
-      name: ''
-      pv_path: ''
-      sub_path: ''
-  splunk:
-    enabled: false
-    annotations:
-      collectord.io/index: SPLUNK_INDEX
-      collectord.io/logs-output: splunk
-
-replicaCount: 1
-initialDelaySeconds: 20
-nodePort: 30030
+cloudProvider:
+    dockerRegistryUrl: 
+    flavor: 
+    imagePullSecretName: 
+imagePullPolicy: 
+environment: 
 
 image:
   repository: 3d-gateway
-  tag: v2.0.0
+  tag: '2.1.1'
+
+nodePort: 30030
+replicaCount: 1
+revisionHistoryLimit: 5 # Amount of revisions we keep
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+ca:
+  enabled: false
+  useExternal: false
+  secretName: 
+  path: 
+  key: 
+
+extraVolumes: {}
+
+extraVolumeMounts: {}
+
+sidecars: {}
+
+podAnnotations: {}
+
+providers:
+  source: NFS
+  destination: S3
+
+S3:
+  accessKey: ''
+  secretAccessKey: ''
+  server: ''
+  serverPort: 
+  serverProto: ''
+  bucket: ''
+  region: ''
+  style: ''
+  sslEnabled: false
+  maxAttempts: 
+  sigVersion: 
+
+NFS:  
+  name: ''
+  pv_path: ''
+  sub_path: ''
 
 validations:
   percentageLimit: 10
   lookupTables:
     url: ''
     subUrl: ''
+
 env:
   basePath: ''
   port: 80
   targetPort: 8080
-  protocol: ''
+  protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
   tracing:
-    enabled: false
-    url: 'http://localhost:55681/v1/trace'
+    enabled: true
+    url: http://localhost:55681/v1/trace
   metrics:
-    enabled: false
-    url: 'http://localhost:55681/v1/metrics'
+    enabled: true
+    url: http://localhost:55681/v1/metrics
+  storeTrigger:
+    url:
+  catalog:
+    url:
 
 resources:
-  enabled: false
+  enabled: true
   value:
     limits:
       cpu: 100m
@@ -141,10 +134,25 @@ resources:
 
 route:
   enabled: false
-  path: 
-  https: false
-  host:
-  useCert: false
+  path: /
+  host: 
   timeout:
     enabled: false # defaults to 30s by openshift
     duration: 60s # supported units (us, ms, s, m, h, d)
+  rewriteTarget: ''
+  tls:
+    enabled: true
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    useCerts: false
+    certificate: ''
+    key: ''
+    caCertificate: ''
+
+ingress:
+  enabled: false
+  path: /
+  host: localhost
+  cors:
+    enabled: true
+    origin: '*'

@@ -36,39 +36,52 @@ Usage:
 {{- end -}}
 {{ $dst | toYaml }}
 {{- end -}}
-
 {{/*
 End of usage example
 */}}
 
 {{/*
-Custom definitions
+Common definitions
 */}}
-
-{{- define "common.ca.merged" -}}
+{{- define "merged.ca" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ca .Values.global.ca ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.providers.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.providers .Values.global.ingestion.providers ) "context" . ) }}
+{{- define "merged.podAnnotations" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.podAnnotations .Values.global.podAnnotations ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.NFS.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.NFS .Values.global.ingestion.NFS ) "context" . ) }}
+{{- define "merged.extraVolumes" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.extraVolumes .Values.global.extraVolumes ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.splunk.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.splunk .Values.global.ingestion.splunk ) "context" . ) }}
+{{- define "merged.sidecars" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.sidecars .Values.global.sidecars ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.store-trigger.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.storeTrigger .Values.global.ingestion.storeTrigger ) "context" . ) }}
+{{- define "merged.extraVolumeMounts" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.extraVolumeMounts .Values.global.extraVolumeMounts ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.catalog.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion.catalog .Values.global.ingestion.catalog ) "context" . ) }}
+{{- define "merged.metrics" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.env.metrics .Values.global.metrics ) "context" . ) }}
 {{- end -}}
 
-{{- define "common.S3.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.S3.destination .Values.global.S3.destination ) "context" . ) }}
+{{- define "merged.tracing" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.env.tracing .Values.global.tracing ) "context" . ) }}
+{{- end -}}
+
+{{/*
+Custom definitions
+*/}}
+{{- define "merged.providers" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.providers .Values.global.providers ) "context" . ) }}
+{{- end -}}
+
+{{- define "merged.NFS" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.NFS .Values.global.NFS ) "context" . ) }}
+{{- end -}}
+
+{{- define "merged.S3" -}}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.S3 .Values.global.S3 ) "context" . ) }}
 {{- end -}}
