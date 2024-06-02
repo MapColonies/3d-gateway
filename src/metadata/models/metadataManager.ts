@@ -22,7 +22,7 @@ export class MetadataManager {
   public async updateMetadata(identifier: string, payload: UpdatePayload): Promise<unknown> {
     this.logger.info({ msg: 'started update of metadata', modelId: identifier, payload });
     this.logger.debug({ msg: 'starting validating the payload', modelId: identifier });
-    
+
     try {
       const validated: boolean | string = await this.validator.validateUpdate(identifier, payload);
       if (typeof validated == 'string') {
