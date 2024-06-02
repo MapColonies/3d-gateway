@@ -6,11 +6,6 @@ export interface StoreTriggerResponse {
   status: OperationStatus.IN_PROGRESS;
 }
 
-export interface StoreTriggerConfig {
-  url: string;
-  subUrl: string;
-}
-
 export interface StoreTriggerPayload {
   modelId: string;
   pathToTileset: string;

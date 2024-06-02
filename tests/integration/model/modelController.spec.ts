@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { ProductType } from '@map-colonies/mc-model-types';
 import mockAxios from 'jest-mock-axios';
 import { randFutureDate, randNumber, randPastDate, randWord } from '@ngneat/falso';
+import { register } from 'prom-client';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
   createMetadata,
@@ -24,6 +25,7 @@ import { ModelRequestSender } from './helpers/requestSender';
 describe('ModelController', function () {
   let requestSender: ModelRequestSender;
   beforeEach(function () {
+    register.clear();
     const app = getApp({
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
