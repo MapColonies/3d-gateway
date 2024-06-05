@@ -39,7 +39,7 @@ environment:
 
 image:
   repository: 3d-gateway
-  tag: '2.1.1'
+  tag: latest
 
 nodePort: 30030
 replicaCount: 1
