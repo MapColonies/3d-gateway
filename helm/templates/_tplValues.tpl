@@ -48,8 +48,17 @@ Common definitions
 {{- end -}}
 
 {{- define "merged.podAnnotations" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.podAnnotations .Values.global.podAnnotations ) "context" . ) }}
-{{- end -}}
+{{- $globalAnnotations := dict }}
+{{- range $key, $value := .Values.global.podAnnotations }}
+  {{- if $value.enabled }}
+    {{- $globalAnnotations = merge $globalAnnotations $value.annotations }}
+  {{- end }}
+{{- end }}
+{{- $mergedAnnotations := merge .Values.podAnnotations $globalAnnotations }}
+{{- range $key, $value := $mergedAnnotations }}
+{{ $key }}: "{{ $value }}"
+{{- end }}
+{{- end }}
 
 {{- define "merged.extraVolumes" -}}
 {{- include "common.tplvalues.merge" ( dict "values" ( list .Values.extraVolumes .Values.global.extraVolumes ) "context" . ) }}

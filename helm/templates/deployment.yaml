@@ -38,11 +38,7 @@ spec:
         run: {{ $fullName }}
         {{- include "gateway.selectorLabels" . | nindent 8 }}
       annotations:
-      {{- range $key, $value := $podAnnotations }}
-        {{- if $value.enabled }}
-          {{ toYaml $value.annotations }}
-        {{- end }}
-      {{- end }}
+        {{ include "merged.podAnnotations" . | nindent 8 }}
       {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       {{- end }}
