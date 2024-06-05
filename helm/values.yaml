@@ -1,0 +1,158 @@
+global:
+  cloudProvider:
+    dockerRegistryUrl: 
+    flavor: openshift
+    imagePullSecretName: 
+  imagePullPolicy: IfNotPresent
+  tracing: {}
+  metrics: {}
+  environment: development
+  
+  providers:
+    source: NFS
+    destination: S3 
+
+  S3:
+    accessKey: ''
+    secretAccessKey: ''
+    server: ''
+    serverPort: 
+    serverProto: ''
+    bucket: ''
+    region: ''
+    style: ''
+    sslEnabled: false
+    maxAttempts: 
+    sigVersion: 
+
+  NFS:  
+    name: ''
+    pv_path: ''
+    sub_path: ''
+
+cloudProvider:
+    dockerRegistryUrl: 
+    flavor: 
+    imagePullSecretName: 
+imagePullPolicy: 
+environment: 
+
+image:
+  repository: 3d-gateway
+  tag: '2.1.1'
+
+nodePort: 30030
+replicaCount: 1
+revisionHistoryLimit: 5 # Amount of revisions we keep
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+ca:
+  enabled: false
+  useExternal: false
+  secretName: 
+  path: 
+  key: 
+
+extraVolumes: {}
+
+extraVolumeMounts: {}
+
+sidecars: {}
+
+podAnnotations: {}
+
+providers:
+  source: 
+  destination: 
+
+S3:
+  accessKey: ''
+  secretAccessKey: ''
+  server: ''
+  serverPort: 
+  serverProto: ''
+  bucket: ''
+  region: ''
+  style: ''
+  sslEnabled: false
+  maxAttempts: 
+  sigVersion: 
+
+NFS:  
+  name: ''
+  pv_path: ''
+  sub_path: ''
+
+validations:
+  percentageLimit: 10
+  lookupTables:
+    url: ''
+    subUrl: ''
+
+env:
+  basePath: ''
+  port: 80
+  targetPort: 8080
+  protocol: TCP
+  logLevel: info
+  logPrettyPrintEnabled: false
+  responseCompressionEnabled: true
+  requestPayloadLimit: 1mb
+  tracing:
+    enabled: true
+    url: http://localhost:55681/v1/trace
+  metrics:
+    enabled: true
+    url: http://localhost:55681/v1/metrics
+  storeTrigger:
+    url:
+  catalog:
+    url:
+
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+route:
+  enabled: false
+  path: /
+  host: 
+  timeout:
+    enabled: false # defaults to 30s by openshift
+    duration: 60s # supported units (us, ms, s, m, h, d)
+  rewriteTarget: ''
+  tls:
+    enabled: true
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+    useCerts: false
+    certificate: ''
+    key: ''
+    caCertificate: ''
+
+ingress:
+  enabled: false
+  path: /
+  host: localhost
+  cors:
+    enabled: true
+    origin: '*'

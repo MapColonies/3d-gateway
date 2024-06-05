@@ -1,80 +1,116 @@
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "gateway.name" . -}}
+{{- $fullName := include "gateway.fullname" . -}}
+{{- $cloudProviderFlavor := include "gateway.cloudProviderFlavor" . -}}
+{{- $tag := include "gateway.tag" . -}}
+{{- $cloudProviderImagePullSecretName := include "gateway.cloudProviderImagePullSecretName" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "gateway.cloudProviderDockerRegistryUrl" . -}}
+{{- $ca := (include "merged.ca" . ) | fromYaml }}
+{{- $podAnnotations := (include "merged.podAnnotations" . ) | fromYaml }}
+{{- $extraVolumes := (include "merged.extraVolumes" . ) | fromYaml }}
+{{- $extraVolumeMounts := (include "merged.extraVolumeMounts" . ) | fromYaml }}
+{{- $sidecars := (include "merged.sidecars" . ) | fromYaml }}
+{{- $providers := (include "merged.providers" . ) | fromYaml }}
 apiVersion: apps/v1
 kind: Deployment
-metadata: {{ $fullname := printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
-  name: {{ $fullname }}
+metadata:
+  name: {{ $fullName }}
   labels:
-    app: {{ $fullname }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: "{{ .Release.Name }}"
+    app: {{ $chartName }}
+    component: {{ $chartName }}
+    environment: {{ include "gateway.environment" . }}
+    release: {{ $releaseName }}
+    {{- include "gateway.labels" . | nindent 4 }}
 spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
-      app: {{ $fullname }}
-  replicas: {{ default 1 .Values.replicaCount | int }}
+      app: {{ $chartName }}
+      release: {{ $releaseName }}
+      run: {{ $fullName }}
+      {{- include "gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ $fullname }}
+        app: {{ $chartName }}
+        release: {{ $releaseName }}
+        run: {{ $fullName }}
+        {{- include "gateway.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{ include "merged.podAnnotations" . | nindent 8 }}
+      {{- if .Values.resetOnConfigChange }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
     spec:
-      volumes:
-      - name: ingestion-source-storage
-        persistentVolumeClaim:
-          claimName: {{ .Values.storage.ingestionSourcePvc.name }}
-      {{- if .Values.logsFilebeat.enabled }}
-      - name: logs
-        emptyDir: {}
-      - name: config
-        configMap:
-          name: filebeat-config
+      {{- if $cloudProviderImagePullSecretName }}
+      imagePullSecrets:
+        - name: {{ $cloudProviderImagePullSecretName | quote }}
       {{- end }}
-      terminationGracePeriodSeconds: 30
       containers:
-      - name: {{ .Chart.Name }}
-        image: "{{ .Values.image }}"
-        imagePullPolicy: IfNotPresent
-        volumeMounts: 
+        - name: {{ $fullName }}-deployment
+          {{- with .Values.image }}
+          image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $tag }}
+          {{- end }}
+          volumeMounts:
+            {{- if eq $providers.source "NFS" }}
             - name: ingestion-source-storage
-              mountPath: {{ .Values.storage.ingestionSourcePv.hostPath }}
-            {{- if .Values.logsFilebeat.enabled }}
-            - name: logs
-              mountPath: {{ .Values.logsFilebeat.mountPath }}
+              {{-  $NFS := (include "merged.NFS" . ) | fromYaml }}
+              mountPath: {{ $NFS.pv_path }}
+              subPath: {{ $NFS.sub_path }}
             {{- end }}
-        env:
-        - name: SERVER_PORT
-          value: {{ .Values.service.targetPort | quote }}
-        - name: STORE_TRIGGER_URL
-          value: {{ tpl .Values.storeTrigger.url . | quote }}
-        - name: STORE_TRIGGER_SUB_URL
-          value: {{ tpl .Values.storeTrigger.subUrl . | quote }}
-        - name: LOOKUP_TABLES_URL
-          value: {{ tpl .Values.lookupTables.url . | quote }}
-        - name: LOOKUP_TABLES_SUB_URL
-          value: {{ tpl .Values.lookupTables.subUrl . | quote }}
-        - name: BASE_PATH
-          value: {{ tpl .Values.paths.basePath . | quote }}
-        - name: PV_PATH
-          value: {{ tpl .Values.storage.ingestionSourcePv.hostPath . | quote }}
-        - name: PERCENTAGE_LIMIT
-          value: {{ .Values.percentageLimit | quote }}
-      {{- if .Values.logsFilebeat.enabled }}
-        command: ["/bin/sh", "-c", "node --max_old_space_size=512 ./index.js >> /usr/src/app/logs/log.log 2>&1"]
-      - name: filebeat
-        image: {{ .Values.logsFilebeat.filebeatImage }}
-        args: [ "-c", "/etc/filebeat.yml", "-e" ]
-        volumeMounts:
-          - name: logs
-            mountPath: {{ .Values.logsFilebeat.mountPath }}
-          - name: config
-            mountPath: /etc/filebeat.yml
-            subPath: filebeat.yml
-      {{- end }}
-        ports:
-        - containerPort: {{ .Values.service.targetPort | int }}
-        livenessProbe:
-          httpGet:
-            path: /liveness
-            port: {{ .Values.service.targetPort | int }}
-        # readinessProbe:
-        #   httpGet:
-        #     path: /readiness
-        #     port: {{ .Values.service.targetPort | int }}
+            {{- if $ca.enabled }}
+            - mountPath: {{ printf "%s/%s" $ca.path $ca.key | quote }}
+              name: root-ca
+              subPath: {{ quote $ca.key }}
+            {{- end }}
+            {{- if $extraVolumeMounts -}}
+              {{ toYaml $extraVolumeMounts | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ $fullName }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.env.targetPort }}
+              protocol: {{ .Values.env.protocol }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.env.targetPort }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.env.targetPort }}
+          {{- end }}
+          {{- if .Values.resources.enabled }}
+          resources:
+            {{- toYaml .Values.resources.value | nindent 12 }}
+          {{- end }}
+        {{- if $sidecars }}
+        {{ tpl ($sidecars) . | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if eq $providers.source "NFS" }}
+        - name: ingestion-source-storage
+          persistentVolumeClaim:
+            {{-  $NFS := (include "merged.NFS" . ) | fromYaml }}
+            claimName: {{ $NFS.name }}
+            {{- end }}
+        {{- if $ca.enabled }}
+        - name: root-ca
+          secret:
+            secretName: {{ $ca.secretName }}
+        {{- end }}
+        {{- if $extraVolumes -}}
+          {{ tpl (toYaml $extraVolumes) . | nindent 8 }}
+        {{- end }}
