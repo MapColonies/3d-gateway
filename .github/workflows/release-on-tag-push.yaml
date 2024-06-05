@@ -9,3 +9,5 @@ jobs:
   release_on_tag_push:
     uses: MapColonies/shared-workflows/.github/workflows/release-on-tag-push.yaml@master
     secrets: inherit
+    with:
+      openApiFilePath: './bundledApi.yaml'
