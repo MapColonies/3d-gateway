@@ -1,0 +1,48 @@
+{{- $chartName := include "gateway.name" . -}}
+{{- $releaseName := .Release.Name -}}
+{{- $fullName := include "gateway.fullname" . -}}
+{{- $ca := (include "merged.ca" . ) | fromYaml }}
+{{- $tracing := (include "merged.tracing" . ) | fromYaml }}
+{{- $metrics := (include "merged.metrics" . ) | fromYaml }}
+{{- $providers := (include "merged.providers" . ) | fromYaml }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName }}
+data:
+  LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
+  {{ if $tracing.enabled }}
+  TELEMETRY_TRACING_ENABLED: 'true'
+  TELEMETRY_TRACING_URL: {{ $tracing.url }}
+  {{ end }}
+  {{ if $metrics.enabled }}
+  TELEMETRY_METRICS_ENABLED: 'true'
+  TELEMETRY_METRICS_URL: {{ $metrics.url }}
+  {{ end }}
+  {{- if $ca.enabled }}
+  REQUESTS_CA_BUNDLE: {{ printf "%s/%s" $ca.path $ca.key | quote }}
+  NODE_EXTRA_CA_CERTS: {{ printf "%s/%s" $ca.path $ca.key | quote }}
+  {{- end }}
+  BASE_PATH: {{ tpl .Values.env.basePath . | quote }}
+  PERCENTAGE_LIMIT: {{ .Values.validations.percentageLimit | quote }}
+  SERVER_PORT: {{ .Values.env.targetPort | quote }}
+  STORE_TRIGGER_URL: {{ .Values.env.storeTrigger.url | default (printf "http://%s-store-trigger" .Release.Name) }}
+  CATALOG_URL: {{ .Values.env.catalog.url | default (printf "http://%s-catalog" .Release.Name) }}
+  LOOKUP_TABLES_URL: {{ .Values.validations.lookupTables.url | quote }}
+  LOOKUP_TABLES_SUB_URL: {{ .Values.validations.lookupTables.subUrl | quote }}
+  {{ if eq $providers.source "NFS" }}
+  {{- $NFS := (include "merged.NFS" . ) | fromYaml }}
+  PV_SOURCE_PATH: {{ $NFS.pv_path | quote }}
+  {{ end }}
+  {{ if eq $providers.destination "S3" }}
+  {{- $S3 := (include "merged.S3" . ) | fromYaml }}
+  S3_DEST_ACCESS_KEY_ID: {{ $S3.accessKey | quote }}
+  S3_DEST_SECRET_ACCESS_KEY: {{ $S3.secretAccessKey | quote }}
+  S3_DEST_END_POINT_URL: "{{ $S3.serverProto }}://{{ $S3.server }}:{{ $S3.serverPort }}"
+  S3_DEST_BUCKET: {{ $S3.bucket | quote }}
+  S3_DEST_REGION: {{ $S3.region | quote }}
+  S3_DEST_FORCE_PATH_STYLE: {{ eq $S3.style "path" | ternary "true" "false" | quote }}
+  S3_DEST_SSL_ENABLED: {{ $S3.sslEnabled | quote}}
+  S3_DEST_MAX_ATTEMPTS: {{ $S3.maxAttempts | quote}}
+  {{ end }}
