@@ -1,5 +1,5 @@
 import jsLogger from '@map-colonies/js-logger';
-import { randFileExt, randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { container } from 'tsyringe';
 import config from 'config';
 import { S3Config } from '../../../src/common/interfaces';
@@ -38,7 +38,7 @@ describe('S3Provider', () => {
 
   describe('getFile', () => {
     it(`Should get the file when it exists on the bucket`, async () => {
-      const filePath = `${randWord()}/${randWord()}.${randFileExt()}`;
+      const filePath = `${faker.word.sample()}/${faker.word.sample()}.${faker.system.commonFileExt()}`;
       const expected = (await s3Helper.createFile(filePath)).toString();
 
       const result = await provider.getFile(filePath);
@@ -47,7 +47,7 @@ describe('S3Provider', () => {
     });
 
     it(`Should throw an error when file does not exists`, async () => {
-      const filePath = `${randWord()}/${randWord()}.${randFileExt()}`;
+      const filePath = `${faker.word.sample()}/${faker.word.sample()}.${faker.system.commonFileExt()}`;
 
       const result = provider.getFile(filePath);
 

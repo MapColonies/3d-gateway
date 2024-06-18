@@ -1,6 +1,6 @@
 import config from 'config';
 import httpStatus from 'http-status-codes';
-import { randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { AppError } from '../../../src/common/appError';
 import { S3Config } from '../../../src/common/interfaces';
 import { getProvider, getProviderConfig } from '../../../src/providers/getProviders';
@@ -16,7 +16,7 @@ describe('getProviderConfig tests', () => {
   });
 
   it(`should throw an error when the provider can't be found on config`, () => {
-    const provider = randWord();
+    const provider = faker.word.sample();
 
     const response = () => getProviderConfig(provider);
 

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import config from 'config';
-import { randBetweenDate, randNumber, randPastDate, randSentence, randUuid, randWord } from '@ngneat/falso';
 import { Polygon } from 'geojson';
+import { faker } from '@faker-js/faker';
 import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
@@ -21,8 +21,8 @@ const basePath = config.get<string>('paths.basePath');
 
 const createLookupOption = (): ILookupOption => {
   return {
-    value: randWord(),
-    translationCode: randWord(),
+    value: faker.word.sample(),
+    translationCode: faker.word.sample(),
   };
 };
 
@@ -59,16 +59,12 @@ export const getTileset = (model = 'Sphere'): Buffer => {
   return fs.readFileSync(`${pvPath}/${model}/tileset.json`);
 };
 
-export const createUuid = (): string => {
-  return randUuid();
-};
-
 export const getBasePath = (): string => {
   return basePath;
 };
 
 export const createLink = (tileset = 'tileset.json'): string => {
-  return `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${createUuid()}/${tileset}`;
+  return `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${faker.string.uuid()}/${tileset}`;
 };
 
 export const createModelPath = (modelName = 'Sphere'): string => {
@@ -89,38 +85,38 @@ export const createFootprint = (modelName = 'Sphere'): Polygon => {
 };
 
 export const createMetadataWithoutProductSource = (modelName = 'Sphere'): Omit<Layer3DMetadata, 'productSource'> => {
-  const sourceDateStart = randPastDate();
-  const sourceDateEnd = randBetweenDate({ from: sourceDateStart, to: new Date() });
-  const minResolutionMeter = randNumber({ max: maxResolutionMeter });
+  const sourceDateStart = faker.date.past();
+  const sourceDateEnd = faker.date.between({ from: sourceDateStart, to: new Date() });
+  const minResolutionMeter = faker.number.int({ max: maxResolutionMeter });
   return {
-    productId: randUuid(),
-    productName: randWord(),
+    productId: faker.string.uuid(),
+    productName: faker.word.sample(),
     productType: ProductType.PHOTO_REALISTIC_3D,
-    description: randSentence(),
-    creationDate: randPastDate(),
+    description: faker.word.words(),
+    creationDate: faker.date.past(),
     sourceDateStart: sourceDateStart,
     sourceDateEnd: sourceDateEnd,
     minResolutionMeter: minResolutionMeter,
-    maxResolutionMeter: randNumber({ min: minResolutionMeter, max: maxResolutionMeter }),
-    maxAccuracyCE90: randNumber({ min: 0, max: noData }),
-    absoluteAccuracyLE90: randNumber({ min: 0, max: noData }),
-    accuracySE90: randNumber({ min: 0, max: maxAccuracySE90 }),
-    relativeAccuracySE90: randNumber({ min: 0, max: maxAccuracy }),
-    visualAccuracy: randNumber({ min: 0, max: maxAccuracy }),
-    sensors: [randWord()],
+    maxResolutionMeter: faker.number.int({ min: minResolutionMeter, max: maxResolutionMeter }),
+    maxAccuracyCE90: faker.number.int({ min: 0, max: noData }),
+    absoluteAccuracyLE90: faker.number.int({ min: 0, max: noData }),
+    accuracySE90: faker.number.int({ min: 0, max: maxAccuracySE90 }),
+    relativeAccuracySE90: faker.number.int({ min: 0, max: maxAccuracy }),
+    visualAccuracy: faker.number.int({ min: 0, max: maxAccuracy }),
+    sensors: [faker.word.sample()],
     footprint: createFootprint(modelName),
-    heightRangeFrom: randNumber(),
-    heightRangeTo: randNumber(),
-    srsId: randNumber().toString(),
-    srsName: randWord(),
-    region: [randWord()],
-    classification: randWord(),
-    productionSystem: randWord(),
-    productionSystemVer: randWord(),
-    producerName: randWord(),
-    minFlightAlt: randNumber(),
-    maxFlightAlt: randNumber(),
-    geographicArea: randWord(),
+    heightRangeFrom: faker.number.int(),
+    heightRangeTo: faker.number.int(),
+    srsId: faker.number.int().toString(),
+    srsName: faker.word.sample(),
+    region: [faker.word.sample()],
+    classification: faker.word.sample(),
+    productionSystem: faker.word.sample(),
+    productionSystemVer: faker.word.sample(),
+    producerName: faker.word.sample(),
+    minFlightAlt: faker.number.int(),
+    maxFlightAlt: faker.number.int(),
+    geographicArea: faker.word.sample(),
     productStatus: RecordStatus.UNPUBLISHED,
     productBoundingBox: undefined,
     productVersion: undefined,
@@ -139,7 +135,7 @@ export const createMetadata = (modelName = 'Sphere'): Layer3DMetadata => {
 export const createRecord = (modelName = 'Sphere'): Record3D => {
   return {
     ...createMetadata(modelName),
-    id: createUuid(),
+    id: faker.string.uuid(),
     links: createLink(),
   };
 };
@@ -154,14 +150,14 @@ export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload =
 
 export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerPayload => {
   return {
-    modelId: createUuid(),
+    modelId: faker.string.uuid(),
     pathToTileset,
     tilesetFilename: createTilesetFileName(),
     metadata: createMetadata(),
   };
 };
 
-export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): ILookupOption[] => {
+export const createLookupOptions = (amount = faker.number.int({ min: 1, max: 3 })): ILookupOption[] => {
   const lookupOptions: ILookupOption[] = [];
   for (let i = 0; i < amount; i++) {
     lookupOptions.push(createLookupOption());
@@ -170,30 +166,30 @@ export const createLookupOptions = (amount = randNumber({ min: 1, max: 3 })): IL
 };
 
 export const createUpdatePayload = (modelName = 'Sphere'): Partial<UpdatePayload> => {
-  const minResolutionMeter = randNumber({ max: maxResolutionMeter });
-  const sourceDateStart = randPastDate();
-  const sourceDateEnd = randBetweenDate({ from: sourceDateStart, to: new Date() });
+  const minResolutionMeter = faker.number.int({ max: maxResolutionMeter });
+  const sourceDateStart = faker.date.past();
+  const sourceDateEnd = faker.date.between({ from: sourceDateStart, to: new Date() });
   const payload: UpdatePayload = {
-    productName: randWord(),
-    description: randWord(),
+    productName: faker.word.sample(),
+    description: faker.word.sample(),
     sourceDateStart: sourceDateStart,
     sourceDateEnd: sourceDateEnd,
-    creationDate: randPastDate(),
+    creationDate: faker.date.past(),
     footprint: createFootprint(modelName),
-    classification: randWord(),
+    classification: faker.word.sample(),
     minResolutionMeter: minResolutionMeter,
-    maxResolutionMeter: randNumber({ min: minResolutionMeter, max: maxResolutionMeter }),
-    maxAccuracyCE90: randNumber({ max: noData }),
-    absoluteAccuracyLE90: randNumber({ max: noData }),
-    accuracySE90: randNumber({ max: maxAccuracySE90 }),
-    relativeAccuracySE90: randNumber({ max: maxAccuracy }),
-    visualAccuracy: randNumber({ max: maxAccuracy }),
-    heightRangeFrom: randNumber(),
-    heightRangeTo: randNumber(),
-    producerName: randWord(),
-    minFlightAlt: randNumber(),
-    maxFlightAlt: randNumber(),
-    geographicArea: randWord(),
+    maxResolutionMeter: faker.number.int({ min: minResolutionMeter, max: maxResolutionMeter }),
+    maxAccuracyCE90: faker.number.int({ max: noData }),
+    absoluteAccuracyLE90: faker.number.int({ max: noData }),
+    accuracySE90: faker.number.int({ max: maxAccuracySE90 }),
+    relativeAccuracySE90: faker.number.int({ max: maxAccuracy }),
+    visualAccuracy: faker.number.int({ max: maxAccuracy }),
+    heightRangeFrom: faker.number.int(),
+    heightRangeTo: faker.number.int(),
+    producerName: faker.word.sample(),
+    minFlightAlt: faker.number.int(),
+    maxFlightAlt: faker.number.int(),
+    geographicArea: faker.word.sample(),
   };
   return payload;
 };

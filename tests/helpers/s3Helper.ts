@@ -15,7 +15,7 @@ import {
   GetObjectCommandInput,
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
-import { randSentence } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { S3Config } from '../../src/common/interfaces';
 import { getTileset } from './helpers';
 
@@ -60,7 +60,7 @@ export class S3Helper {
   }
 
   public async createFile(filePath: string, readFromTileset = false): Promise<Buffer> {
-    const data: Buffer = readFromTileset ? getTileset() : Buffer.from(randSentence());
+    const data: Buffer = readFromTileset ? getTileset() : Buffer.from(faker.word.words());
     const params: PutObjectCommandInput = {
       Bucket: this.s3Config.bucket,
       Key: `${filePath}`,
