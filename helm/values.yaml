@@ -113,10 +113,10 @@ env:
   requestPayloadLimit: 1mb
   tracing:
     enabled: true
-    url: http://localhost:55681/v1/trace
+    url: ''
   metrics:
     enabled: true
-    url: http://localhost:55681/v1/metrics
+    url: ''
   storeTrigger:
     url:
   catalog:
