@@ -1,8 +1,9 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
+import { faker } from '@faker-js/faker';
 import { AppError } from '../../../../src/common/appError';
 import { UpdatePayload } from '../../../../src/common/interfaces';
-import { createRecord, createUpdatePayload, createUpdateStatusPayload, createUuid } from '../../../helpers/helpers';
+import { createRecord, createUpdatePayload, createUpdateStatusPayload } from '../../../helpers/helpers';
 import { catalogMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { MetadataManager } from '../../../../src/metadata/models/metadataManager';
 
@@ -23,7 +24,7 @@ describe('MetadataManager', () => {
 
   describe('updateMetadata tests', () => {
     it('resolves without errors', async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
       validationManagerMock.validateUpdate.mockReturnValue(true);
       catalogMock.patchMetadata.mockResolvedValue(payload);
@@ -34,7 +35,7 @@ describe('MetadataManager', () => {
     });
 
     it(`rejects if update's validation failed`, async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
       validationManagerMock.validateUpdate.mockReturnValue('Some Error');
 
@@ -44,7 +45,7 @@ describe('MetadataManager', () => {
     });
 
     it('rejects if one of the external-services of the validation is not available', async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
       validationManagerMock.validateUpdate.mockRejectedValue(new Error('catalog service is not available'));
 
@@ -54,7 +55,7 @@ describe('MetadataManager', () => {
     });
 
     it(`rejects if didn't update metadata in catalog`, async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
       validationManagerMock.validateUpdate.mockReturnValue(true);
       catalogMock.patchMetadata.mockRejectedValue(new Error('catalog service is not available'));
@@ -67,7 +68,7 @@ describe('MetadataManager', () => {
 
   describe('updateStatus tests', () => {
     it('resolves without errors', async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(createRecord());
       catalogMock.changeStatus.mockResolvedValue(payload);
@@ -78,7 +79,7 @@ describe('MetadataManager', () => {
     });
 
     it(`rejects if update's validation failed`, async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(undefined);
 
@@ -88,7 +89,7 @@ describe('MetadataManager', () => {
     });
 
     it(`rejects if catalog is not available during validation`, async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockRejectedValue(new Error('catalog service is not available'));
 
@@ -98,7 +99,7 @@ describe('MetadataManager', () => {
     });
 
     it(`rejects if catalog is not available during update`, async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(createRecord());
       catalogMock.changeStatus.mockRejectedValue(new Error('catalog service is not available'));

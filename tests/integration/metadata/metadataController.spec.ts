@@ -2,11 +2,10 @@ import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
-import { randFutureDate, randPastDate, randSentence, randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import config from 'config';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
-  createUuid,
   createUpdatePayload,
   createUpdateStatusPayload,
   createWrongFootprintCoordinates,
@@ -48,9 +47,9 @@ describe('MetadataController', function () {
   describe('PATCH /metadata/{identifier}', function () {
     describe('Happy Path 🙂', function () {
       it(`Should return 200 status code and metadata if payload is valid`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
-        const expected = randSentence();
+        const expected = faker.word.words();
         const record = createRecord();
         await s3Helper.createFile(extractLink(record.links), true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
@@ -66,9 +65,9 @@ describe('MetadataController', function () {
 
     describe('Bad Path 😡', function () {
       it(`Should return 400 status code if classification is not valid`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
-        const classification = randWord();
+        const classification = faker.word.sample();
         const record = createRecord();
         await s3Helper.createFile(extractLink(record.links), true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
@@ -81,7 +80,7 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 400 status code if the footprint is not in the footprint schema`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         payload.footprint = createWrongFootprintSchema();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
@@ -98,7 +97,7 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 400 status code if the first and the last coordinates of footprint are not the same`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         payload.footprint = createWrongFootprintCoordinates();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
@@ -113,10 +112,10 @@ describe('MetadataController', function () {
       });
 
       it('Should return 400 status code if startDate is later than endDate', async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
-        payload.sourceDateEnd = randPastDate();
-        payload.sourceDateStart = randFutureDate();
+        payload.sourceDateEnd = faker.date.past();
+        payload.sourceDateStart = faker.date.soon();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -126,7 +125,7 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 400 status code if record does not exist in catalog`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
@@ -139,7 +138,7 @@ describe('MetadataController', function () {
 
     describe('Sad Path 😥', function () {
       it(`Should return 500 status code if lookup-tables is not working properly`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
@@ -153,7 +152,7 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 500 status code if catalog is not working properly`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         mockAxios.get.mockRejectedValueOnce(new Error('catalog error'));
 
@@ -164,7 +163,7 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
@@ -179,10 +178,10 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 500 status code if the link is not valid`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
-        record.links = randWord();
+        record.links = faker.word.sample();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -196,9 +195,9 @@ describe('MetadataController', function () {
   describe('PATCH /metadata/status/{identifier}', function () {
     describe('Happy Path 🙂', function () {
       it(`Should return 200 status code and metadata if payload is valid`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
-        const expected = randSentence();
+        const expected = faker.word.words();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
@@ -211,7 +210,7 @@ describe('MetadataController', function () {
 
     describe('Bad Path 😡', function () {
       it(`Should return 400 status code if record does not exist in catalog`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
         mockAxios.get.mockResolvedValueOnce({ data: undefined });
 
@@ -224,7 +223,7 @@ describe('MetadataController', function () {
 
     describe('Sad Path 😥', function () {
       it(`Should return 500 status code if catalog is not working properly`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
         mockAxios.get.mockRejectedValueOnce(new Error('catalog error'));
 
@@ -235,7 +234,7 @@ describe('MetadataController', function () {
       });
 
       it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
-        const identifier = createUuid();
+        const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });

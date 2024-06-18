@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { ProductType } from '@map-colonies/mc-model-types';
 import { Polygon } from 'geojson';
-import { randBoolean, randNumber, randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { ValidationManager } from '../../../src/validator/validationManager';
 import { IngestionPayload } from '../../../src/common/interfaces';
@@ -16,7 +16,6 @@ import {
   createWrongFootprintCoordinates,
   createFootprint,
   createWrongFootprintSchema,
-  createUuid,
   createRecord,
   createUpdatePayload,
   getTileset,
@@ -70,7 +69,7 @@ describe('ValidationManager', () => {
     });
 
     it('returns error string when got model name that is not in the agreed folder', () => {
-      const modelName = randWord();
+      const modelName = faker.word.sample();
 
       const result = validationManager['validateModelName'](modelName);
 
@@ -94,7 +93,7 @@ describe('ValidationManager', () => {
     it('returns error string when the file in tilesetFilename does not exists', () => {
       const payload: IngestionPayload = {
         modelPath: createMountedModelPath(),
-        tilesetFilename: randWord(),
+        tilesetFilename: faker.word.sample(),
         metadata: createMetadata(),
       };
 
@@ -190,7 +189,7 @@ describe('ValidationManager', () => {
         tilesetFilename: 'invalidTileset.json',
         metadata: createMetadata(),
       };
-      const fileContent = randWord();
+      const fileContent = faker.word.sample();
 
       const result = () => {
         validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
@@ -339,7 +338,7 @@ describe('ValidationManager', () => {
 
   describe('validateProductID tests', () => {
     it('returns string error when productID does not exist in catalog', async () => {
-      const productID = createUuid();
+      const productID = faker.string.uuid();
       catalogMock.isProductIdExist.mockResolvedValue(false);
 
       const result = await validationManager['validateProductID'](productID);
@@ -348,7 +347,7 @@ describe('ValidationManager', () => {
     });
 
     it('returns true when productID exists in catalog', async () => {
-      const productID = createUuid();
+      const productID = faker.string.uuid();
       catalogMock.isProductIdExist.mockResolvedValue(true);
 
       const result = await validationManager['validateProductID'](productID);
@@ -357,7 +356,7 @@ describe('ValidationManager', () => {
     });
 
     it('throws error when there is a problem with catalog', async () => {
-      const productID = createUuid();
+      const productID = faker.string.uuid();
       catalogMock.isProductIdExist.mockRejectedValue(new Error('error'));
 
       const result = async () => {
@@ -370,9 +369,9 @@ describe('ValidationManager', () => {
 
   describe('validateResolutionMeter tests', () => {
     it('returns true when one of them is undefined', () => {
-      const option = randBoolean();
-      const minResolutionMeter = option ? randNumber({ max: 8000 }) : undefined;
-      const maxResolutionMeter = minResolutionMeter === undefined ? randNumber({ max: 8000 }) : undefined;
+      const option = faker.datatype.boolean();
+      const minResolutionMeter = option ? faker.number.int({ max: 8000 }) : undefined;
+      const maxResolutionMeter = minResolutionMeter === undefined ? faker.number.int({ max: 8000 }) : undefined;
 
       const result = validationManager['validateResolutionMeter'](minResolutionMeter, maxResolutionMeter);
 
@@ -380,8 +379,8 @@ describe('ValidationManager', () => {
     });
 
     it('returns true when minResolutionMeter is smaller than maxResolutionMeter', () => {
-      const minResolutionMeter = randNumber({ max: 7999 });
-      const maxResolutionMeter = randNumber({ min: minResolutionMeter, max: 8000 });
+      const minResolutionMeter = faker.number.int({ max: 7999 });
+      const maxResolutionMeter = faker.number.int({ min: minResolutionMeter, max: 8000 });
 
       const result = validationManager['validateResolutionMeter'](minResolutionMeter, maxResolutionMeter);
 
@@ -389,7 +388,7 @@ describe('ValidationManager', () => {
     });
 
     it('returns false when minResolutionMeter is bigger than maxResolutionMeter', () => {
-      const maxResolutionMeter = randNumber({ max: 7999 });
+      const maxResolutionMeter = faker.number.int({ max: 7999 });
       const minResolutionMeter = maxResolutionMeter + 1;
 
       const result = validationManager['validateResolutionMeter'](minResolutionMeter, maxResolutionMeter);
@@ -400,7 +399,7 @@ describe('ValidationManager', () => {
 
   describe('validateClassification tests', () => {
     it('returns true when classification exists in lookup-tables', async () => {
-      const classification = randWord();
+      const classification = faker.word.sample();
       lookupTablesMock.getClassifications.mockResolvedValue([classification]);
 
       const result = await validationManager['validateClassification'](classification);
@@ -409,8 +408,8 @@ describe('ValidationManager', () => {
     });
 
     it('returns false when classification does not exist in lookup-tables', async () => {
-      const classification = randWord();
-      const optionalClassifications = [`${randWord()}-1`, `${randWord()}-2`];
+      const classification = faker.word.sample();
+      const optionalClassifications = [`${faker.word.sample()}-1`, `${faker.word.sample()}-2`];
       lookupTablesMock.getClassifications.mockResolvedValue(optionalClassifications);
 
       const result = await validationManager['validateClassification'](classification);
@@ -419,7 +418,7 @@ describe('ValidationManager', () => {
     });
 
     it('throws error when there is an error in lookup-tables', async () => {
-      const classification = randWord();
+      const classification = faker.word.sample();
       lookupTablesMock.getClassifications.mockRejectedValue(new Error('lookup-tables service is not available'));
 
       const result = async () => {
@@ -462,7 +461,7 @@ describe('ValidationManager', () => {
 
     it('returns error string when has one invalid function', async () => {
       const payload: IngestionPayload = {
-        modelPath: randWord(),
+        modelPath: faker.word.sample(),
         tilesetFilename: createTilesetFileName(),
         metadata: createMetadata(),
       };
@@ -488,7 +487,7 @@ describe('ValidationManager', () => {
 
   describe('validateUpdate', () => {
     it('returns true when got all functions valid', async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
       catalogMock.getRecord.mockResolvedValue(record);
@@ -501,7 +500,7 @@ describe('ValidationManager', () => {
     });
 
     it('returns error string when has one invalid function', async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       catalogMock.getRecord.mockResolvedValue(undefined);
 
@@ -511,7 +510,7 @@ describe('ValidationManager', () => {
     });
 
     it('throws error when one of the external services does not properly responded', async () => {
-      const identifier = createUuid();
+      const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       catalogMock.getRecord.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'catalog error', true));
 

@@ -2,9 +2,9 @@ import mockAxios from 'jest-mock-axios';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { randWord } from '@ngneat/falso';
 import { trace } from '@opentelemetry/api';
-import { createStoreTriggerPayload, createUuid } from '../../../helpers/helpers';
+import { faker } from '@faker-js/faker';
+import { createStoreTriggerPayload } from '../../../helpers/helpers';
 import { StoreTriggerCall } from '../../../../src/externalServices/storeTrigger/requestCall';
 import { StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
 
@@ -21,9 +21,9 @@ describe('StoreTriggerCall', () => {
   describe('postPayload Function', () => {
     it('resolves without errors', async () => {
       const storeTriggerUrl = config.get<string>('externalServices.storeTrigger');
-      const request = createStoreTriggerPayload(randWord());
+      const request = createStoreTriggerPayload(faker.word.sample());
       const expected: StoreTriggerResponse = {
-        jobID: createUuid(),
+        jobID: faker.string.uuid(),
         status: OperationStatus.IN_PROGRESS,
       };
       mockAxios.post.mockResolvedValue({ data: expected });
@@ -35,7 +35,7 @@ describe('StoreTriggerCall', () => {
     });
 
     it('rejects if service is not available', async () => {
-      const request = createStoreTriggerPayload(randWord());
+      const request = createStoreTriggerPayload(faker.word.sample());
       mockAxios.post.mockRejectedValue(new Error('store-trigger is not available'));
 
       const createPromise = storeTrigger.postPayload(request);
