@@ -3,7 +3,7 @@ import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
 import { ProductType } from '@map-colonies/mc-model-types';
 import mockAxios from 'jest-mock-axios';
-import { randFutureDate, randNumber, randPastDate, randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { register } from 'prom-client';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
@@ -119,7 +119,7 @@ describe('ModelController', function () {
 
       it('should return 400 status code if modelPath is invalid', async function () {
         const payload = createIngestionPayload();
-        payload.modelPath = randWord();
+        payload.modelPath = faker.word.sample();
         const basePath = getBasePath();
 
         const response = await requestSender.createModel(payload);
@@ -145,7 +145,7 @@ describe('ModelController', function () {
 
       it('should return 400 status code if tilesetFilename is wrong', async function () {
         const payload = createIngestionPayload();
-        payload.tilesetFilename = randWord();
+        payload.tilesetFilename = faker.word.sample();
 
         const response = await requestSender.createModel(payload);
 
@@ -190,7 +190,7 @@ describe('ModelController', function () {
 
       it('should return 400 status code if modelName is invalid', async function () {
         const payload = createIngestionPayload();
-        const modelName = randWord();
+        const modelName = faker.word.sample();
         payload.modelPath = createModelPath(modelName);
 
         const response = await requestSender.createModel(payload);
@@ -224,8 +224,8 @@ describe('ModelController', function () {
 
       it('should return 400 status code if startDate is later than endDate', async function () {
         const payload = createIngestionPayload();
-        payload.metadata.sourceDateEnd = randPastDate();
-        payload.metadata.sourceDateStart = randFutureDate();
+        payload.metadata.sourceDateEnd = faker.date.past();
+        payload.metadata.sourceDateStart = faker.date.soon();
 
         const response = await requestSender.createModel(payload);
 
@@ -235,7 +235,7 @@ describe('ModelController', function () {
 
       it('should return 400 status code if minResolution is greater than maxResolution', async function () {
         const payload = createIngestionPayload();
-        payload.metadata.maxResolutionMeter = randNumber({ max: 8000 });
+        payload.metadata.maxResolutionMeter = faker.number.int({ max: 8000 });
         payload.metadata.minResolutionMeter = payload.metadata.maxResolutionMeter + 1;
 
         const response = await requestSender.createModel(payload);
@@ -304,7 +304,7 @@ describe('ModelController', function () {
 
       it('should return 400 status code if classification is not a valid value', async function () {
         const payload = createIngestionPayload();
-        const validClassification = randWord();
+        const validClassification = faker.word.sample();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: validClassification }] as ILookupOption[] });
 

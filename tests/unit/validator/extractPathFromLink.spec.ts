@@ -1,10 +1,10 @@
-import { randWord } from '@ngneat/falso';
+import { faker } from '@faker-js/faker';
 import { extractLink } from '../../../src/validator/extractPathFromLink';
 import { AppError } from '../../../src/common/appError';
 
 describe('Extract Path From Link', () => {
   it('Should extract the path from link', () => {
-    const expected = randWord();
+    const expected = faker.word.sample();
     const link = `http://bla/api/3d/v1/b3dm/${expected}`;
 
     const result = extractLink(link);
