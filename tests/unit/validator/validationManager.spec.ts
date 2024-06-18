@@ -252,7 +252,7 @@ describe('ValidationManager', () => {
           tilesetFilename: createTilesetFileName(),
           metadata: createMetadata(),
         };
-        payload.metadata.footprint = createWrongFootprintCoordinates();
+        payload.metadata.footprint = createFootprint();
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
         const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 

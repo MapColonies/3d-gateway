@@ -1,8 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import httpStatus from 'http-status-codes';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
@@ -22,6 +23,11 @@ export class MetadataManager {
   public async updateMetadata(identifier: string, payload: UpdatePayload): Promise<unknown> {
     this.logger.info({ msg: 'started update of metadata', modelId: identifier, payload });
     this.logger.debug({ msg: 'starting validating the payload', modelId: identifier });
+
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: identifier,
+    });
 
     try {
       const validated: boolean | string = await this.validator.validateUpdate(identifier, payload);

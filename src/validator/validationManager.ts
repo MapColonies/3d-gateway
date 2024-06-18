@@ -2,9 +2,7 @@ import * as fs from 'fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import httpStatus from 'http-status-codes';
-import union from '@turf/union';
-import intersect from '@turf/intersect';
-import area from '@turf/area';
+import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
@@ -212,7 +210,7 @@ export class ValidationManager {
 
       this.logger.debug({ msg: 'extracted successfully polygon of the model', polygon: model, modelName: productName });
 
-      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(footprint, model);
+      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
 
       this.logger.debug({
         msg: 'intersected successfully between footprint and polygon of the model',
@@ -224,7 +222,7 @@ export class ValidationManager {
         return `Wrong footprint! footprint's coordinates is not even close to the model!`;
       }
 
-      const combined: Feature<Polygon | MultiPolygon> | null = union(footprint, model);
+      const combined: Feature<Polygon | MultiPolygon> | null = union(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
 
       this.logger.debug({ msg: 'combined successfully footprint and polygon of the model', combined, modelName: productName });
 

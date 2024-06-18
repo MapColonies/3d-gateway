@@ -2,7 +2,8 @@ import { inject, injectable } from 'tsyringe';
 import { v4 as uuid } from 'uuid';
 import { Logger } from '@map-colonies/js-logger';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, trace } from '@opentelemetry/api';
+import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import httpStatus from 'http-status-codes';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/requestCall';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
@@ -25,6 +26,12 @@ export class ModelManager {
   public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {
     const modelId = uuid();
     this.logger.info({ msg: 'started ingestion of new model', modelId, modelName: payload.metadata.productName, payload });
+    const spanActive = trace.getActiveSpan();
+    
+    spanActive?.setAttributes({
+      [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
+    });
+
     const productSource: string = payload.modelPath;
     payload.metadata.footprint = utils.convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
 
