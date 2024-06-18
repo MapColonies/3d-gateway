@@ -27,7 +27,7 @@ export class ModelManager {
     const modelId = uuid();
     this.logger.info({ msg: 'started ingestion of new model', modelId, modelName: payload.metadata.productName, payload });
     const spanActive = trace.getActiveSpan();
-    
+
     spanActive?.setAttributes({
       [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
     });

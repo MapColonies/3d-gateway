@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { ellipse } from '@turf/turf'
+import { ellipse } from '@turf/turf';
 import bboxPolygon from '@turf/bbox-polygon';
 import * as proj4 from 'proj4';
 import { BBox, Polygon } from 'geojson';

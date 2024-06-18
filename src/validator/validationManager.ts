@@ -210,7 +210,9 @@ export class ValidationManager {
 
       this.logger.debug({ msg: 'extracted successfully polygon of the model', polygon: model, modelName: productName });
 
-      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
+      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(
+        featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)])
+      );
 
       this.logger.debug({
         msg: 'intersected successfully between footprint and polygon of the model',
