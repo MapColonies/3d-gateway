@@ -1,4 +1,5 @@
 import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
 import { AppError } from '../../../../src/common/appError';
 import { UpdatePayload } from '../../../../src/common/interfaces';
@@ -10,7 +11,12 @@ let metadataManager: MetadataManager;
 
 describe('MetadataManager', () => {
   beforeEach(() => {
-    metadataManager = new MetadataManager(jsLogger({ enabled: false }), validationManagerMock as never, catalogMock as never);
+    metadataManager = new MetadataManager(
+      jsLogger({ enabled: false }),
+      trace.getTracer('testTracer'),
+      validationManagerMock as never,
+      catalogMock as never
+    );
   });
   afterEach(() => {
     jest.clearAllMocks();

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import ellipse from '@turf/ellipse';
+import { ellipse } from '@turf/turf';
 import bboxPolygon from '@turf/bbox-polygon';
 import * as proj4 from 'proj4';
 import { BBox, Polygon } from 'geojson';
@@ -14,7 +14,7 @@ export const convertSphereFromXYZToWGS84 = (shape: BoundingSphere): Polygon => {
   const radius: number = coord[3] / 1000;
 
   // The polygon of the tileset
-  const model: Polygon = ellipse([coord[0], coord[1]], radius, radius).geometry;
+  const model: Polygon = ellipse([coord[0], coord[1]], radius, radius, {}).geometry;
   return model;
 };
 

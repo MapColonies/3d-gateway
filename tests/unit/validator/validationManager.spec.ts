@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { ProductType } from '@map-colonies/mc-model-types';
 import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
@@ -29,6 +30,7 @@ describe('ValidationManager', () => {
     validationManager = new ValidationManager(
       config,
       jsLogger({ enabled: false }),
+      trace.getTracer('testTracer'),
       lookupTablesMock as never,
       catalogMock as never,
       providerMock as never
@@ -114,7 +116,14 @@ describe('ValidationManager', () => {
 
   describe('validateProductType tests', () => {
     it('returns true without warnings when got valid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, providerMock);
+      validationManager = new ValidationManager(
+        config,
+        jsLoggerMock as never,
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        providerMock
+      );
       const modelName = createModelPath();
       const productType = ProductType.PHOTO_REALISTIC_3D;
 
@@ -125,7 +134,14 @@ describe('ValidationManager', () => {
     });
 
     it('returns true with warnings when got invalid productType', () => {
-      validationManager = new ValidationManager(config, jsLoggerMock as never, lookupTablesMock as never, catalogMock as never, providerMock);
+      validationManager = new ValidationManager(
+        config,
+        jsLoggerMock as never,
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        providerMock
+      );
       const modelName = createModelPath();
       const productType = ProductType.DSM;
       jsLoggerMock.warn.mockReturnValue('');
@@ -236,7 +252,7 @@ describe('ValidationManager', () => {
           tilesetFilename: createTilesetFileName(),
           metadata: createMetadata(),
         };
-        payload.metadata.footprint = createWrongFootprintCoordinates();
+        payload.metadata.footprint = createFootprint();
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
         const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
 
@@ -286,6 +302,7 @@ describe('ValidationManager', () => {
       validationManager = new ValidationManager(
         configMock,
         jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
         lookupTablesMock as never,
         catalogMock as never,
         providerMock

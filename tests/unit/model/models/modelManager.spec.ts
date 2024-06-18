@@ -1,4 +1,5 @@
 import jsLogger from '@map-colonies/js-logger';
+import { trace } from '@opentelemetry/api';
 import { AppError } from '../../../../src/common/appError';
 import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
@@ -10,7 +11,12 @@ let modelManager: ModelManager;
 
 describe('ModelManager', () => {
   beforeEach(() => {
-    modelManager = new ModelManager(jsLogger({ enabled: false }), validationManagerMock as never, storeTriggerMock as never);
+    modelManager = new ModelManager(
+      jsLogger({ enabled: false }),
+      trace.getTracer('testTracer'),
+      validationManagerMock as never,
+      storeTriggerMock as never
+    );
   });
   afterEach(() => {
     jest.clearAllMocks();

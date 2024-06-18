@@ -2,6 +2,7 @@ import mockAxios from 'jest-mock-axios';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
 import { createStoreTriggerPayload } from '../../../helpers/helpers';
 import { StoreTriggerCall } from '../../../../src/externalServices/storeTrigger/requestCall';
@@ -11,7 +12,7 @@ let storeTrigger: StoreTriggerCall;
 
 describe('StoreTriggerCall', () => {
   beforeEach(() => {
-    storeTrigger = new StoreTriggerCall(config, jsLogger({ enabled: false }));
+    storeTrigger = new StoreTriggerCall(config, trace.getTracer('testTracer'), jsLogger({ enabled: false }));
   });
   afterEach(() => {
     jest.clearAllMocks();

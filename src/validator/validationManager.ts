@@ -2,12 +2,12 @@ import * as fs from 'fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import httpStatus from 'http-status-codes';
-import union from '@turf/union';
-import intersect from '@turf/intersect';
-import area from '@turf/area';
+import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
 import { IConfig, Provider, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
@@ -24,11 +24,13 @@ export class ValidationManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
     @inject(CatalogCall) private readonly catalog: CatalogCall,
     @inject(SERVICES.PROVIDER) private readonly provider: Provider
   ) {}
 
+  @withSpanAsyncV4
   public async validateIngestion(payload: IngestionPayload): Promise<boolean | string> {
     let result: boolean | string;
 
@@ -77,6 +79,7 @@ export class ValidationManager {
     return true;
   }
 
+  @withSpanAsyncV4
   public async validateUpdate(identifier: string, payload: UpdatePayload): Promise<boolean | string> {
     let result: boolean | string;
     const record = await this.catalog.getRecord(identifier);
@@ -118,6 +121,7 @@ export class ValidationManager {
     return true;
   }
 
+  @withSpanV4
   public validateModelPath(sourcePath: string): boolean | string {
     const basePath = this.config.get<string>('paths.basePath');
 
@@ -128,6 +132,7 @@ export class ValidationManager {
     return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${basePath}`;
   }
 
+  @withSpanV4
   private validateModelName(modelPath: string): boolean | string {
     if (fs.existsSync(`${modelPath}`)) {
       this.logger.debug({ msg: 'modelName validated successfully!' });
@@ -136,6 +141,7 @@ export class ValidationManager {
     return `Unknown model name! The model name isn't in the folder!, modelPath: ${modelPath}`;
   }
 
+  @withSpanV4
   private validateTilesetJson(modelPath: string, tilesetFilename: string): boolean | string {
     if (!fs.existsSync(`${modelPath}/${tilesetFilename}`)) {
       return `Unknown tileset name! The tileset file wasn't found!, tileset: ${tilesetFilename} doesn't exist`;
@@ -150,6 +156,7 @@ export class ValidationManager {
     return true;
   }
 
+  @withSpanAsyncV4
   private async validateProductID(productId: string): Promise<boolean | string> {
     if (!(await this.catalog.isProductIdExist(productId))) {
       return `Record with productId: ${productId} doesn't exist!`;
@@ -158,6 +165,7 @@ export class ValidationManager {
     return true;
   }
 
+  @withSpanV4
   // For now, the validation will be only warning.
   private validateProductType(productType: ProductType, modelName: string): boolean | string {
     if (productType != ProductType.PHOTO_REALISTIC_3D) {
@@ -167,6 +175,7 @@ export class ValidationManager {
     return true;
   }
 
+  @withSpanV4
   private validateFootprint(footprint: Polygon): boolean | string {
     if (!this.validatePolygonSchema(footprint)) {
       return `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
@@ -180,6 +189,7 @@ export class ValidationManager {
     return true;
   }
 
+  @withSpanV4
   private validateIntersection(fileContent: string, footprint: Polygon, productName: string): boolean | string {
     const limit: number = this.config.get<number>('validation.percentageLimit');
     let model: Polygon;
@@ -200,7 +210,9 @@ export class ValidationManager {
 
       this.logger.debug({ msg: 'extracted successfully polygon of the model', polygon: model, modelName: productName });
 
-      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(footprint, model);
+      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(
+        featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)])
+      );
 
       this.logger.debug({
         msg: 'intersected successfully between footprint and polygon of the model',
@@ -212,7 +224,7 @@ export class ValidationManager {
         return `Wrong footprint! footprint's coordinates is not even close to the model!`;
       }
 
-      const combined: Feature<Polygon | MultiPolygon> | null = union(footprint, model);
+      const combined: Feature<Polygon | MultiPolygon> | null = union(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
 
       this.logger.debug({ msg: 'combined successfully footprint and polygon of the model', combined, modelName: productName });
 
@@ -242,6 +254,7 @@ export class ValidationManager {
     }
   }
 
+  @withSpanV4
   private validateDates(startDate: Date, endDate: Date): boolean | string {
     if (startDate <= endDate) {
       this.logger.debug({ msg: 'dates validated successfully!' });
@@ -250,6 +263,7 @@ export class ValidationManager {
     return 'sourceStartDate should not be later than sourceEndDate';
   }
 
+  @withSpanV4
   private validateResolutionMeter(minResolutionMeter: number | undefined, maxResolutionMeter: number | undefined): boolean | string {
     if (minResolutionMeter == undefined || maxResolutionMeter == undefined) {
       return true;
@@ -261,6 +275,7 @@ export class ValidationManager {
     return 'minResolutionMeter should not be bigger than maxResolutionMeter';
   }
 
+  @withSpanV4
   private async validateClassification(classification: string): Promise<boolean | string> {
     const classifications = await this.lookupTables.getClassifications();
     if (classifications.includes(classification)) {
@@ -270,6 +285,7 @@ export class ValidationManager {
     return `classification is not a valid value.. Optional values: ${classifications.join()}`;
   }
 
+  @withSpanV4
   private validateCoordinates(footprint: Polygon): boolean {
     const length = footprint.coordinates[0].length;
     const first = footprint.coordinates[0][0];
@@ -277,6 +293,7 @@ export class ValidationManager {
     return first[0] == last[0] && first[1] == last[1];
   }
 
+  @withSpanV4
   private validatePolygonSchema(footprint: Polygon): boolean {
     const ajv = new Ajv();
     const compiledSchema = ajv.compile(footprintSchema);
