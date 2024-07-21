@@ -5,7 +5,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
 import { createStoreTriggerPayload } from '../../../helpers/helpers';
-import { StoreTriggerCall } from '../../../../src/externalServices/storeTrigger/requestCall';
+import { StoreTriggerCall } from '../../../../src/externalServices/storeTrigger/storeTriggerCall';
 import { StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
 
 let storeTrigger: StoreTriggerCall;

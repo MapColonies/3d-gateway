@@ -63,3 +63,9 @@ export interface S3Config {
   forcePathStyle: boolean;
   maxAttempts: number;
 }
+
+export interface LogContext {
+  fileName: string;
+  class: string;
+  function?: string;
+}
