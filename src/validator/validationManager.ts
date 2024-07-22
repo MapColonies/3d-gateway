@@ -116,10 +116,10 @@ export class ValidationManager {
       const tilesetPath = extractLink(record.links);
 
       const logContext = { ...this.logContext, function: this.validateUpdate.name };
-      this.logger.debug({ 
-        msg: 'Extracted full path to tileset', 
+      this.logger.debug({
+        msg: 'Extracted full path to tileset',
         logContext,
-        tilesetPath 
+        tilesetPath,
       });
       const file = await this.provider.getFile(tilesetPath);
       result = this.validateIntersection(file, payload.footprint, payload.productName!);
@@ -142,7 +142,7 @@ export class ValidationManager {
   public validateModelPath(sourcePath: string): boolean | string {
     if (sourcePath.includes(this.basePath)) {
       const logContext = { ...this.logContext, function: this.validateModelPath.name };
-      this.logger.debug({ 
+      this.logger.debug({
         msg: 'modelPath validated successfully!',
         logContext,
       });
@@ -155,7 +155,7 @@ export class ValidationManager {
   private validateModelName(modelPath: string): boolean | string {
     if (fs.existsSync(`${modelPath}`)) {
       const logContext = { ...this.logContext, function: this.validateModelName.name };
-      this.logger.debug({ 
+      this.logger.debug({
         msg: 'modelName validated successfully!',
         logContext,
       });
@@ -176,9 +176,9 @@ export class ValidationManager {
       return `${tilesetFilename} file that was provided isn't in a valid json format!`;
     }
     const logContext = { ...this.logContext, function: this.validateTilesetJson.name };
-    this.logger.debug({ 
+    this.logger.debug({
       msg: 'tileset validated successfully!',
-      logContext
+      logContext,
     });
     return true;
   }
@@ -189,9 +189,9 @@ export class ValidationManager {
       return `Record with productId: ${productId} doesn't exist!`;
     }
     const logContext = { ...this.logContext, function: this.validateProductID.name };
-    this.logger.debug({ 
-      msg: 'productId validated successfully!', 
-      logContext
+    this.logger.debug({
+      msg: 'productId validated successfully!',
+      logContext,
     });
     return true;
   }
@@ -201,13 +201,13 @@ export class ValidationManager {
   private validateProductType(productType: ProductType, modelName: string): boolean | string {
     const logContext = { ...this.logContext, function: this.validateProductType.name };
     if (productType != ProductType.PHOTO_REALISTIC_3D) {
-      this.logger.warn({ 
-        msg: 'product type is not 3DPhotoRealistic. skipping intersection validation', 
+      this.logger.warn({
+        msg: 'product type is not 3DPhotoRealistic. skipping intersection validation',
         logContext,
-        modelName 
+        modelName,
       });
     }
-    this.logger.debug({ 
+    this.logger.debug({
       msg: 'productType validated successfully!',
       logContext,
     });
@@ -225,9 +225,9 @@ export class ValidationManager {
       return `Wrong footprint: ${JSON.stringify(footprint)} the first and last coordinates should be equal`;
     }
     const logContext = { ...this.logContext, function: this.validateFootprint.name };
-    this.logger.debug({ 
+    this.logger.debug({
       msg: 'footprint validated successfully!',
-      logContext
+      logContext,
     });
     return true;
   }
@@ -237,10 +237,10 @@ export class ValidationManager {
     let model: Polygon;
     const logContext = { ...this.logContext, function: this.validateIntersection.name };
     try {
-      this.logger.debug({ 
-        msg: 'extract polygon of the model', 
+      this.logger.debug({
+        msg: 'extract polygon of the model',
         logContext,
-        modelName: productName 
+        modelName: productName,
       });
       const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
 
@@ -254,11 +254,11 @@ export class ValidationManager {
         return 'Bad tileset format. Should be in 3DTiles format';
       }
 
-      this.logger.debug({ 
-        msg: 'extracted successfully polygon of the model', 
+      this.logger.debug({
+        msg: 'extracted successfully polygon of the model',
         logContext,
-        polygon: model, 
-        modelName: productName 
+        polygon: model,
+        modelName: productName,
       });
 
       const intersection: Feature<Polygon | MultiPolygon> | null = intersect(
@@ -278,11 +278,11 @@ export class ValidationManager {
 
       const combined: Feature<Polygon | MultiPolygon> | null = union(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
 
-      this.logger.debug({ 
-        msg: 'combined successfully footprint and polygon of the model', 
+      this.logger.debug({
+        msg: 'combined successfully footprint and polygon of the model',
         logContext,
-        combined, 
-        modelName: productName 
+        combined,
+        modelName: productName,
       });
 
       const areaFootprint = area(footprint);
@@ -300,7 +300,7 @@ export class ValidationManager {
       if (coverage < this.limit) {
         return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`;
       }
-      this.logger.debug({ 
+      this.logger.debug({
         msg: 'intersection validated successfully!',
         logContext,
       });
@@ -320,9 +320,9 @@ export class ValidationManager {
   private validateDates(startDate: Date, endDate: Date): boolean | string {
     if (startDate <= endDate) {
       const logContext = { ...this.logContext, function: this.validateDates.name };
-      this.logger.debug({ 
+      this.logger.debug({
         msg: 'dates validated successfully!',
-        logContext
+        logContext,
       });
       return true;
     }
@@ -336,9 +336,9 @@ export class ValidationManager {
     }
     if (minResolutionMeter <= maxResolutionMeter) {
       const logContext = { ...this.logContext, function: this.validateResolutionMeter.name };
-      this.logger.debug({ 
+      this.logger.debug({
         msg: 'resolutionMeters validated successfully!',
-        logContext
+        logContext,
       });
       return true;
     }
@@ -350,9 +350,9 @@ export class ValidationManager {
     const classifications = await this.lookupTables.getClassifications();
     if (classifications.includes(classification)) {
       const logContext = { ...this.logContext, function: this.validateClassification.name };
-      this.logger.debug({ 
+      this.logger.debug({
         msg: 'classification validated successfully!',
-        logContext
+        logContext,
       });
       return true;
     }
