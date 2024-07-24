@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import { readFileSync } from 'node:fs';
 import config from 'config';
 import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
@@ -56,7 +56,7 @@ export const createWrongFootprintSchema = (): Polygon => {
 };
 
 export const getTileset = (model = 'Sphere'): Buffer => {
-  return fs.readFileSync(`${pvPath}/${model}/tileset.json`);
+  return readFileSync(`${pvPath}/${model}/tileset.json`);
 };
 
 export const getBasePath = (): string => {
@@ -80,7 +80,7 @@ export const createTilesetFileName = (): string => {
 };
 
 export const createFootprint = (modelName = 'Sphere'): Polygon => {
-  const jsonString: string = fs.readFileSync(`${pvPath}/${modelName}/footprint.json`, 'utf8');
+  const jsonString: string = readFileSync(`${pvPath}/${modelName}/footprint.json`, 'utf8');
   return JSON.parse(jsonString) as Polygon;
 };
 

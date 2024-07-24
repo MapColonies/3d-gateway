@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { trace } from '@opentelemetry/api';
-import { CatalogCall } from '../../../../src/externalServices/catalog/requestCall';
+import { CatalogCall } from '../../../../src/externalServices/catalog/catalogCall';
 import { createRecord, createUpdatePayload, createUpdateStatusPayload } from '../../../helpers/helpers';
 
 let catalog: CatalogCall;

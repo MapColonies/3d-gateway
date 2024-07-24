@@ -6,11 +6,12 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
-import { IConfig } from '../../common/interfaces';
+import { IConfig, LogContext } from '../../common/interfaces';
 import { ILookupOption, LookupTablesConfig } from './interfaces';
 
 @injectable()
 export class LookupTablesCall {
+  private readonly logContext: LogContext;
   private readonly lookupTables: LookupTablesConfig;
 
   public constructor(
@@ -19,12 +20,18 @@ export class LookupTablesCall {
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {
     this.lookupTables = this.config.get<LookupTablesConfig>('externalServices.lookupTables');
+    this.logContext = {
+      fileName: __filename,
+      class: LookupTablesCall.name,
+    };
   }
 
   @withSpanAsyncV4
   public async getClassifications(): Promise<string[]> {
+    const logContext = { ...this.logContext, function: this.getClassifications.name };
     this.logger.debug({
       msg: 'Get Classifications from lookup-tables service',
+      logContext,
     });
     try {
       const response = await axios.get<ILookupOption[]>(`${this.lookupTables.url}/${this.lookupTables.subUrl}/classification`);
@@ -34,11 +41,16 @@ export class LookupTablesCall {
       }
       this.logger.debug({
         msg: 'Got Classifications',
+        logContext,
         classifications,
       });
       return classifications;
     } catch (error) {
-      this.logger.error({ msg: 'something went wrong with lookup-tables service', error });
+      this.logger.error({
+        msg: 'something went wrong with lookup-tables service',
+        logContext,
+        error,
+      });
       throw new AppError('lookup-tables', StatusCodes.INTERNAL_SERVER_ERROR, 'there is a problem with lookup-tables', true);
     }
   }

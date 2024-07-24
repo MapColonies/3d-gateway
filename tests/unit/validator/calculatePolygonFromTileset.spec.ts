@@ -1,17 +1,17 @@
-import * as fs from 'fs';
+import { readFileSync } from 'node:fs';
 import { Polygon } from 'geojson';
-import * as polygonCalculates from '../../../src/validator/calculatePolygonFromTileset';
+import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from '../../../src/validator/calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from '../../../src/validator/interfaces';
 
 describe('Calculate polygon from tileset', () => {
   describe('calculateSphere tests', () => {
     it('Should return sphere polygon', () => {
-      const file: string = fs.readFileSync('./tests/helpers/3DModels/Sphere/tileset.json', 'utf8');
+      const file: string = readFileSync('./tests/helpers/3DModels/Sphere/tileset.json', 'utf8');
       const shape: BoundingSphere = (JSON.parse(file) as TileSetJson).root.boundingVolume as BoundingSphere;
-      const converted: string = fs.readFileSync('./tests/helpers/3DModels/Sphere/convertedTileset.json', 'utf8');
+      const converted: string = readFileSync('./tests/helpers/3DModels/Sphere/convertedTileset.json', 'utf8');
       const expected: Polygon = JSON.parse(converted) as Polygon;
 
-      const result = polygonCalculates.convertSphereFromXYZToWGS84(shape);
+      const result = convertSphereFromXYZToWGS84(shape);
 
       expect(result).toStrictEqual(expected);
     });
@@ -19,7 +19,7 @@ describe('Calculate polygon from tileset', () => {
 
   describe('calculateRegion tests', () => {
     it('Should return region polygon', () => {
-      const file: string = fs.readFileSync('./tests/helpers/3DModels/Region/tileset.json', 'utf8');
+      const file: string = readFileSync('./tests/helpers/3DModels/Region/tileset.json', 'utf8');
       const shape: BoundingRegion = (JSON.parse(file) as TileSetJson).root.boundingVolume as BoundingRegion;
       const expected = {
         type: 'Polygon',
@@ -34,7 +34,7 @@ describe('Calculate polygon from tileset', () => {
         ],
       };
 
-      const result = polygonCalculates.convertRegionFromRadianToDegrees(shape);
+      const result = convertRegionFromRadianToDegrees(shape);
 
       expect(result).toStrictEqual(expected);
     });

@@ -1,7 +1,7 @@
-import * as fs from 'fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -9,18 +9,22 @@ import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
-import { IConfig, Provider, UpdatePayload } from '../common/interfaces';
+import { IConfig, LogContext, Provider, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
 import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
-import { LookupTablesCall } from '../externalServices/lookupTables/requestCall';
-import { CatalogCall } from '../externalServices/catalog/requestCall';
-import * as polygonCalculates from './calculatePolygonFromTileset';
+import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
+import { CatalogCall } from '../externalServices/catalog/catalogCall';
+import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
 
 @injectable()
 export class ValidationManager {
+  private readonly basePath: string;
+  private readonly limit: number;
+  private readonly logContext: LogContext;
+
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -28,7 +32,14 @@ export class ValidationManager {
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
     @inject(CatalogCall) private readonly catalog: CatalogCall,
     @inject(SERVICES.PROVIDER) private readonly provider: Provider
-  ) {}
+  ) {
+    this.logContext = {
+      fileName: __filename,
+      class: ValidationManager.name,
+    };
+    this.basePath = this.config.get<string>('paths.basePath');
+    this.limit = this.config.get<number>('validation.percentageLimit');
+  }
 
   @withSpanAsyncV4
   public async validateIngestion(payload: IngestionPayload): Promise<boolean | string> {
@@ -55,7 +66,7 @@ export class ValidationManager {
       return result;
     }
     const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
+    const file: string = readFileSync(`${tilesetPath}`, 'utf8');
     result = this.validateIntersection(file, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
     if (typeof result == 'string') {
@@ -103,7 +114,13 @@ export class ValidationManager {
         return result;
       }
       const tilesetPath = extractLink(record.links);
-      this.logger.debug({ msg: 'Extracted full path to tileset', tilesetPath });
+
+      const logContext = { ...this.logContext, function: this.validateUpdate.name };
+      this.logger.debug({
+        msg: 'Extracted full path to tileset',
+        logContext,
+        tilesetPath,
+      });
       const file = await this.provider.getFile(tilesetPath);
       result = this.validateIntersection(file, payload.footprint, payload.productName!);
       if (typeof result == 'string') {
@@ -123,19 +140,25 @@ export class ValidationManager {
 
   @withSpanV4
   public validateModelPath(sourcePath: string): boolean | string {
-    const basePath = this.config.get<string>('paths.basePath');
-
-    if (sourcePath.includes(basePath)) {
-      this.logger.debug({ msg: 'modelPath validated successfully!' });
+    if (sourcePath.includes(this.basePath)) {
+      const logContext = { ...this.logContext, function: this.validateModelPath.name };
+      this.logger.debug({
+        msg: 'modelPath validated successfully!',
+        logContext,
+      });
       return true;
     }
-    return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${basePath}`;
+    return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${this.basePath}`;
   }
 
   @withSpanV4
   private validateModelName(modelPath: string): boolean | string {
-    if (fs.existsSync(`${modelPath}`)) {
-      this.logger.debug({ msg: 'modelName validated successfully!' });
+    if (existsSync(`${modelPath}`)) {
+      const logContext = { ...this.logContext, function: this.validateModelName.name };
+      this.logger.debug({
+        msg: 'modelName validated successfully!',
+        logContext,
+      });
       return true;
     }
     return `Unknown model name! The model name isn't in the folder!, modelPath: ${modelPath}`;
@@ -143,16 +166,20 @@ export class ValidationManager {
 
   @withSpanV4
   private validateTilesetJson(modelPath: string, tilesetFilename: string): boolean | string {
-    if (!fs.existsSync(`${modelPath}/${tilesetFilename}`)) {
+    if (!existsSync(`${modelPath}/${tilesetFilename}`)) {
       return `Unknown tileset name! The tileset file wasn't found!, tileset: ${tilesetFilename} doesn't exist`;
     }
-    const fileContent: string = fs.readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
+    const fileContent: string = readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
     try {
       JSON.parse(fileContent);
     } catch (error) {
       return `${tilesetFilename} file that was provided isn't in a valid json format!`;
     }
-    this.logger.debug({ msg: 'tileset validated successfully!' });
+    const logContext = { ...this.logContext, function: this.validateTilesetJson.name };
+    this.logger.debug({
+      msg: 'tileset validated successfully!',
+      logContext,
+    });
     return true;
   }
 
@@ -161,17 +188,29 @@ export class ValidationManager {
     if (!(await this.catalog.isProductIdExist(productId))) {
       return `Record with productId: ${productId} doesn't exist!`;
     }
-    this.logger.debug({ msg: 'productId validated successfully!' });
+    const logContext = { ...this.logContext, function: this.validateProductID.name };
+    this.logger.debug({
+      msg: 'productId validated successfully!',
+      logContext,
+    });
     return true;
   }
 
   @withSpanV4
   // For now, the validation will be only warning.
   private validateProductType(productType: ProductType, modelName: string): boolean | string {
+    const logContext = { ...this.logContext, function: this.validateProductType.name };
     if (productType != ProductType.PHOTO_REALISTIC_3D) {
-      this.logger.warn({ msg: 'product type is not 3DPhotoRealistic. skipping intersection validation', modelName });
+      this.logger.warn({
+        msg: 'product type is not 3DPhotoRealistic. skipping intersection validation',
+        logContext,
+        modelName,
+      });
     }
-    this.logger.debug({ msg: 'productType validated successfully!' });
+    this.logger.debug({
+      msg: 'productType validated successfully!',
+      logContext,
+    });
     return true;
   }
 
@@ -185,30 +224,42 @@ export class ValidationManager {
     if (!this.validateCoordinates(footprint)) {
       return `Wrong footprint: ${JSON.stringify(footprint)} the first and last coordinates should be equal`;
     }
-    this.logger.debug({ msg: 'footprint validated successfully!' });
+    const logContext = { ...this.logContext, function: this.validateFootprint.name };
+    this.logger.debug({
+      msg: 'footprint validated successfully!',
+      logContext,
+    });
     return true;
   }
 
   @withSpanV4
   private validateIntersection(fileContent: string, footprint: Polygon, productName: string): boolean | string {
-    const limit: number = this.config.get<number>('validation.percentageLimit');
     let model: Polygon;
-
+    const logContext = { ...this.logContext, function: this.validateIntersection.name };
     try {
-      this.logger.debug({ msg: 'extract polygon of the model', modelName: productName });
+      this.logger.debug({
+        msg: 'extract polygon of the model',
+        logContext,
+        modelName: productName,
+      });
       const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
 
       if (shape.sphere != undefined) {
-        model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
+        model = convertSphereFromXYZToWGS84(shape as BoundingSphere);
       } else if (shape.region != undefined) {
-        model = polygonCalculates.convertRegionFromRadianToDegrees(shape as BoundingRegion);
+        model = convertRegionFromRadianToDegrees(shape as BoundingRegion);
       } else if (shape.box != undefined) {
         return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
       } else {
         return 'Bad tileset format. Should be in 3DTiles format';
       }
 
-      this.logger.debug({ msg: 'extracted successfully polygon of the model', polygon: model, modelName: productName });
+      this.logger.debug({
+        msg: 'extracted successfully polygon of the model',
+        logContext,
+        polygon: model,
+        modelName: productName,
+      });
 
       const intersection: Feature<Polygon | MultiPolygon> | null = intersect(
         featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)])
@@ -216,6 +267,7 @@ export class ValidationManager {
 
       this.logger.debug({
         msg: 'intersected successfully between footprint and polygon of the model',
+        logContext,
         intersection,
         modelName: productName,
       });
@@ -226,12 +278,18 @@ export class ValidationManager {
 
       const combined: Feature<Polygon | MultiPolygon> | null = union(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
 
-      this.logger.debug({ msg: 'combined successfully footprint and polygon of the model', combined, modelName: productName });
+      this.logger.debug({
+        msg: 'combined successfully footprint and polygon of the model',
+        logContext,
+        combined,
+        modelName: productName,
+      });
 
       const areaFootprint = area(footprint);
       const areaCombined = area(combined!);
       this.logger.debug({
         msg: 'calculated successfully the areas',
+        logContext,
         footprint: areaFootprint,
         combined: areaCombined,
         modelName: productName,
@@ -239,25 +297,33 @@ export class ValidationManager {
       /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       const coverage = (100 * areaFootprint) / areaCombined;
 
-      if (coverage < limit) {
-        return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${limit}%`;
+      if (coverage < this.limit) {
+        return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`;
       }
-      this.logger.debug({ msg: 'intersection validated successfully!' });
+      this.logger.debug({
+        msg: 'intersection validated successfully!',
+        logContext,
+      });
       return true;
     } catch (error) {
       this.logger.error({
         msg: `An error caused during the validation of the intersection...`,
+        logContext,
         modelName: productName,
         error,
       });
-      throw new AppError('IntersectionError', httpStatus.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
+      throw new AppError('IntersectionError', StatusCodes.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
     }
   }
 
   @withSpanV4
   private validateDates(startDate: Date, endDate: Date): boolean | string {
     if (startDate <= endDate) {
-      this.logger.debug({ msg: 'dates validated successfully!' });
+      const logContext = { ...this.logContext, function: this.validateDates.name };
+      this.logger.debug({
+        msg: 'dates validated successfully!',
+        logContext,
+      });
       return true;
     }
     return 'sourceStartDate should not be later than sourceEndDate';
@@ -269,7 +335,11 @@ export class ValidationManager {
       return true;
     }
     if (minResolutionMeter <= maxResolutionMeter) {
-      this.logger.debug({ msg: 'resolutionMeters validated successfully!' });
+      const logContext = { ...this.logContext, function: this.validateResolutionMeter.name };
+      this.logger.debug({
+        msg: 'resolutionMeters validated successfully!',
+        logContext,
+      });
       return true;
     }
     return 'minResolutionMeter should not be bigger than maxResolutionMeter';
@@ -279,7 +349,11 @@ export class ValidationManager {
   private async validateClassification(classification: string): Promise<boolean | string> {
     const classifications = await this.lookupTables.getClassifications();
     if (classifications.includes(classification)) {
-      this.logger.debug({ msg: 'classification validated successfully!' });
+      const logContext = { ...this.logContext, function: this.validateClassification.name };
+      this.logger.debug({
+        msg: 'classification validated successfully!',
+        logContext,
+      });
       return true;
     }
     return `classification is not a valid value.. Optional values: ${classifications.join()}`;

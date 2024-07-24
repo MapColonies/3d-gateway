@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import { readFileSync } from 'node:fs';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
@@ -207,7 +207,7 @@ describe('ValidationManager', () => {
         };
 
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = fs.readFileSync(tilesetPath, 'utf8');
+        const fileContent = readFileSync(tilesetPath, 'utf8');
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
@@ -222,7 +222,7 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint('Region');
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
+        const fileContent = readFileSync(tilesetPath, 'utf-8');
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -239,7 +239,7 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint('Region');
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
+        const fileContent = readFileSync(tilesetPath, 'utf-8');
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -254,7 +254,7 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint();
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
+        const fileContent = readFileSync(tilesetPath, 'utf-8');
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -270,7 +270,7 @@ describe('ValidationManager', () => {
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-      const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
+      const fileContent = readFileSync(tilesetPath, 'utf-8');
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -285,7 +285,7 @@ describe('ValidationManager', () => {
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-      const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
+      const fileContent = readFileSync(tilesetPath, 'utf-8');
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -308,7 +308,7 @@ describe('ValidationManager', () => {
         providerMock
       );
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-      const fileContent = fs.readFileSync(tilesetPath, 'utf-8');
+      const fileContent = readFileSync(tilesetPath, 'utf-8');
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 

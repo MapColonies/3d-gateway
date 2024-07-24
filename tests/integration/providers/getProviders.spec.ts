@@ -1,5 +1,5 @@
 import config from 'config';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { faker } from '@faker-js/faker';
 import { AppError } from '../../../src/common/appError';
 import { S3Config } from '../../../src/common/interfaces';
@@ -23,7 +23,7 @@ describe('getProviderConfig tests', () => {
     expect(response).toThrow(
       new AppError(
         'configError',
-        httpStatus.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
         `Invalid config provider received: ${provider} - available values: "nfs" or "s3"`,
         false
       )

@@ -2,7 +2,7 @@ import mockAxios from 'jest-mock-axios';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
-import { LookupTablesCall } from '../../../../src/externalServices/lookupTables/requestCall';
+import { LookupTablesCall } from '../../../../src/externalServices/lookupTables/lookupTablesCall';
 import { ILookupOption, LookupTablesConfig } from '../../../../src/externalServices/lookupTables/interfaces';
 import { createLookupOptions } from '../../../helpers/helpers';
 
