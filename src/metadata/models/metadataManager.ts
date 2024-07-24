@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { Tracer, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
@@ -49,7 +49,7 @@ export class MetadataManager {
     try {
       const validated: boolean | string = await this.validator.validateUpdate(identifier, payload);
       if (typeof validated == 'string') {
-        throw new AppError('badRequest', httpStatus.BAD_REQUEST, validated, true);
+        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, validated, true);
       }
       this.logger.info({
         msg: 'model validated successfully',
@@ -65,7 +65,7 @@ export class MetadataManager {
         logContext,
         error,
       });
-      throw new AppError('error', httpStatus.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
     try {
       const response = await this.catalog.patchMetadata(identifier, payload);
@@ -78,7 +78,7 @@ export class MetadataManager {
         error,
         payload,
       });
-      throw new AppError('catalog', httpStatus.INTERNAL_SERVER_ERROR, 'there is an error with catalog', true);
+      throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is an error with catalog', true);
     }
   }
 
@@ -99,7 +99,7 @@ export class MetadataManager {
 
     try {
       if ((await this.catalog.getRecord(identifier)) === undefined) {
-        throw new AppError('badRequest', httpStatus.BAD_REQUEST, `Record with identifier: ${identifier} doesn't exist!`, true);
+        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, `Record with identifier: ${identifier} doesn't exist!`, true);
       }
       this.logger.info({
         msg: 'model validated successfully',
@@ -115,7 +115,7 @@ export class MetadataManager {
         logContext,
         error,
       });
-      throw new AppError('error', httpStatus.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
     try {
       const response = await this.catalog.changeStatus(identifier, payload);
@@ -128,7 +128,7 @@ export class MetadataManager {
         error,
         payload,
       });
-      throw new AppError('catalog', httpStatus.INTERNAL_SERVER_ERROR, 'there is an error with catalog', true);
+      throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is an error with catalog', true);
     }
   }
 }

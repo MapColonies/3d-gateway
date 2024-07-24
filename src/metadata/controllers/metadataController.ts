@@ -1,6 +1,6 @@
 import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
@@ -27,7 +27,7 @@ export class MetadataController {
     try {
       const payload = req.body;
       const response = await this.manager.updateMetadata(identifier, payload);
-      return res.status(httpStatus.OK).json(response);
+      return res.status(StatusCodes.OK).json(response);
     } catch (error) {
       this.logger.error({
         msg: `Failed in updating the metadata!`,
@@ -44,7 +44,7 @@ export class MetadataController {
     try {
       const payload = req.body;
       const response = await this.manager.updateStatus(identifier, payload);
-      return res.status(httpStatus.OK).json(response);
+      return res.status(StatusCodes.OK).json(response);
     } catch (error) {
       this.logger.error({
         msg: `Failed in changing the status!`,

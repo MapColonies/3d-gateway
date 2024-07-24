@@ -1,5 +1,10 @@
 import config from 'config';
-import * as utils from '../../../../src/model/models/utilities';
+import {
+  convertStringToGeojson,
+  changeBasePathToPVPath,
+  removePvPathFromModelPath,
+  replaceBackQuotesWithQuotes,
+} from '../../../../src/model/models/utilities';
 
 describe('utilities tests', () => {
   describe('removeFootprintSpaces tests', () => {
@@ -7,7 +12,7 @@ describe('utilities tests', () => {
       const footprint = '         { "key":"v a l u e"  }   ';
       const expected = { key: 'v a l u e' };
 
-      const result = utils.convertStringToGeojson(footprint);
+      const result = convertStringToGeojson(footprint);
 
       expect(result).toStrictEqual(expected);
     });
@@ -18,7 +23,7 @@ describe('utilities tests', () => {
       const basePath: string = config.get<string>('paths.basePath') + '\\model\\path';
       const expected: string = config.get<string>('paths.pvPath') + '\\model\\path';
 
-      const result: string = utils.changeBasePathToPVPath(basePath);
+      const result: string = changeBasePathToPVPath(basePath);
 
       expect(result).toBe(expected);
     });
@@ -29,7 +34,7 @@ describe('utilities tests', () => {
       const modelName = 'model\\path';
       const modelPath = config.get<string>('paths.pvPath') + `/${modelName}`;
 
-      const result: string = utils.removePvPathFromModelPath(modelPath);
+      const result: string = removePvPathFromModelPath(modelPath);
 
       expect(result).toBe(modelName);
     });
@@ -40,7 +45,7 @@ describe('utilities tests', () => {
       const path = 'path\\to\\model\\with\\quotes';
       const expected = 'path/to/model/with/quotes';
 
-      const result: string = utils.replaceBackQuotesWithQuotes(path);
+      const result: string = replaceBackQuotesWithQuotes(path);
 
       expect(result).toBe(expected);
     });

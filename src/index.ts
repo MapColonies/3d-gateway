@@ -1,6 +1,6 @@
 // this import must be called before the first import of tsyringe
 import 'reflect-metadata';
-import { createServer } from 'http';
+import { createServer } from 'node:http';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
 import { container } from 'tsyringe';

@@ -1,6 +1,6 @@
 import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { IngestionPayload, LogContext } from '../../common/interfaces';
@@ -24,7 +24,7 @@ export class ModelController {
     try {
       const payload = req.body;
       const response = await this.manager.createModel(payload);
-      return res.status(httpStatus.CREATED).json(response);
+      return res.status(StatusCodes.CREATED).json(response);
     } catch (error) {
       this.logger.error({
         msg: `Failed in ingesting a new model!`,

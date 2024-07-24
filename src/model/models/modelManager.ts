@@ -4,14 +4,14 @@ import { Logger } from '@map-colonies/js-logger';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer, trace } from '@opentelemetry/api';
 import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/storeTriggerCall';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IngestionPayload, LogContext } from '../../common/interfaces';
-import * as utils from './utilities';
+import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
 @injectable()
 export class ModelManager {
@@ -47,7 +47,7 @@ export class ModelManager {
     });
 
     const productSource: string = payload.modelPath;
-    payload.metadata.footprint = utils.convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
+    payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
 
     this.logger.debug({
       msg: 'starting validating the payload',
@@ -58,10 +58,10 @@ export class ModelManager {
     try {
       const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
       if (typeof resultModelPathValidation === 'string') {
-        throw new AppError('', httpStatus.BAD_REQUEST, resultModelPathValidation, true);
+        throw new AppError('', StatusCodes.BAD_REQUEST, resultModelPathValidation, true);
       }
-      payload.modelPath = utils.changeBasePathToPVPath(payload.modelPath);
-      payload.modelPath = utils.replaceBackQuotesWithQuotes(payload.modelPath);
+      payload.modelPath = changeBasePathToPVPath(payload.modelPath);
+      payload.modelPath = replaceBackQuotesWithQuotes(payload.modelPath);
       this.logger.debug({
         msg: `changed model name from: '${productSource}' to: '${payload.modelPath}'`,
         logContext,
@@ -70,7 +70,7 @@ export class ModelManager {
 
       const validated: boolean | string = await this.validator.validateIngestion(payload);
       if (typeof validated == 'string') {
-        throw new AppError('badRequest', httpStatus.BAD_REQUEST, validated, true);
+        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, validated, true);
       }
       this.logger.info({
         msg: 'model validated successfully',
@@ -87,12 +87,12 @@ export class ModelManager {
         logContext,
         error,
       });
-      throw new AppError('error', httpStatus.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
 
     const request: StoreTriggerPayload = {
       modelId: modelId,
-      pathToTileset: utils.removePvPathFromModelPath(payload.modelPath),
+      pathToTileset: removePvPathFromModelPath(payload.modelPath),
       tilesetFilename: payload.tilesetFilename,
       metadata: { ...payload.metadata, productSource: productSource },
     };
@@ -108,7 +108,7 @@ export class ModelManager {
         error,
         payload,
       });
-      throw new AppError('', httpStatus.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
+      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
   }
 }

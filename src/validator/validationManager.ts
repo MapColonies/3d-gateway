@@ -1,7 +1,7 @@
-import * as fs from 'fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import httpStatus from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -15,7 +15,7 @@ import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
-import * as polygonCalculates from './calculatePolygonFromTileset';
+import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
 
@@ -66,7 +66,7 @@ export class ValidationManager {
       return result;
     }
     const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-    const file: string = fs.readFileSync(`${tilesetPath}`, 'utf8');
+    const file: string = readFileSync(`${tilesetPath}`, 'utf8');
     result = this.validateIntersection(file, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
     if (typeof result == 'string') {
@@ -153,7 +153,7 @@ export class ValidationManager {
 
   @withSpanV4
   private validateModelName(modelPath: string): boolean | string {
-    if (fs.existsSync(`${modelPath}`)) {
+    if (existsSync(`${modelPath}`)) {
       const logContext = { ...this.logContext, function: this.validateModelName.name };
       this.logger.debug({
         msg: 'modelName validated successfully!',
@@ -166,10 +166,10 @@ export class ValidationManager {
 
   @withSpanV4
   private validateTilesetJson(modelPath: string, tilesetFilename: string): boolean | string {
-    if (!fs.existsSync(`${modelPath}/${tilesetFilename}`)) {
+    if (!existsSync(`${modelPath}/${tilesetFilename}`)) {
       return `Unknown tileset name! The tileset file wasn't found!, tileset: ${tilesetFilename} doesn't exist`;
     }
-    const fileContent: string = fs.readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
+    const fileContent: string = readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
     try {
       JSON.parse(fileContent);
     } catch (error) {
@@ -245,9 +245,9 @@ export class ValidationManager {
       const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
 
       if (shape.sphere != undefined) {
-        model = polygonCalculates.convertSphereFromXYZToWGS84(shape as BoundingSphere);
+        model = convertSphereFromXYZToWGS84(shape as BoundingSphere);
       } else if (shape.region != undefined) {
-        model = polygonCalculates.convertRegionFromRadianToDegrees(shape as BoundingRegion);
+        model = convertRegionFromRadianToDegrees(shape as BoundingRegion);
       } else if (shape.box != undefined) {
         return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
       } else {
@@ -312,7 +312,7 @@ export class ValidationManager {
         modelName: productName,
         error,
       });
-      throw new AppError('IntersectionError', httpStatus.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
+      throw new AppError('IntersectionError', StatusCodes.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
     }
   }
 
