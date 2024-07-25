@@ -30,6 +30,46 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
+  public async validateModelSources(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
+    const logContext = { ...this.logContext, function: this.validateModelSources.name };
+    this.logger.info({
+      msg: 'Sources validation started',
+      logContext,
+      payload,
+    });
+
+    const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
+    if (typeof resultModelPathValidation === 'string') {
+      return {
+        isValid: false,
+        message: resultModelPathValidation,
+      };
+    }
+    payload.modelPath = this.getAdjustedModelPath(payload.modelPath);
+    const sourcesValidationResponse = await this.validator.sourcesValid(payload);
+
+    this.logger.info({
+      msg: 'Sources validation ended',
+      logContext,
+      payload,
+      sourcesValidationResponse,
+    });
+    return sourcesValidationResponse;
+  }
+
+  // @withSpanAsyncV4
+  // public async validateModel(payload: IngestionPayload): Promise<SourcesValidationResponse> {
+  //   const logContext = { ...this.logContext, function: this.validateModel.name };
+  //   this.logger.info({
+  //     msg: 'start validation of new model',
+  //     logContext,
+  //     modelName: payload.metadata.productName,
+  //     payload,
+  //   });
+  //   throw new NotImplementedError('Not implemented yet');
+  // }
+
+  @withSpanAsyncV4
   public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {
     const logContext = { ...this.logContext, function: this.createModel.name };
     const modelId = uuid();
@@ -105,7 +145,7 @@ export class ModelManager {
       throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
   }
-  
+
   private getAdjustedModelPath(modelPath: string): string {
     const logContext = { ...this.logContext, function: this.getAdjustedModelPath.name };
     const changedModelPath = changeBasePathToPVPath(modelPath);
@@ -117,45 +157,5 @@ export class ModelManager {
       replacedModelPath: replacedModelPath,
     });
     return replacedModelPath;
-  }
-
-  // @withSpanAsyncV4
-  // public async validateModel(payload: IngestionPayload): Promise<SourcesValidationResponse> {
-  //   const logContext = { ...this.logContext, function: this.validateModel.name };
-  //   this.logger.info({
-  //     msg: 'start validation of new model',
-  //     logContext,
-  //     modelName: payload.metadata.productName,
-  //     payload,
-  //   });
-  //   throw new NotImplementedError('Not implemented yet');
-  // }
-
-  @withSpanAsyncV4
-  public async validateModelSources(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
-    const logContext = { ...this.logContext, function: this.validateModelSources.name };
-    this.logger.info({
-      msg: 'Sources validation started',
-      logContext,
-      payload,
-    });
-
-    const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
-    if (typeof resultModelPathValidation === 'string') {
-      return {
-        isValid: false,
-        message: resultModelPathValidation
-      }
-    }
-    payload.modelPath = this.getAdjustedModelPath(payload.modelPath);
-    const sourcesValidationResponse = await this.validator.sourcesValid(payload);
-
-    this.logger.info({
-      msg: 'Sources validation ended',
-      logContext,
-      payload,
-      sourcesValidationResponse,
-    });
-    return sourcesValidationResponse;
   }
 }

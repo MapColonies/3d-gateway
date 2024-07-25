@@ -58,7 +58,7 @@ export class ValidationManager {
       };
     }
 
-    const tilesetLocation = join(`${payload.modelPath}` ,`${payload.tilesetFilename}`);
+    const tilesetLocation = join(`${payload.modelPath}`, `${payload.tilesetFilename}`);
     const isTilesetExists = await this.validateFilesExist(tilesetLocation);
     if (!isTilesetExists) {
       return {
@@ -439,7 +439,7 @@ export class ValidationManager {
         fullPath: fullPath,
       });
       const fileContent: string = await readFile(fullPath, { encoding: FILE_ENCODING });
-      const tileSetJson: TileSetJson = (JSON.parse(fileContent) as TileSetJson);
+      const tileSetJson: TileSetJson = JSON.parse(fileContent) as TileSetJson;
       const shape = tileSetJson.root.boundingVolume;
 
       if (shape.sphere != undefined) {
@@ -459,7 +459,7 @@ export class ValidationManager {
         msg: message,
         logContext,
         fullPath,
-        error
+        error,
       });
       tileSetResponseIsValidResponse.message = message;
       return false;
@@ -476,22 +476,23 @@ export class ValidationManager {
       fullPath,
     });
 
-    let isValid: boolean = await access(fullPath, fsConstants.F_OK).then(() => {
-      return true;
-    }).catch((error) => {
-      this.logger.error({
-        msg: `File '${fullPath}' doesn't exists`,
-        logContext,
-        error,
-        fullPath,
+    const isValid: boolean = await access(fullPath, fsConstants.F_OK)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        this.logger.error({
+          msg: `File '${fullPath}' doesn't exists`,
+          logContext,
+          fullPath,
+        });
+        return false;
       });
-      return false;
-    });
     this.logger.debug({
       msg: 'validate file exists ended',
       logContext,
       fullPath,
-      isValid
+      isValid,
     });
     return isValid;
   }
