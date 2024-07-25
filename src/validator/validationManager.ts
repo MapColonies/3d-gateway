@@ -21,7 +21,7 @@ import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from '.
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
 
-interface TileSetResponseIsValidResponse {
+interface IsValidTilesetContentResponse {
   message?: string;
   polygon?: Polygon;
 }
@@ -67,20 +67,20 @@ export class ValidationManager {
       };
     }
 
-    const tileSetResponseIsValidResponse: TileSetResponseIsValidResponse = {
+    const isValidTilesetContentResponse: IsValidTilesetContentResponse = {
       polygon: undefined,
       message: undefined,
     };
-    const isValidTilesetContent = await this.isValidTilesetContent(tilesetLocation, tileSetResponseIsValidResponse);
+    const isValidTilesetContent = await this.isValidTilesetContent(tilesetLocation, isValidTilesetContentResponse);
     if (!isValidTilesetContent) {
       return {
         isValid: false,
-        message: tileSetResponseIsValidResponse.message,
+        message: isValidTilesetContentResponse.message,
       };
     }
 
     // TODO: refactor in next PR in order to return bool and better message
-    const result = this.validateFootprint(tileSetResponseIsValidResponse.polygon as Polygon);
+    const result = this.validateFootprint(isValidTilesetContentResponse.polygon as Polygon);
     if (typeof result == 'string') {
       return {
         isValid: false,
@@ -430,7 +430,7 @@ export class ValidationManager {
   //#region validate sources
 
   @withSpanV4
-  private async isValidTilesetContent(fullPath: string, tileSetResponseIsValidResponse: TileSetResponseIsValidResponse): Promise<boolean> {
+  private async isValidTilesetContent(fullPath: string, isValidTilesetContentResponse: IsValidTilesetContentResponse): Promise<boolean> {
     const logContext = { ...this.logContext, function: this.isValidTilesetContent.name };
     try {
       this.logger.debug({
@@ -443,14 +443,14 @@ export class ValidationManager {
       const shape = tileSetJson.root.boundingVolume;
 
       if (shape.sphere != undefined) {
-        tileSetResponseIsValidResponse.polygon = convertSphereFromXYZToWGS84(shape as BoundingSphere);
+        isValidTilesetContentResponse.polygon = convertSphereFromXYZToWGS84(shape as BoundingSphere);
       } else if (shape.region != undefined) {
-        tileSetResponseIsValidResponse.polygon = convertRegionFromRadianToDegrees(shape as BoundingRegion);
+        isValidTilesetContentResponse.polygon = convertRegionFromRadianToDegrees(shape as BoundingRegion);
       } else if (shape.box != undefined) {
-        tileSetResponseIsValidResponse.message = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
+        isValidTilesetContentResponse.message = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
         return false;
       } else {
-        tileSetResponseIsValidResponse.message = 'Bad tileset format. Should be in 3DTiles format';
+        isValidTilesetContentResponse.message = 'Bad tileset format. Should be in 3DTiles format';
         return false;
       }
     } catch (error) {
@@ -461,7 +461,7 @@ export class ValidationManager {
         fullPath,
         error,
       });
-      tileSetResponseIsValidResponse.message = message;
+      isValidTilesetContentResponse.message = message;
       return false;
     }
     return true;
