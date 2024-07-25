@@ -1,4 +1,6 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync, constants as fsConstants } from 'node:fs';
+import { readFile, access } from 'node:fs/promises';
+import { join } from 'node:path';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { StatusCodes } from 'http-status-codes';
@@ -8,8 +10,8 @@ import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
-import { SERVICES } from '../common/constants';
-import { IConfig, LogContext, Provider, UpdatePayload } from '../common/interfaces';
+import { FILE_ENCODING, SERVICES } from '../common/constants';
+import { IConfig, IngestionSourcesPayload, LogContext, Provider, SourcesValidationResponse, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
 import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
@@ -18,6 +20,11 @@ import { CatalogCall } from '../externalServices/catalog/catalogCall';
 import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
+
+interface TileSetResponseIsValidResponse {
+  message?: string;
+  polygon?: Polygon;
+}
 
 @injectable()
 export class ValidationManager {
@@ -39,6 +46,51 @@ export class ValidationManager {
     };
     this.basePath = this.config.get<string>('paths.basePath');
     this.limit = this.config.get<number>('validation.percentageLimit');
+  }
+
+  @withSpanAsyncV4
+  public async sourcesValid(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
+    const isModelFileExists = await this.validateFilesExist(payload.modelPath);
+    if (!isModelFileExists) {
+      return {
+        isValid: false,
+        message: `Unknown model name! The model name isn't in the folder!, modelPath: ${payload.modelPath}`,
+      };
+    }
+
+    const tilesetLocation = join(`${payload.modelPath}` ,`${payload.tilesetFilename}`);
+    const isTilesetExists = await this.validateFilesExist(tilesetLocation);
+    if (!isTilesetExists) {
+      return {
+        isValid: false,
+        message: `Unknown tileset name! The tileset file wasn't found!, tileset: ${payload.tilesetFilename} doesn't exist`,
+      };
+    }
+
+    const tileSetResponseIsValidResponse: TileSetResponseIsValidResponse = {
+      polygon: undefined,
+      message: undefined,
+    };
+    const isValidTilesetContent = await this.isValidTilesetContent(tilesetLocation, tileSetResponseIsValidResponse);
+    if (!isValidTilesetContent) {
+      return {
+        isValid: false,
+        message: tileSetResponseIsValidResponse.message,
+      };
+    }
+
+    // TODO: refactor in next PR in order to return bool and better message
+    const result = this.validateFootprint(tileSetResponseIsValidResponse.polygon as Polygon);
+    if (typeof result == 'string') {
+      return {
+        isValid: false,
+        message: result,
+      };
+    }
+
+    return {
+      isValid: true,
+    };
   }
 
   @withSpanAsyncV4
@@ -169,7 +221,7 @@ export class ValidationManager {
     if (!existsSync(`${modelPath}/${tilesetFilename}`)) {
       return `Unknown tileset name! The tileset file wasn't found!, tileset: ${tilesetFilename} doesn't exist`;
     }
-    const fileContent: string = readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
+    const fileContent: string = readFileSync(`${modelPath}/${tilesetFilename}`, FILE_ENCODING);
     try {
       JSON.parse(fileContent);
     } catch (error) {
@@ -374,4 +426,75 @@ export class ValidationManager {
     const isPolygon = compiledSchema(footprint);
     return isPolygon;
   }
+
+  //#region validate sources
+
+  @withSpanV4
+  private async isValidTilesetContent(fullPath: string, tileSetResponseIsValidResponse: TileSetResponseIsValidResponse): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.isValidTilesetContent.name };
+    try {
+      this.logger.debug({
+        msg: 'Tileset validation started',
+        logContext,
+        fullPath: fullPath,
+      });
+      const fileContent: string = await readFile(fullPath, { encoding: FILE_ENCODING });
+      const tileSetJson: TileSetJson = (JSON.parse(fileContent) as TileSetJson);
+      const shape = tileSetJson.root.boundingVolume;
+
+      if (shape.sphere != undefined) {
+        tileSetResponseIsValidResponse.polygon = convertSphereFromXYZToWGS84(shape as BoundingSphere);
+      } else if (shape.region != undefined) {
+        tileSetResponseIsValidResponse.polygon = convertRegionFromRadianToDegrees(shape as BoundingRegion);
+      } else if (shape.box != undefined) {
+        tileSetResponseIsValidResponse.message = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
+        return false;
+      } else {
+        tileSetResponseIsValidResponse.message = 'Bad tileset format. Should be in 3DTiles format';
+        return false;
+      }
+    } catch (error) {
+      const message = `File '${fullPath}' tileset validation failed`;
+      this.logger.error({
+        msg: message,
+        logContext,
+        fullPath,
+        error
+      });
+      tileSetResponseIsValidResponse.message = message;
+      return false;
+    }
+    return true;
+  }
+
+  @withSpanV4
+  private async validateFilesExist(fullPath: string): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.validateFilesExist.name };
+    this.logger.debug({
+      msg: 'validate file exists started',
+      logContext,
+      fullPath,
+    });
+
+    let isValid: boolean = await access(fullPath, fsConstants.F_OK).then(() => {
+      return true;
+    }).catch((error) => {
+      this.logger.error({
+        msg: `File '${fullPath}' doesn't exists`,
+        logContext,
+        error,
+        fullPath,
+      });
+      return false;
+    });
+    this.logger.debug({
+      msg: 'validate file exists ended',
+      logContext,
+      fullPath,
+      isValid
+    });
+    return isValid;
+  }
+
+  ////#endregion
 }

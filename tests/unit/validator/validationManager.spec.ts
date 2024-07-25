@@ -22,6 +22,7 @@ import {
 } from '../../helpers/helpers';
 import { configMock, lookupTablesMock, jsLoggerMock, catalogMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
+import { FILE_ENCODING } from '../../../src/common/constants';
 
 describe('ValidationManager', () => {
   let validationManager: ValidationManager;
@@ -222,7 +223,7 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint('Region');
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = readFileSync(tilesetPath, 'utf-8');
+        const fileContent = readFileSync(tilesetPath, FILE_ENCODING);
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -239,7 +240,7 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint('Region');
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = readFileSync(tilesetPath, 'utf-8');
+        const fileContent = readFileSync(tilesetPath, FILE_ENCODING);
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -254,7 +255,7 @@ describe('ValidationManager', () => {
         };
         payload.metadata.footprint = createFootprint();
         const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-        const fileContent = readFileSync(tilesetPath, 'utf-8');
+        const fileContent = readFileSync(tilesetPath, FILE_ENCODING);
 
         const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -270,7 +271,7 @@ describe('ValidationManager', () => {
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-      const fileContent = readFileSync(tilesetPath, 'utf-8');
+      const fileContent = readFileSync(tilesetPath, FILE_ENCODING);
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -285,7 +286,7 @@ describe('ValidationManager', () => {
       };
       payload.metadata.footprint = createWrongFootprintCoordinates();
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-      const fileContent = readFileSync(tilesetPath, 'utf-8');
+      const fileContent = readFileSync(tilesetPath, FILE_ENCODING);
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint, payload.metadata.productName!);
 
@@ -308,7 +309,7 @@ describe('ValidationManager', () => {
         providerMock
       );
       const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-      const fileContent = readFileSync(tilesetPath, 'utf-8');
+      const fileContent = readFileSync(tilesetPath, FILE_ENCODING);
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
@@ -517,6 +518,26 @@ describe('ValidationManager', () => {
       const response = validationManager.validateUpdate(identifier, payload);
 
       await expect(response).rejects.toThrow('catalog error');
+    });
+  });
+
+  describe('validate sources', () => {
+    it('returns true when start date is earlier than end date', () => {
+      const startDate = new Date(2021, 11, 12, 7);
+      const endDate = new Date(2022, 11, 12, 8);
+
+      const result = validationManager['validateDates'](startDate, endDate);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when end date is earlier than start date', () => {
+      const startDate = new Date(2022, 11, 12, 8);
+      const endDate = new Date(2022, 11, 12, 7);
+
+      const result = validationManager['validateDates'](startDate, endDate);
+
+      expect(result).toBe('sourceStartDate should not be later than sourceEndDate');
     });
   });
 });

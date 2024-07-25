@@ -2,12 +2,15 @@ import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
+import { NotImplementedError } from '@map-colonies/error-types';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload, LogContext } from '../../common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
+type ValidateSourcesHandler = RequestHandler<undefined, SourcesValidationResponse, IngestionSourcesPayload>;
+type ValidateModelHandler = RequestHandler<undefined, SourcesValidationResponse, IngestionPayload>;
 
 @injectable()
 export class ModelController {
@@ -34,5 +37,42 @@ export class ModelController {
       });
       return next(error);
     }
+  };
+
+  public validateSources: ValidateSourcesHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.validateSources.name };
+    try {
+      const payload = req.body;
+      const response = await this.manager.validateModelSources(payload);
+      return res.status(StatusCodes.OK).json(response);
+    } catch (error) {
+      this.logger.error({
+        msg: `Failed to validate sources!`,
+        logContext,
+        error,
+        modelPath: req.body.modelPath,
+        tilesetFilename: req.body.tilesetFilename,
+      });
+      return next(error);
+    }
+  };
+
+  //eslint-disable-next-line @typescript-eslint/require-await
+  public validate: ValidateModelHandler = async (/*req, res, next*/) => {
+    throw new NotImplementedError('Not implemented yet');
+    // const logContext = { ...this.logContext, function: this.validate.name };
+    // try {
+    //   const payload = req.body;
+    //   const response = await this.manager.validateModel(payload);
+    //   return res.status(StatusCodes.OK).json(response);
+    // } catch (error) {
+    //   this.logger.error({
+    //     msg: `Failed to validate model!`,
+    //     logContext,
+    //     error,
+    //     modelName: req.body.metadata.productName,
+    //   });
+    //   return next(error);
+    // }
   };
 }

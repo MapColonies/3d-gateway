@@ -10,7 +10,7 @@ import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalService
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
-import { IngestionPayload, LogContext } from '../../common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
 import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
 @injectable()
@@ -46,7 +46,7 @@ export class ModelManager {
       [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
     });
 
-    const productSource: string = payload.modelPath;
+    const originalModelPath: string = payload.modelPath;
     payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
 
     this.logger.debug({
@@ -60,13 +60,7 @@ export class ModelManager {
       if (typeof resultModelPathValidation === 'string') {
         throw new AppError('', StatusCodes.BAD_REQUEST, resultModelPathValidation, true);
       }
-      payload.modelPath = changeBasePathToPVPath(payload.modelPath);
-      payload.modelPath = replaceBackQuotesWithQuotes(payload.modelPath);
-      this.logger.debug({
-        msg: `changed model name from: '${productSource}' to: '${payload.modelPath}'`,
-        logContext,
-        modelName: payload.metadata.productName,
-      });
+      payload.modelPath = this.getAdjustedModelPath(payload.modelPath);
 
       const validated: boolean | string = await this.validator.validateIngestion(payload);
       if (typeof validated == 'string') {
@@ -94,7 +88,7 @@ export class ModelManager {
       modelId: modelId,
       pathToTileset: removePvPathFromModelPath(payload.modelPath),
       tilesetFilename: payload.tilesetFilename,
-      metadata: { ...payload.metadata, productSource: productSource },
+      metadata: { ...payload.metadata, productSource: originalModelPath },
     };
     try {
       const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
@@ -110,5 +104,58 @@ export class ModelManager {
       });
       throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
     }
+  }
+  
+  private getAdjustedModelPath(modelPath: string): string {
+    const logContext = { ...this.logContext, function: this.getAdjustedModelPath.name };
+    const changedModelPath = changeBasePathToPVPath(modelPath);
+    const replacedModelPath = replaceBackQuotesWithQuotes(changedModelPath);
+    this.logger.debug({
+      msg: `changed model name from: '${modelPath}' to: '${replacedModelPath}'`,
+      logContext,
+      productSource: modelPath,
+      replacedModelPath: replacedModelPath,
+    });
+    return replacedModelPath;
+  }
+
+  // @withSpanAsyncV4
+  // public async validateModel(payload: IngestionPayload): Promise<SourcesValidationResponse> {
+  //   const logContext = { ...this.logContext, function: this.validateModel.name };
+  //   this.logger.info({
+  //     msg: 'start validation of new model',
+  //     logContext,
+  //     modelName: payload.metadata.productName,
+  //     payload,
+  //   });
+  //   throw new NotImplementedError('Not implemented yet');
+  // }
+
+  @withSpanAsyncV4
+  public async validateModelSources(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
+    const logContext = { ...this.logContext, function: this.validateModelSources.name };
+    this.logger.info({
+      msg: 'Sources validation started',
+      logContext,
+      payload,
+    });
+
+    const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
+    if (typeof resultModelPathValidation === 'string') {
+      return {
+        isValid: false,
+        message: resultModelPathValidation
+      }
+    }
+    payload.modelPath = this.getAdjustedModelPath(payload.modelPath);
+    const sourcesValidationResponse = await this.validator.sourcesValid(payload);
+
+    this.logger.info({
+      msg: 'Sources validation ended',
+      logContext,
+      payload,
+      sourcesValidationResponse,
+    });
+    return sourcesValidationResponse;
   }
 }

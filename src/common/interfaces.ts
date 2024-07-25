@@ -19,6 +19,16 @@ export interface IngestionPayload {
   metadata: Omit<Layer3DMetadata, 'productSource'>;
 }
 
+export interface IngestionSourcesPayload {
+  modelPath: string;
+  tilesetFilename: string;
+}
+
+export interface SourcesValidationResponse {
+  isValid: boolean;
+  message?: string;
+}
+
 export interface UpdatePayload {
   productName?: string;
   sourceDateStart?: Date;
