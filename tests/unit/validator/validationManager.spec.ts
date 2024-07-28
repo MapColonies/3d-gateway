@@ -52,12 +52,12 @@ describe('ValidationManager', () => {
     it.each([
       {
         filePath: __filename,
-        expectedValid: true
+        expectedValid: true,
       },
       {
-        filePath:  __filename+'.aa',
-        expectedValid: false
-      }/*,
+        filePath: __filename + '.aa',
+        expectedValid: false,
+      } /*,
       {
         filePath: __dirname,
         expectedValid: true
@@ -65,16 +65,15 @@ describe('ValidationManager', () => {
       {
         filePath: __dirname+'_fakeDir',
         expectedValid: false
-      }*/])('should check if file or directory exists and return true for %p',
-      async (testInput: ValidateFilesExistTestInput) => {
-        const payload = createValidateSourcesPayload();
-        const response = await validationManager.sourcesValid(payload);
-        const expectedResponse: SourcesValidationResponse = {
-          isValid: true,
-        };
-        expect(response).toStrictEqual(expectedResponse);
-      }
-    );
+      }*/,
+    ])('should check if file or directory exists and return true for %p', async (testInput: ValidateFilesExistTestInput) => {
+      const payload = createValidateSourcesPayload();
+      const response = await validationManager.sourcesValid(payload);
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: true,
+      };
+      expect(response).toStrictEqual(expectedResponse);
+    });
   });
 
   describe('validateModelPath tests', () => {
@@ -189,11 +188,11 @@ describe('ValidationManager', () => {
     });
   });
 
-  describe('validateFootprint tests', () => {
+  describe('validatePolygon tests', () => {
     it('returns true when the footPrint is valid', () => {
       const footprint = createFootprint();
 
-      const result = validationManager['validateFootprint'](footprint);
+      const result = validationManager['validatePolygon'](footprint);
 
       expect(result).toBe(true);
     });
@@ -201,7 +200,7 @@ describe('ValidationManager', () => {
     it('returns error string when the footPrint is not invalid schema', () => {
       const footprint = createWrongFootprintSchema();
 
-      const result = validationManager['validateFootprint'](footprint);
+      const result = validationManager['validatePolygon'](footprint);
       expect(result).toBe(
         `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
           footprint
@@ -212,7 +211,7 @@ describe('ValidationManager', () => {
     it('returns error string when the first and last coordinate are different', () => {
       const footprint = createWrongFootprintCoordinates();
 
-      const result = validationManager['validateFootprint'](footprint);
+      const result = validationManager['validatePolygon'](footprint);
 
       expect(result).toBe(`Wrong footprint: ${JSON.stringify(footprint)} the first and last coordinates should be equal`);
     });

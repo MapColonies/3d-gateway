@@ -446,7 +446,7 @@ export class ValidationManager {
       }
 
       // TODO: refactor in next PR in order to return bool and better message
-      const validatePolygonResult = this.validatePolygon(isValidTilesetContentResponse.polygon as Polygon);
+      const validatePolygonResult = this.validatePolygon(isValidTilesetContentResponse.polygon);
       if (typeof validatePolygonResult == 'string') {
         isValidTilesetContentResponse.message = validatePolygonResult;
         return false;
