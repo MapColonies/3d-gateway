@@ -79,15 +79,6 @@ export class ValidationManager {
       };
     }
 
-    // TODO: refactor in next PR in order to return bool and better message
-    const result = this.validateFootprint(isValidTilesetContentResponse.polygon as Polygon);
-    if (typeof result == 'string') {
-      return {
-        isValid: false,
-        message: result,
-      };
-    }
-
     return {
       isValid: true,
     };
@@ -113,7 +104,7 @@ export class ValidationManager {
     if (typeof result == 'string') {
       return result;
     }
-    result = this.validateFootprint(payload.metadata.footprint as Polygon);
+    result = this.validatePolygon(payload.metadata.footprint as Polygon);
     if (typeof result == 'string') {
       return result;
     }
@@ -161,7 +152,7 @@ export class ValidationManager {
     }
 
     if (payload.footprint != undefined) {
-      result = this.validateFootprint(payload.footprint);
+      result = this.validatePolygon(payload.footprint);
       if (typeof result == 'string') {
         return result;
       }
@@ -267,18 +258,18 @@ export class ValidationManager {
   }
 
   @withSpanV4
-  private validateFootprint(footprint: Polygon): boolean | string {
-    if (!this.validatePolygonSchema(footprint)) {
-      return `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
-        footprint
+  private validatePolygon(polygon: Polygon): boolean | string {
+    if (!this.validatePolygonSchema(polygon)) {
+      return `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+        polygon
       )}`;
     }
-    if (!this.validateCoordinates(footprint)) {
-      return `Wrong footprint: ${JSON.stringify(footprint)} the first and last coordinates should be equal`;
+    if (!this.validateCoordinates(polygon)) {
+      return `Wrong polygon: ${JSON.stringify(polygon)} the first and last coordinates should be equal`;
     }
-    const logContext = { ...this.logContext, function: this.validateFootprint.name };
+    const logContext = { ...this.logContext, function: this.validatePolygon.name };
     this.logger.debug({
-      msg: 'footprint validated successfully!',
+      msg: 'polygon validated successfully!',
       logContext,
     });
     return true;
@@ -451,6 +442,13 @@ export class ValidationManager {
         return false;
       } else {
         isValidTilesetContentResponse.message = 'Bad tileset format. Should be in 3DTiles format';
+        return false;
+      }
+
+      // TODO: refactor in next PR in order to return bool and better message
+      const validatePolygonResult = this.validatePolygon(isValidTilesetContentResponse.polygon as Polygon);
+      if (typeof validatePolygonResult == 'string') {
+        isValidTilesetContentResponse.message = validatePolygonResult;
         return false;
       }
     } catch (error) {

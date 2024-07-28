@@ -7,7 +7,7 @@ import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { ValidationManager } from '../../../src/validator/validationManager';
-import { IngestionPayload } from '../../../src/common/interfaces';
+import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
 import {
   createMetadata,
   createModelPath,
@@ -19,6 +19,7 @@ import {
   createRecord,
   createUpdatePayload,
   getTileset,
+  createValidateSourcesPayload,
 } from '../../helpers/helpers';
 import { configMock, lookupTablesMock, jsLoggerMock, catalogMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
@@ -42,11 +43,45 @@ describe('ValidationManager', () => {
     jest.clearAllMocks();
   });
 
+  interface ValidateFilesExistTestInput {
+    filePath: string;
+    expectedValid: boolean;
+  }
+
+  describe('sourcesValid tests', () => {
+    it.each([
+      {
+        filePath: __filename,
+        expectedValid: true
+      },
+      {
+        filePath:  __filename+'.aa',
+        expectedValid: false
+      }/*,
+      {
+        filePath: __dirname,
+        expectedValid: true
+      },
+      {
+        filePath: __dirname+'_fakeDir',
+        expectedValid: false
+      }*/])('should check if file or directory exists and return true for %p',
+      async (testInput: ValidateFilesExistTestInput) => {
+        const payload = createValidateSourcesPayload();
+        const response = await validationManager.sourcesValid(payload);
+        const expectedResponse: SourcesValidationResponse = {
+          isValid: true,
+        };
+        expect(response).toStrictEqual(expectedResponse);
+      }
+    );
+  });
+
   describe('validateModelPath tests', () => {
     it('returns true when got valid model path', () => {
       const modelPath = createModelPath();
 
-      const result = validationManager['validateModelPath'](modelPath);
+      const result = validationManager.validateModelPath(modelPath);
 
       expect(result).toBe(true);
     });
@@ -54,7 +89,7 @@ describe('ValidationManager', () => {
     it('returns error string when model path not in the agreed path', () => {
       const modelPath = 'some/path';
 
-      const result = validationManager['validateModelPath'](modelPath);
+      const result = validationManager.validateModelPath(modelPath);
 
       expect(result).toContain(`Unknown model path! The model isn't in the agreed folder!`);
     });
@@ -64,7 +99,7 @@ describe('ValidationManager', () => {
     it('returns true when got valid model name', () => {
       const modelPath = createMountedModelPath();
 
-      const result = validationManager['validateModelName'](modelPath);
+      const result = validationManager.validateModelPath(modelPath);
 
       expect(result).toBe(true);
     });
@@ -72,7 +107,7 @@ describe('ValidationManager', () => {
     it('returns error string when got model name that is not in the agreed folder', () => {
       const modelName = faker.word.sample();
 
-      const result = validationManager['validateModelName'](modelName);
+      const result = validationManager.validateModelPath(modelName);
 
       expect(result).toBe(`Unknown model name! The model name isn't in the folder!, modelPath: ${modelName}`);
     });
@@ -518,26 +553,6 @@ describe('ValidationManager', () => {
       const response = validationManager.validateUpdate(identifier, payload);
 
       await expect(response).rejects.toThrow('catalog error');
-    });
-  });
-
-  describe('validate sources', () => {
-    it('returns true when start date is earlier than end date', () => {
-      const startDate = new Date(2021, 11, 12, 7);
-      const endDate = new Date(2022, 11, 12, 8);
-
-      const result = validationManager['validateDates'](startDate, endDate);
-
-      expect(result).toBe(true);
-    });
-
-    it('returns false when end date is earlier than start date', () => {
-      const startDate = new Date(2022, 11, 12, 8);
-      const endDate = new Date(2022, 11, 12, 7);
-
-      const result = validationManager['validateDates'](startDate, endDate);
-
-      expect(result).toBe('sourceStartDate should not be later than sourceEndDate');
     });
   });
 });

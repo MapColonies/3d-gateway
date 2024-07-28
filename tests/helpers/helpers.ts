@@ -3,7 +3,7 @@ import config from 'config';
 import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
 import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
-import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
 import { Record3D } from '../../src/externalServices/catalog/interfaces';
@@ -145,6 +145,13 @@ export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload =
     modelPath: createModelPath(modelName),
     tilesetFilename: createTilesetFileName(),
     metadata: createMetadataWithoutProductSource(modelName),
+  };
+};
+
+export const createValidateSourcesPayload = (modelName = 'Sphere'): IngestionSourcesPayload => {
+  return {
+    modelPath: createModelPath(modelName),
+    tilesetFilename: createTilesetFileName(),
   };
 };
 
