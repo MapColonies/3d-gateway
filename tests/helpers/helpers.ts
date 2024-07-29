@@ -18,7 +18,11 @@ const minY = 2;
 const maxX = 3;
 const maxY = 4;
 const pvPath = config.get<string>('paths.pvPath');
-const basePath = config.get<string>('paths.basePath');
+let basePath = config.get<string>('paths.basePath');
+const isWin = process.platform === 'win32';
+if (isWin) {
+  basePath = basePath.replace('\\\\', '');
+}
 
 const createLookupOption = (): ILookupOption => {
   return {
@@ -208,3 +212,5 @@ export const createUpdateStatusPayload = (): UpdateStatusPayload => {
     productStatus: 'UNPUBLISHED',
   };
 };
+
+export { basePath };

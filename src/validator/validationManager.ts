@@ -341,7 +341,7 @@ export class ValidationManager {
       const coverage = (100 * areaFootprint) / areaCombined;
 
       if (coverage < this.limit) {
-        return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`;
+        return `The footprint intersectection with the model doesn't reach minimum required threshhold, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`;
       }
       this.logger.debug({
         msg: 'intersection validated successfully!',

@@ -40,7 +40,7 @@
         "--collectCoverage=false",
         "--colors",
         "--config",
-        "${workspaceRoot}/tests/configurations/integration/jest.config.ts",
+        "${workspaceRoot}/tests/configurations/unit/jest.config.ts",
         "--runInBand",
         /*"--runTestsByPath",
         "${relativeFile}",

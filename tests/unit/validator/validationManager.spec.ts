@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -10,6 +9,7 @@ import { StatusCodes } from 'http-status-codes';
 import { ValidationManager } from '../../../src/validator/validationManager';
 import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
 import {
+  basePath as helpersBasePath,
   createMetadata,
   createModelPath,
   createTilesetFileName,
@@ -30,8 +30,9 @@ describe('ValidationManager', () => {
   let validationManager: ValidationManager;
 
   beforeEach(() => {
+    configMock.get.mockReturnValueOnce(helpersBasePath);
     validationManager = new ValidationManager(
-      config,
+      configMock,
       jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
       lookupTablesMock as never,
@@ -182,7 +183,7 @@ describe('ValidationManager', () => {
   describe('validateProductType tests', () => {
     it('returns true without warnings when got valid productType', () => {
       validationManager = new ValidationManager(
-        config,
+        configMock,
         jsLoggerMock as never,
         trace.getTracer('testTracer'),
         lookupTablesMock as never,
@@ -200,7 +201,7 @@ describe('ValidationManager', () => {
 
     it('returns true with warnings when got invalid productType', () => {
       validationManager = new ValidationManager(
-        config,
+        configMock,
         jsLoggerMock as never,
         trace.getTracer('testTracer'),
         lookupTablesMock as never,
@@ -377,7 +378,7 @@ describe('ValidationManager', () => {
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
-      expect(result).toContain('The footprint is not intersected enough with the model');
+      expect(result).toContain('The footprint intersectection with the model');
     });
   });
 
@@ -503,7 +504,15 @@ describe('ValidationManager', () => {
       };
       catalogMock.isProductIdExist.mockResolvedValue([payload.metadata.productId]);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
-
+      configMock.get.mockReturnValue(20); // for limit test
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        providerMock
+      );
       const response = await validationManager.validateIngestion(payload);
 
       expect(response).toBe(true);
