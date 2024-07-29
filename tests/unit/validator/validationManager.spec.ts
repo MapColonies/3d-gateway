@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
@@ -25,10 +26,6 @@ import { configMock, lookupTablesMock, jsLoggerMock, catalogMock, providerMock }
 import { AppError } from '../../../src/common/appError';
 import { FILE_ENCODING } from '../../../src/common/constants';
 
-import fs from "fs/promises";
-
-jest.mock("fs/promises");
-
 describe('ValidationManager', () => {
   let validationManager: ValidationManager;
 
@@ -47,45 +44,72 @@ describe('ValidationManager', () => {
     jest.clearAllMocks();
   });
 
-  interface ValidateFilesExistTestInput {
-    filePath: string;
-    expectedValid: boolean;
-  }
+  describe('sourcesValid tests', () => {
+    describe('sourcesValid tests', () => {
+      it.each(['Sphere', 'Region'])('should check if sources are valid and return true for %p', async (testInput: string) => {
+        const payload = createValidateSourcesPayload(testInput);
 
-  // describe('sourcesValid tests', () => {
-  //   it.each([
-  //     {
-  //       filePath: __filename,
-  //       expectedValid: true,
-  //     },
-  //     {
-  //       filePath: __filename + '.aa',
-  //       expectedValid: false,
-  //     } /*,
-  //     {
-  //       filePath: __dirname,
-  //       expectedValid: true
-  //     },
-  //     {
-  //       filePath: __dirname+'_fakeDir',
-  //       expectedValid: false
-  //     }*/,
-  //   ])('should check if file or directory exists and return true for %p', async (testInput: ValidateFilesExistTestInput) => {
-  //     const payload = createValidateSourcesPayload();
-  //     // fs.access = jest.fn().mockResolvedValueOnce(true);
-  //     const response = await validationManager.sourcesValid(payload);
-  //     const expectedResponse: SourcesValidationResponse = {
-  //       isValid: true,
-  //     };
-  //     expect(response).toStrictEqual(expectedResponse);
-  //   });
-  // });
+        const response = await validationManager.sourcesValid(payload);
+        const expectedResponse: SourcesValidationResponse = {
+          isValid: true,
+        };
+        expect(response).toStrictEqual(expectedResponse);
+      });
+    });
+
+    it('should check if sources are valid and return false for Box tileset', async () => {
+      const payload = createValidateSourcesPayload('Box');
+
+      const response = await validationManager.sourcesValid(payload);
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
+      };
+      expect(response).toStrictEqual(expectedResponse);
+    });
+
+    it('should check if sources exists and return false if modelPath is invalid', async () => {
+      const payload = createValidateSourcesPayload();
+
+      payload.modelPath = 'invalidModelName';
+      const response = await validationManager.sourcesValid(payload);
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `Unknown model name! The model name isn't in the folder!, modelPath: ${payload.modelPath}`,
+      };
+      expect(response).toStrictEqual(expectedResponse);
+    });
+
+    it('should check if sources exists and return false if TilesetJson is invalid', async () => {
+      const payload = createValidateSourcesPayload();
+
+      payload.tilesetFilename = 'invalidTilesetFilename';
+      const response = await validationManager.sourcesValid(payload);
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `Unknown tileset name! The tileset file wasn't found!, tileset: ${payload.tilesetFilename} doesn't exist`,
+      };
+      expect(response).toStrictEqual(expectedResponse);
+    });
+
+    it('should check if sources exists and return false if TilesetJson is invalid JSON', async () => {
+      const payload = createValidateSourcesPayload();
+
+      payload.tilesetFilename = 'invalidTileset.json';
+      const response = await validationManager.sourcesValid(payload);
+      const fullPath = join(`${payload.modelPath}`, `${payload.tilesetFilename}`);
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `File '${fullPath}' tileset validation failed`,
+      };
+      expect(response).toStrictEqual(expectedResponse);
+    });
+  });
 
   describe('validateModelPath tests', () => {
     it('returns true when got valid model path', () => {
       const modelPath = createModelPath();
-      
-      // fs.access = jest.fn().mockResolvedValueOnce(true);
+
       const result = validationManager.validateModelPath(modelPath);
 
       expect(result).toBe(true);
@@ -111,7 +135,7 @@ describe('ValidationManager', () => {
 
     it('returns error string when got model name that is not in the agreed folder', () => {
       const modelName = faker.word.sample();
-      
+
       const result = validationManager.validateModelPath(modelName);
 
       expect(result).toContain(`Unknown model path! The model isn't in the agreed folder!`);

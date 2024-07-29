@@ -20,8 +20,8 @@ import {
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { IngestionPayload } from '../../../src/common/interfaces';
-import { ModelRequestSender } from './helpers/requestSender';
 import { replaceBackQuotesWithQuotes } from '../../../src/model/models/utilities';
+import { ModelRequestSender } from './helpers/requestSender';
 
 describe('ModelController', function () {
   let requestSender: ModelRequestSender;
