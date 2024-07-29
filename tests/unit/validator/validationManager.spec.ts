@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, normalize } from 'node:path';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -128,6 +128,16 @@ describe('ValidationManager', () => {
   describe('validateModelName tests', () => {
     it('returns true when got valid model name', () => {
       const modelPath = createMountedModelPath();
+      const normalizedBasePath = normalize(helpersBasePath);
+      configMock.get.mockReturnValueOnce(normalizedBasePath);
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        providerMock as never
+      );
 
       const result = validationManager.validateModelPath(modelPath);
 

@@ -8,7 +8,7 @@
     }
   },
   "paths": {
-    "basePath": "\\\\tests\\helpers\\3DModels",
+    "basePath": "./tests\\helpers\\3DModels",
     "pvPath": "./tests/helpers/3DModels"
   },
   "provider": "S3",
