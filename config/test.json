@@ -8,7 +8,7 @@
     }
   },
   "paths": {
-    "basePath": "\\\\tmp\\tilesets\\models",
+    "basePath": "tests\\helpers\\3DModels",
     "pvPath": "./tests/helpers/3DModels"
   },
   "provider": "S3",

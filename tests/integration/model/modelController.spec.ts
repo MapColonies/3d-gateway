@@ -21,6 +21,7 @@ import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { IngestionPayload } from '../../../src/common/interfaces';
 import { ModelRequestSender } from './helpers/requestSender';
+import { replaceBackQuotesWithQuotes } from '../../../src/model/models/utilities';
 
 describe('ModelController', function () {
   let requestSender: ModelRequestSender;
@@ -191,14 +192,16 @@ describe('ModelController', function () {
       it('should return 400 status code if modelName is invalid', async function () {
         const payload = createIngestionPayload();
         const modelName = faker.word.sample();
-        payload.modelPath = createModelPath(modelName);
+
+        const originalModelPath = createModelPath(modelName);
+        payload.modelPath = originalModelPath;
 
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Unknown model name! The model name isn't in the folder!, modelPath: ${createMountedModelPath(modelName)}`
+          `Unknown model name! The model name isn't in the folder!, modelPath: ${replaceBackQuotesWithQuotes(originalModelPath)}`
         );
       });
 
@@ -253,7 +256,7 @@ describe('ModelController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Wrong footprint: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`
+          `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`
         );
       });
 
@@ -266,7 +269,7 @@ describe('ModelController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
+          `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
             payload.metadata.footprint
           )}`
         );

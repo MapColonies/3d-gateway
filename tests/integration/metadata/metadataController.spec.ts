@@ -90,7 +90,7 @@ describe('MetadataController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
+          `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
             payload.footprint
           )}`
         );
@@ -107,7 +107,7 @@ describe('MetadataController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Wrong footprint: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
+          `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
         );
       });
 

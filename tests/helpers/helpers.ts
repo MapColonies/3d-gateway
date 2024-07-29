@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import config from 'config';
 import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
@@ -72,7 +73,8 @@ export const createModelPath = (modelName = 'Sphere'): string => {
 };
 
 export const createMountedModelPath = (modelName = 'Sphere'): string => {
-  return `${pvPath}/${modelName}`;
+  const mountedPath = join(`${pvPath}`, `${modelName}`);
+  return mountedPath;
 };
 
 export const createTilesetFileName = (): string => {
