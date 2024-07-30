@@ -19,6 +19,7 @@ export const storeTriggerMock = {
 
 export const validationManagerMock = {
   validateModelPath: jest.fn(),
+  sourcesValid: jest.fn(),
   validateIngestion: jest.fn(),
   validateUpdate: jest.fn(),
   validateRecordExistence: jest.fn(),

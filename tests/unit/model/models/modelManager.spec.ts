@@ -1,9 +1,9 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { AppError } from '../../../../src/common/appError';
-import { IngestionPayload } from '../../../../src/common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, SourcesValidationResponse } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
-import { createIngestionPayload, createStoreTriggerPayload } from '../../../helpers/helpers';
+import { createIngestionPayload, createStoreTriggerPayload, createValidateSourcesPayload } from '../../../helpers/helpers';
 import { storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { StoreTriggerPayload } from '../../../../src/externalServices/storeTrigger/interfaces';
 
@@ -73,6 +73,59 @@ describe('ModelManager', () => {
       const createPromise = modelManager.createModel(payload);
 
       await expect(createPromise).rejects.toThrow('store-trigger service is not available');
+    });
+  });
+
+  describe('validateModelSources tests', () => {
+    it('resolves without errors', async () => {
+      const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
+      
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      const validResponse: SourcesValidationResponse = {
+        isValid: true
+      }
+      validationManagerMock.sourcesValid.mockResolvedValue(validResponse);
+
+      const expectedSourcesValidationResponse: SourcesValidationResponse = {
+        isValid: true
+      }
+      const isValidResponse: SourcesValidationResponse = await modelManager.validateModelSources(payload);
+      expect(isValidResponse).toMatchObject(expectedSourcesValidationResponse);
+    });
+
+    it('resolves invalid response for validateModelPath=false', async () => {
+      const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
+      
+      const validResponse: SourcesValidationResponse = {
+        isValid: true
+      }
+      validationManagerMock.validateModelPath.mockReturnValue(`invalidResponse`);
+      validationManagerMock.sourcesValid.mockResolvedValue(validResponse);
+
+      const expectedSourcesValidationResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `invalidResponse`,
+      }
+      const response: SourcesValidationResponse = await modelManager.validateModelSources(payload);
+      expect(response).toMatchObject(expectedSourcesValidationResponse);
+    });
+
+    it('resolves invalid response for sourcesValid=false', async () => {
+      const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
+      
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      const inValidResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `invalidResponse`,
+      }
+      validationManagerMock.sourcesValid.mockResolvedValue(inValidResponse);
+
+      const expectedSourcesValidationResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `invalidResponse`,
+      }
+      const response: SourcesValidationResponse = await modelManager.validateModelSources(payload);
+      expect(response).toMatchObject(expectedSourcesValidationResponse);
     });
   });
 });

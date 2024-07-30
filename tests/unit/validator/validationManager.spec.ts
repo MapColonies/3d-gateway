@@ -99,13 +99,26 @@ describe('ValidationManager', () => {
     it('should check if sources exists and return false if TilesetJson is invalid JSON', async () => {
       const payload = createValidateSourcesPayload();
       payload.modelPath = createMountedModelPath();
-
       payload.tilesetFilename = 'invalidTileset.json';
+
       const response = await validationManager.sourcesValid(payload);
       const fullPath = join(`${payload.modelPath}`, `${payload.tilesetFilename}`);
       const expectedResponse: SourcesValidationResponse = {
         isValid: false,
         message: `File '${fullPath}' tileset validation failed`,
+      };
+      expect(response).toStrictEqual(expectedResponse);
+    });
+
+    it('should check if sources exists and return false if TilesetJson contains invalid 3DTiles format', async () => {
+      const payload = createValidateSourcesPayload();
+      payload.modelPath = createMountedModelPath();
+      payload.tilesetFilename = 'invalidTileset3Dtiles.json';
+
+      const response = await validationManager.sourcesValid(payload);
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: 'Bad tileset format. Should be in 3DTiles format',
       };
       expect(response).toStrictEqual(expectedResponse);
     });
