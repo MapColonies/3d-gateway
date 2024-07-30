@@ -5,7 +5,9 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer, trace } from '@opentelemetry/api';
 import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { StatusCodes } from 'http-status-codes';
+import { FlowProducer } from 'bullmq';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/storeTriggerCall';
+import { QUEUES, Stage } from '../../common/commonBullMQ';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
@@ -20,6 +22,7 @@ export class ModelManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
+    @inject(SERVICES.FLOW_PRODUCER) private readonly flowProducer: FlowProducer,
     @inject(ValidationManager) private readonly validator: ValidationManager,
     @inject(StoreTriggerCall) private readonly storeTrigger: StoreTriggerCall
   ) {
@@ -30,7 +33,7 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
-  public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {
+  public async createModel(payload: IngestionPayload): Promise<void> {
     const logContext = { ...this.logContext, function: this.createModel.name };
     const modelId = uuid();
     this.logger.info({
@@ -94,11 +97,34 @@ export class ModelManager {
       modelId: modelId,
       pathToTileset: removePvPathFromModelPath(payload.modelPath),
       tilesetFilename: payload.tilesetFilename,
-      metadata: { ...payload.metadata, productSource: productSource },
+      metadata: { ...payload.metadata, productSource },
     };
     try {
-      const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
-      return response;
+      await this.flowProducer.add({
+        name: 'ingestion',
+        queueName: QUEUES.jobsQueue,
+        // children: [
+        //   {
+        //     name: Stage.FINALIZING,
+        //     queueName: QUEUES.stagesQueue,
+        //     children: [{
+        //       name: Stage.PROCESSING,
+        //       queueName: QUEUES.stagesQueue,
+        //       data: request
+        //     }],
+        //     data: request
+        //   }
+        // ],
+        data: {
+          parameters: request, 
+          stage: Stage.INITIALIZING
+        },
+        opts: {
+          removeOnComplete: {age: 500}
+        },
+      });
+      
+      return;
     } catch (error) {
       this.logger.error({
         msg: 'Error in creating a flow',

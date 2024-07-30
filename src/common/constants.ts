@@ -20,6 +20,7 @@ export const SERVICES: Record<string, symbol> = {
   TRACER: Symbol('Tracer'),
   PROVIDER: Symbol('Provider'),
   PROVIDER_CONFIG: Symbol('ProviderConfig'),
+  FLOW_PRODUCER: Symbol('FlowProducer'),
 };
 /* eslint-disable @typescript-eslint/naming-convention */
 

@@ -20,7 +20,7 @@
     }
   },
   "server": {
-    "port": "8080",
+    "port": "8083",
     "request": {
       "payload": {
         "limit": "1mb"
@@ -43,7 +43,7 @@
   },
   "paths": {
     "basePath": "\\\\domtest\\mimi\\archi\\maz\\silver\\libot",
-    "pvPath": "/home/3DModels"
+    "pvPath": "/home/netancoh/Desktop/Models"
   },
   "validation": {
     "percentageLimit": 10

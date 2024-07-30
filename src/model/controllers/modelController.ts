@@ -7,7 +7,7 @@ import { IngestionPayload, LogContext } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 
-type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
+type CreateModelHandler = RequestHandler<undefined, undefined, IngestionPayload>;
 
 @injectable()
 export class ModelController {
@@ -24,7 +24,7 @@ export class ModelController {
     try {
       const payload = req.body;
       const response = await this.manager.createModel(payload);
-      return res.status(StatusCodes.CREATED).json(response);
+      return res.status(StatusCodes.CREATED).json();
     } catch (error) {
       this.logger.error({
         msg: `Failed in ingesting a new model!`,

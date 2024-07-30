@@ -5,6 +5,7 @@ import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { instanceCachingFactory } from 'tsyringe';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import client from 'prom-client';
+import { FlowProducer } from 'bullmq';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
@@ -46,6 +47,20 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
             return client.register;
           }
         }),
+      },
+    },
+    {
+      token: SERVICES.FLOW_PRODUCER,
+      provider: {
+        useFactory: (): FlowProducer => {
+          return new FlowProducer({
+            connection: {
+              host: "127.0.0.1",
+              port: 6379
+            },
+            prefix: '3D'
+          });
+        },
       },
     },
     {
