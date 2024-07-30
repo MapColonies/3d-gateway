@@ -208,5 +208,3 @@ export const createUpdateStatusPayload = (): UpdateStatusPayload => {
     productStatus: 'UNPUBLISHED',
   };
 };
-
-export { basePath };

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { join, normalize } from 'node:path';
+import { join } from 'node:path';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
@@ -10,7 +10,6 @@ import { StatusCodes } from 'http-status-codes';
 import { ValidationManager } from '../../../src/validator/validationManager';
 import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
 import {
-  basePath as helpersBasePath,
   createMetadata,
   createModelPath,
   createTilesetFileName,
@@ -49,7 +48,7 @@ describe('ValidationManager', () => {
     describe('sourcesValid tests', () => {
       it.each(['Sphere', 'Region'])('should check if sources are valid and return true for %p', async (testInput: string) => {
         const payload = createValidateSourcesPayload(testInput);
-        payload.modelPath = createMountedModelPath(testInput)
+        payload.modelPath = createMountedModelPath(testInput);
 
         const response = await validationManager.sourcesValid(payload);
         const expectedResponse: SourcesValidationResponse = {
@@ -133,7 +132,7 @@ describe('ValidationManager', () => {
   describe('validateModelName tests', () => {
     it('returns true when got valid model name', () => {
       const modelPath = createMountedModelPath();
-      
+
       const result = validationManager['validateModelName'](modelPath);
 
       expect(result).toBe(true);
