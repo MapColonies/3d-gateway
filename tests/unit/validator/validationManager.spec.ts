@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
+import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -30,9 +31,8 @@ describe('ValidationManager', () => {
   let validationManager: ValidationManager;
 
   beforeEach(() => {
-    configMock.get.mockReturnValueOnce(helpersBasePath);
     validationManager = new ValidationManager(
-      configMock,
+      config,
       jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
       lookupTablesMock as never,
@@ -49,6 +49,7 @@ describe('ValidationManager', () => {
     describe('sourcesValid tests', () => {
       it.each(['Sphere', 'Region'])('should check if sources are valid and return true for %p', async (testInput: string) => {
         const payload = createValidateSourcesPayload(testInput);
+        payload.modelPath = createMountedModelPath(testInput)
 
         const response = await validationManager.sourcesValid(payload);
         const expectedResponse: SourcesValidationResponse = {
@@ -59,7 +60,9 @@ describe('ValidationManager', () => {
     });
 
     it('should check if sources are valid and return false for Box tileset', async () => {
-      const payload = createValidateSourcesPayload('Box');
+      const testInput = 'Box';
+      const payload = createValidateSourcesPayload(testInput);
+      payload.modelPath = createMountedModelPath(testInput);
 
       const response = await validationManager.sourcesValid(payload);
       const expectedResponse: SourcesValidationResponse = {
@@ -71,8 +74,8 @@ describe('ValidationManager', () => {
 
     it('should check if sources exists and return false if modelPath is invalid', async () => {
       const payload = createValidateSourcesPayload();
-
       payload.modelPath = 'invalidModelName';
+
       const response = await validationManager.sourcesValid(payload);
       const expectedResponse: SourcesValidationResponse = {
         isValid: false,
@@ -83,8 +86,9 @@ describe('ValidationManager', () => {
 
     it('should check if sources exists and return false if TilesetJson is invalid', async () => {
       const payload = createValidateSourcesPayload();
-
+      payload.modelPath = createMountedModelPath();
       payload.tilesetFilename = 'invalidTilesetFilename';
+
       const response = await validationManager.sourcesValid(payload);
       const expectedResponse: SourcesValidationResponse = {
         isValid: false,
@@ -95,6 +99,7 @@ describe('ValidationManager', () => {
 
     it('should check if sources exists and return false if TilesetJson is invalid JSON', async () => {
       const payload = createValidateSourcesPayload();
+      payload.modelPath = createMountedModelPath();
 
       payload.tilesetFilename = 'invalidTileset.json';
       const response = await validationManager.sourcesValid(payload);
@@ -128,18 +133,8 @@ describe('ValidationManager', () => {
   describe('validateModelName tests', () => {
     it('returns true when got valid model name', () => {
       const modelPath = createMountedModelPath();
-      const normalizedBasePath = normalize(helpersBasePath);
-      configMock.get.mockReturnValueOnce(normalizedBasePath);
-      validationManager = new ValidationManager(
-        configMock,
-        jsLogger({ enabled: false }),
-        trace.getTracer('testTracer'),
-        lookupTablesMock as never,
-        catalogMock as never,
-        providerMock as never
-      );
-
-      const result = validationManager.validateModelPath(modelPath);
+      
+      const result = validationManager['validateModelName'](modelPath);
 
       expect(result).toBe(true);
     });
@@ -211,7 +206,7 @@ describe('ValidationManager', () => {
 
     it('returns true with warnings when got invalid productType', () => {
       validationManager = new ValidationManager(
-        configMock,
+        config,
         jsLoggerMock as never,
         trace.getTracer('testTracer'),
         lookupTablesMock as never,
@@ -514,15 +509,6 @@ describe('ValidationManager', () => {
       };
       catalogMock.isProductIdExist.mockResolvedValue([payload.metadata.productId]);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
-      configMock.get.mockReturnValue(20); // for limit test
-      validationManager = new ValidationManager(
-        configMock,
-        jsLogger({ enabled: false }),
-        trace.getTracer('testTracer'),
-        lookupTablesMock as never,
-        catalogMock as never,
-        providerMock
-      );
       const response = await validationManager.validateIngestion(payload);
 
       expect(response).toBe(true);
