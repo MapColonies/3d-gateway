@@ -79,51 +79,51 @@ describe('ModelManager', () => {
   describe('validateModelSources tests', () => {
     it('resolves without errors', async () => {
       const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
-      
+
       validationManagerMock.validateModelPath.mockReturnValue(true);
       const validResponse: SourcesValidationResponse = {
-        isValid: true
-      }
+        isValid: true,
+      };
       validationManagerMock.sourcesValid.mockResolvedValue(validResponse);
 
       const expectedSourcesValidationResponse: SourcesValidationResponse = {
-        isValid: true
-      }
+        isValid: true,
+      };
       const isValidResponse: SourcesValidationResponse = await modelManager.validateModelSources(payload);
       expect(isValidResponse).toMatchObject(expectedSourcesValidationResponse);
     });
 
     it('resolves invalid response for validateModelPath=false', async () => {
       const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
-      
+
       const validResponse: SourcesValidationResponse = {
-        isValid: true
-      }
+        isValid: true,
+      };
       validationManagerMock.validateModelPath.mockReturnValue(`invalidResponse`);
       validationManagerMock.sourcesValid.mockResolvedValue(validResponse);
 
       const expectedSourcesValidationResponse: SourcesValidationResponse = {
         isValid: false,
         message: `invalidResponse`,
-      }
+      };
       const response: SourcesValidationResponse = await modelManager.validateModelSources(payload);
       expect(response).toMatchObject(expectedSourcesValidationResponse);
     });
 
     it('resolves invalid response for sourcesValid=false', async () => {
       const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
-      
+
       validationManagerMock.validateModelPath.mockReturnValue(true);
       const inValidResponse: SourcesValidationResponse = {
         isValid: false,
         message: `invalidResponse`,
-      }
+      };
       validationManagerMock.sourcesValid.mockResolvedValue(inValidResponse);
 
       const expectedSourcesValidationResponse: SourcesValidationResponse = {
         isValid: false,
         message: `invalidResponse`,
-      }
+      };
       const response: SourcesValidationResponse = await modelManager.validateModelSources(payload);
       expect(response).toMatchObject(expectedSourcesValidationResponse);
     });
