@@ -5,8 +5,7 @@
   },
   "geometricError": 5337.4784658333701373,
   "root": {
-    "boundingVolume": {
-    },
+    "boundingVolume": {},
     "refine": "REPLACE",
     "geometricError": 5337.4784658333701373,
     "SMMasterHeader": {
