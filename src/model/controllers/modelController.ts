@@ -2,7 +2,6 @@ import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
-import { NotImplementedError } from '@map-colonies/error-types';
 import { SERVICES } from '../../common/constants';
 import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
