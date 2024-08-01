@@ -20,7 +20,7 @@ import {
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
 import { ModelRequestSender } from './helpers/requestSender';
 
 describe('ModelController', function () {
