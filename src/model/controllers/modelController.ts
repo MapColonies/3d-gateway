@@ -63,7 +63,8 @@ export class ModelController {
 
   //eslint-disable-next-line @typescript-eslint/require-await
   public validate: ValidateModelHandler = async (/*req, res, next*/) => {
-    throw new NotImplementedError('Not implemented yet');
+    return Promise.reject('Not implemented yet');
+
     // const logContext = { ...this.logContext, function: this.validate.name };
     // try {
     //   const payload = req.body;
