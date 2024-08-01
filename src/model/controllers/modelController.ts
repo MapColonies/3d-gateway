@@ -44,7 +44,11 @@ export class ModelController {
     try {
       const payload = req.body;
       const response = await this.manager.validateModelSources(payload);
-      return res.status(StatusCodes.OK).json(response);
+      if (!response.isValid) {
+        return res.status(StatusCodes.BAD_REQUEST).json(response);
+      } else {
+        return res.status(StatusCodes.OK).json(response);
+      }
     } catch (error) {
       this.logger.error({
         msg: `Failed to validate sources!`,
