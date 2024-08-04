@@ -2,7 +2,6 @@ import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
-import { NotImplementedError } from '@map-colonies/error-types';
 import { SERVICES } from '../../common/constants';
 import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
@@ -44,7 +43,11 @@ export class ModelController {
     try {
       const payload = req.body;
       const response = await this.manager.validateModelSources(payload);
-      return res.status(StatusCodes.OK).json(response);
+      if (!response.isValid) {
+        return res.status(StatusCodes.BAD_REQUEST).json(response);
+      } else {
+        return res.status(StatusCodes.OK).json(response);
+      }
     } catch (error) {
       this.logger.error({
         msg: `Failed to validate sources!`,
@@ -59,7 +62,8 @@ export class ModelController {
 
   //eslint-disable-next-line @typescript-eslint/require-await
   public validate: ValidateModelHandler = async (/*req, res, next*/) => {
-    throw new NotImplementedError('Not implemented yet');
+    return Promise.reject('Not implemented yet');
+
     // const logContext = { ...this.logContext, function: this.validate.name };
     // try {
     //   const payload = req.body;

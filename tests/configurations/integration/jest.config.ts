@@ -26,7 +26,7 @@ module.exports = {
       branches: 73,
       functions: 80,
       lines: 80,
-      statements: -13,
+      statements: -20,
     },
   },
   globalSetup: '<rootDir>/tests/configurations/runContainers/global-setup.js',

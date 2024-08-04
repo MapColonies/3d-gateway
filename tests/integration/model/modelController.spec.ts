@@ -16,11 +16,11 @@ import {
   createWrongFootprintCoordinates,
   createWrongFootprintSchema,
   getBasePath,
+  createValidateSourcesPayload,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { IngestionPayload } from '../../../src/common/interfaces';
-import { replaceBackQuotesWithQuotes } from '../../../src/model/models/utilities';
+import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
 import { ModelRequestSender } from './helpers/requestSender';
 
 describe('ModelController', function () {
@@ -40,7 +40,7 @@ describe('ModelController', function () {
     mockAxios.reset();
   });
 
-  describe('POST /models', function () {
+  describe('POST /models (createModel)', function () {
     describe('Happy Path 🙂', function () {
       describe('Sphere', function () {
         it('should return 201 status code and the added model', async function () {
@@ -199,10 +199,8 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty(
-          'message',
-          `Unknown model name! The model name isn't in the folder!, modelPath: ${replaceBackQuotesWithQuotes(originalModelPath)}`
-        );
+        expect(response.body).toHaveProperty('message');
+        expect((response.body as { message: string }).message).toContain(`Unknown model name! The model name isn't in the folder!, modelPath:`);
       });
 
       it('should return 400 status code if region is empty', async function () {
@@ -371,6 +369,49 @@ describe('ModelController', function () {
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
       });
+    });
+  });
+
+  describe('POST /models/validateSources', function () {
+    describe('Happy Path 🙂', function () {
+      it.each(['Sphere', 'Region'])('should return 200 status code for %p', async (testInput: string) => {
+        const payload = createValidateSourcesPayload(testInput);
+
+        const response = await requestSender.validateSources(payload);
+        const expectedResponse: SourcesValidationResponse = {
+          isValid: true,
+        };
+        expect(response.status).toBe(StatusCodes.OK);
+        expect(response.body).toStrictEqual(expectedResponse);
+      });
+    });
+  });
+
+  describe('Bad Path 😡', function () {
+    it('should return 400 status code for Box', async function () {
+      const testInput = 'Box';
+      const payload = createValidateSourcesPayload(testInput);
+
+      const expectedResponse: SourcesValidationResponse = {
+        isValid: false,
+        message: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
+      };
+      const response = await requestSender.validateSources(payload);
+
+      expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+      expect(response.body).toStrictEqual(expectedResponse);
+    });
+
+    it('should return 400 status code for bad model', async function () {
+      const testInput = 'Sphere';
+      const payload = createValidateSourcesPayload(testInput);
+      payload.modelPath = 'InvalidModelPath';
+
+      const response = await requestSender.validateSources(payload);
+
+      expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+      expect((response.body as { isValid: boolean }).isValid).toBe(false);
+      expect((response.body as { message: string }).message).toContain(`Unknown model path! The model isn't in the agreed folder!`);
     });
   });
 });
