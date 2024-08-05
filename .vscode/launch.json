@@ -29,32 +29,6 @@
         "TELEMETRY_METRICS_URL": "http://localhost:55681/v1/metrics"
         // "OPENAPI_FILE_PATH": "./openapi3.yaml"
       }
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Test Spec File",
-      "protocol": "inspector",
-      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
-      "args": [
-        "--collectCoverage=false",
-        "--colors",
-        "--config",
-        "${workspaceRoot}/tests/configurations/unit/jest.config.ts",
-        "--runInBand",
-        /*"--runTestsByPath",
-        "${relativeFile}",
-        "--testPathPattern=${fileDirname}",*/
-        "--testTimeout=10000000"
-      ],
-      "outputCapture": "std",
-      "internalConsoleOptions": "openOnSessionStart",
-      "envFile": "${workspaceRoot}/.env",
-      "skipFiles": ["${workspaceRoot}/../../node_modules/**/*", "<node_internals>/**/*"],
-      "windows": {
-        "skipFiles": ["C:\\**\\node_modules\\**\\*", "<node_internals>/**/*"]
-      },
-      "disableOptimisticBPs": true
     }
   ]
 }
