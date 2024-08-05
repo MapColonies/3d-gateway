@@ -395,7 +395,7 @@ describe('ValidationManager', () => {
 
       const result = validationManager['validateIntersection'](fileContent, payload.metadata.footprint as Polygon, payload.metadata.productName!);
 
-      expect(result).toContain('The footprint intersectection with the model');
+      expect(result).toContain('The footprint intersection with the model');
     });
   });
 
