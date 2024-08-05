@@ -11,7 +11,7 @@ import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { FILE_ENCODING, SERVICES } from '../common/constants';
-import { IConfig, IngestionSourcesPayload, LogContext, Provider, SourcesValidationResponse, UpdatePayload } from '../common/interfaces';
+import { IConfig, IngestionSourcesPayload, LogContext, Provider, ValidationResponse, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
 import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
@@ -49,7 +49,7 @@ export class ValidationManager {
   }
 
   @withSpanAsyncV4
-  public async sourcesValid(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
+  public async sourcesValid(payload: IngestionSourcesPayload): Promise<ValidationResponse> {
     const isModelFileExists = await this.validateFilesExist(payload.modelPath);
     if (!isModelFileExists) {
       return {

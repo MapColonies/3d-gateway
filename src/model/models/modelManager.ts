@@ -10,7 +10,7 @@ import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalService
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
-import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
 @injectable()
@@ -30,7 +30,7 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
-  public async validateModelSources(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
+  public async validateModelSources(payload: IngestionSourcesPayload): Promise<ValidationResponse> {
     const logContext = { ...this.logContext, function: this.validateModelSources.name };
     this.logger.info({
       msg: 'Sources validation started',
@@ -58,7 +58,7 @@ export class ModelManager {
   }
 
   // @withSpanAsyncV4
-  // public async validateModel(payload: IngestionPayload): Promise<SourcesValidationResponse> {
+  // public async validateModel(payload: IngestionPayload): Promise<ValidationResponse> {
   //   const logContext = { ...this.logContext, function: this.validateModel.name };
   //   this.logger.info({
   //     msg: 'start validation of new model',

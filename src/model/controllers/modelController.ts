@@ -3,13 +3,13 @@ import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
-type ValidateSourcesHandler = RequestHandler<undefined, SourcesValidationResponse, IngestionSourcesPayload>;
-type ValidateModelHandler = RequestHandler<undefined, SourcesValidationResponse, IngestionPayload>;
+type ValidateSourcesHandler = RequestHandler<undefined, ValidationResponse, IngestionSourcesPayload>;
+type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionPayload>;
 
 @injectable()
 export class ModelController {

@@ -8,7 +8,7 @@ import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { ValidationManager } from '../../../src/validator/validationManager';
-import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
+import { IngestionPayload, ValidationResponse } from '../../../src/common/interfaces';
 import {
   createMetadata,
   createModelPath,
@@ -51,7 +51,7 @@ describe('ValidationManager', () => {
         payload.modelPath = createMountedModelPath(testInput);
 
         const response = await validationManager.sourcesValid(payload);
-        const expectedResponse: SourcesValidationResponse = {
+        const expectedResponse: ValidationResponse = {
           isValid: true,
         };
         expect(response).toStrictEqual(expectedResponse);
@@ -64,7 +64,7 @@ describe('ValidationManager', () => {
       payload.modelPath = createMountedModelPath(testInput);
 
       const response = await validationManager.sourcesValid(payload);
-      const expectedResponse: SourcesValidationResponse = {
+      const expectedResponse: ValidationResponse = {
         isValid: false,
         message: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
       };
@@ -76,7 +76,7 @@ describe('ValidationManager', () => {
       payload.modelPath = 'invalidModelName';
 
       const response = await validationManager.sourcesValid(payload);
-      const expectedResponse: SourcesValidationResponse = {
+      const expectedResponse: ValidationResponse = {
         isValid: false,
         message: `Unknown model name! The model name isn't in the folder!, modelPath: ${payload.modelPath}`,
       };
@@ -89,7 +89,7 @@ describe('ValidationManager', () => {
       payload.tilesetFilename = 'invalidTilesetFilename';
 
       const response = await validationManager.sourcesValid(payload);
-      const expectedResponse: SourcesValidationResponse = {
+      const expectedResponse: ValidationResponse = {
         isValid: false,
         message: `Unknown tileset name! The tileset file wasn't found!, tileset: ${payload.tilesetFilename} doesn't exist`,
       };
@@ -103,7 +103,7 @@ describe('ValidationManager', () => {
 
       const response = await validationManager.sourcesValid(payload);
       const fullPath = join(`${payload.modelPath}`, `${payload.tilesetFilename}`);
-      const expectedResponse: SourcesValidationResponse = {
+      const expectedResponse: ValidationResponse = {
         isValid: false,
         message: `File '${fullPath}' tileset validation failed`,
       };
@@ -116,7 +116,7 @@ describe('ValidationManager', () => {
       payload.tilesetFilename = 'invalidTileset3Dtiles.json';
 
       const response = await validationManager.sourcesValid(payload);
-      const expectedResponse: SourcesValidationResponse = {
+      const expectedResponse: ValidationResponse = {
         isValid: false,
         message: 'Bad tileset format. Should be in 3DTiles format',
       };
@@ -535,7 +535,6 @@ describe('ValidationManager', () => {
       payload.metadata.productType = ProductType.DSM;
       catalogMock.isProductIdExist.mockResolvedValue([payload.metadata.productId]);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
-
       const response = await validationManager.validateIngestion(payload);
 
       expect(response).toBe(true);
