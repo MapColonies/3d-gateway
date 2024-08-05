@@ -24,7 +24,7 @@ export interface IngestionSourcesPayload {
   tilesetFilename: string;
 }
 
-export interface SourcesValidationResponse {
+export interface validationResponse {
   isValid: boolean;
   message?: string;
 }
