@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { inject, injectable } from 'tsyringe';
 import { v4 as uuid } from 'uuid';
 import { Logger } from '@map-colonies/js-logger';
@@ -10,7 +11,7 @@ import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalService
 import { SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
-import { IngestionPayload, IngestionSourcesPayload, LogContext, SourcesValidationResponse } from '../../common/interfaces';
+import { IngestionPayload, IngestionSourcesPayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
 @injectable()
@@ -30,13 +31,17 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
-  public async validateModelSources(payload: IngestionSourcesPayload): Promise<SourcesValidationResponse> {
+  public async validateModelSources(payload: IngestionSourcesPayload): Promise<ValidationResponse> {
     const logContext = { ...this.logContext, function: this.validateModelSources.name };
     this.logger.info({
       msg: 'Sources validation started',
       logContext,
       payload,
     });
+
+    if (payload.adjustedModelPath == undefined) {
+      payload.adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
+    }
 
     const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
     if (typeof resultModelPathValidation === 'string') {
@@ -45,8 +50,8 @@ export class ModelManager {
         message: resultModelPathValidation,
       };
     }
-    payload.modelPath = this.getAdjustedModelPath(payload.modelPath);
-    const sourcesValidationResponse = await this.validator.sourcesValid(payload);
+    const tilesetLocation = join(`${payload.adjustedModelPath}`, `${payload.tilesetFilename}`);
+    const sourcesValidationResponse = await this.validator.sourcesValid(payload, tilesetLocation);
 
     this.logger.info({
       msg: 'Sources validation ended',
@@ -57,65 +62,66 @@ export class ModelManager {
     return sourcesValidationResponse;
   }
 
-  // @withSpanAsyncV4
-  // public async validateModel(payload: IngestionPayload): Promise<SourcesValidationResponse> {
-  //   const logContext = { ...this.logContext, function: this.validateModel.name };
-  //   this.logger.info({
-  //     msg: 'start validation of new model',
-  //     logContext,
-  //     modelName: payload.metadata.productName,
-  //     payload,
-  //   });
-  //   throw new NotImplementedError('Not implemented yet');
-  // }
+  @withSpanAsyncV4
+  public async validateModel(payload: IngestionPayload): Promise<ValidationResponse> {
+    const logContext = { ...this.logContext, function: this.validateModel.name };
+    this.logger.info({
+      msg: 'model validation started',
+      logContext,
+      modelName: payload.metadata.productName,
+      payload,
+    });
+
+    if (payload.adjustedModelPath == undefined) {
+      payload.adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
+    }
+
+    const isSourcesValidResponse = await this.validateModelSources({ modelPath: payload.modelPath, tilesetFilename: payload.tilesetFilename });
+    if (!isSourcesValidResponse.isValid) {
+      this.logger.info({
+        msg: 'model validation ended',
+        logContext,
+        modelName: payload.metadata.productName,
+        payload,
+        isSourcesValidResponse,
+      });
+      return isSourcesValidResponse;
+    }
+
+    const tilesetLocation = join(`${payload.modelPath}`, `${payload.tilesetFilename}`);
+    const isMetadataValidResponse = await this.validator.isMetadataValid(payload, tilesetLocation);
+    this.logger.info({
+      msg: 'model validation ended',
+      logContext,
+      modelName: payload.metadata.productName,
+      payload,
+      isSourcesValidResponse,
+    });
+    return isMetadataValidResponse;
+  }
 
   @withSpanAsyncV4
   public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {
     const logContext = { ...this.logContext, function: this.createModel.name };
-    const modelId = uuid();
+
     this.logger.info({
-      msg: 'started ingestion of new model',
+      msg: 'new model ingestion - start validation',
       logContext,
-      modelId,
       modelName: payload.metadata.productName,
       payload,
     });
-    const spanActive = trace.getActiveSpan();
 
-    spanActive?.setAttributes({
-      [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
-    });
-
+    // update values
     const originalModelPath: string = payload.modelPath;
     payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
+    payload.adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
 
-    this.logger.debug({
-      msg: 'starting validating the payload',
-      logContext,
-      modelId,
-      modelName: payload.metadata.productName,
-    });
     try {
-      const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
-      if (typeof resultModelPathValidation === 'string') {
-        throw new AppError('', StatusCodes.BAD_REQUEST, resultModelPathValidation, true);
+      const isValidResponse = await this.validateModel(payload);
+      if (!isValidResponse.isValid) {
+        throw new AppError('', StatusCodes.BAD_REQUEST, isValidResponse.message!, true);
       }
-      payload.modelPath = this.getAdjustedModelPath(payload.modelPath);
-
-      const validated: boolean | string = await this.validator.validateIngestion(payload);
-      if (typeof validated == 'string') {
-        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, validated, true);
-      }
-      this.logger.info({
-        msg: 'model validated successfully',
-        logContext,
-        modelId,
-        modelName: payload.metadata.productName,
-      });
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
       this.logger.error({
         msg: 'unfamiliar error',
         logContext,
@@ -123,6 +129,20 @@ export class ModelManager {
       });
       throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
+
+    // else
+    const modelId = uuid();
+    this.logger.info({
+      msg: 'new model ingestion - start ingestion',
+      logContext,
+      modelId,
+      modelName: payload.metadata.productName,
+      payload,
+    });
+    const spanActive = trace.getActiveSpan();
+    spanActive?.setAttributes({
+      [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
+    });
 
     const request: StoreTriggerPayload = {
       modelId: modelId,

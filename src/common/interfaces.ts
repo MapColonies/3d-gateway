@@ -13,18 +13,19 @@ export interface OpenApiConfig {
   uiPath: string;
 }
 
-export interface IngestionPayload {
-  modelPath: string;
-  tilesetFilename: string;
-  metadata: Omit<Layer3DMetadata, 'productSource'>;
+export type MetaDataType = Omit<Layer3DMetadata, 'productSource'>;
+
+export interface IngestionPayload extends IngestionSourcesPayload {
+  metadata: MetaDataType;
 }
 
 export interface IngestionSourcesPayload {
   modelPath: string;
+  adjustedModelPath?: string;
   tilesetFilename: string;
 }
 
-export interface SourcesValidationResponse {
+export interface ValidationResponse {
   isValid: boolean;
   message?: string;
 }

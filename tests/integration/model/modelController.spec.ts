@@ -20,7 +20,7 @@ import {
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { IngestionPayload, SourcesValidationResponse } from '../../../src/common/interfaces';
+import { IngestionPayload, ValidationResponse } from '../../../src/common/interfaces';
 import { ModelRequestSender } from './helpers/requestSender';
 
 describe('ModelController', function () {
@@ -378,7 +378,7 @@ describe('ModelController', function () {
         const payload = createValidateSourcesPayload(testInput);
 
         const response = await requestSender.validateSources(payload);
-        const expectedResponse: SourcesValidationResponse = {
+        const expectedResponse: ValidationResponse = {
           isValid: true,
         };
         expect(response.status).toBe(StatusCodes.OK);
@@ -392,7 +392,7 @@ describe('ModelController', function () {
       const testInput = 'Box';
       const payload = createValidateSourcesPayload(testInput);
 
-      const expectedResponse: SourcesValidationResponse = {
+      const expectedResponse: ValidationResponse = {
         isValid: false,
         message: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
       };
