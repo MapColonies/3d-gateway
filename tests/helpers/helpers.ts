@@ -73,7 +73,7 @@ export const createModelPath = (modelName = 'Sphere'): string => {
 };
 
 export const createMountedModelPath = (modelName = 'Sphere'): string => {
-  const mountedPath = join(`${pvPath}`, `${modelName}`);
+  const mountedPath = join(pvPath, modelName);
   return mountedPath;
 };
 
