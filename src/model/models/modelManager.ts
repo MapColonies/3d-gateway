@@ -50,7 +50,7 @@ export class ModelManager {
         message: resultModelPathValidation,
       };
     }
-    const tilesetLocation = join(`${payload.adjustedModelPath}`, `${payload.tilesetFilename}`);
+    const tilesetLocation = join(payload.adjustedModelPath, payload.tilesetFilename);
     const sourcesValidationResponse = await this.validator.sourcesValid(payload, tilesetLocation);
 
     this.logger.info({
@@ -88,7 +88,7 @@ export class ModelManager {
       return isSourcesValidResponse;
     }
 
-    const tilesetLocation = join(`${payload.modelPath}`, `${payload.tilesetFilename}`);
+    const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
     const isMetadataValidResponse = await this.validator.isMetadataValid(payload, tilesetLocation);
     this.logger.info({
       msg: 'model validation ended',

@@ -25,7 +25,7 @@ describe('ModelManager', () => {
     it('resolves without errors', async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
-
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
       validationManagerMock.sourcesValid.mockResolvedValue({
         isValid: true,
@@ -33,7 +33,6 @@ describe('ModelManager', () => {
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
-      storeTriggerMock.postPayload.mockResolvedValue(expected);
 
       const created = await modelManager.createModel(payload);
 
@@ -42,6 +41,8 @@ describe('ModelManager', () => {
 
     it(`rejects if modelPath's validation failed`, async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue('Some ModelPath Error');
 
       const createPromise = modelManager.createModel(payload);
@@ -51,6 +52,8 @@ describe('ModelManager', () => {
 
     it(`rejects if sourcesValid validation failed`, async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
@@ -66,6 +69,8 @@ describe('ModelManager', () => {
 
     it(`rejects if isMetadataValid validation failed`, async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
       validationManagerMock.sourcesValid.mockResolvedValue({
         isValid: true,
@@ -77,6 +82,37 @@ describe('ModelManager', () => {
 
       const createPromise = modelManager.createModel(payload);
       await expect(createPromise).rejects.toThrow('Some isMetadataValid Error');
+    });
+
+    it(`rejects if isMetadataValid throws an error`, async () => {
+      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      validationManagerMock.sourcesValid.mockRejectedValue(new Error('there is a problem with sourcesValid'));
+      validationManagerMock.isMetadataValid.mockResolvedValue({
+        isValid: true,
+      });
+
+      const createPromise = modelManager.createModel(payload);
+      await expect(createPromise).rejects.toThrow('there is a problem with sourcesValid');
+    });
+
+    it(`rejects if storeTrigger throws an error`, async () => {
+      const payload: IngestionPayload = createIngestionPayload('Sphere');
+
+      storeTriggerMock.postPayload.mockRejectedValue(new Error('there is a problem with storeTrigger'));
+
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      validationManagerMock.sourcesValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.isMetadataValid.mockResolvedValue({
+        isValid: true,
+      });
+
+      const createPromise = modelManager.createModel(payload);
+      await expect(createPromise).rejects.toThrow('store-trigger service is not available');
     });
   });
 

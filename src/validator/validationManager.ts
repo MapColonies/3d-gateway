@@ -2,7 +2,6 @@ import { constants as fsConstants } from 'node:fs';
 import { readFile, access } from 'node:fs/promises';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { StatusCodes } from 'http-status-codes';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -12,7 +11,6 @@ import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { FILE_ENCODING, SERVICES } from '../common/constants';
 import { IConfig, IngestionSourcesPayload, LogContext, Provider, ValidationResponse, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
-import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
@@ -60,7 +58,8 @@ export class ValidationManager {
       };
     }
 
-    const polygonResponse = await this.getTilesetModelPolygon(tilesetLocation);
+    const fileContent: string = await readFile(tilesetLocation, { encoding: FILE_ENCODING });
+    const polygonResponse = this.getTilesetModelPolygon(fileContent);
     if (typeof polygonResponse == 'string') {
       return {
         isValid: false,
@@ -103,11 +102,12 @@ export class ValidationManager {
       return sourcesValidationResponse;
     }
 
-    const polygonResponse = await this.getTilesetModelPolygon(tilesetLocation);
+    const fileContent: string = await readFile(tilesetLocation, { encoding: FILE_ENCODING });
+    const polygonResponse = this.getTilesetModelPolygon(fileContent);
     if (typeof polygonResponse == 'string') {
       return {
         isValid: false,
-        message: 'failed to extract tileset polygon', // NOTE: this shouldn't happen as we call validateSources before
+        message: polygonResponse, // NOTE: this shouldn't happen as we call validateSources before
       };
     }
 
@@ -138,7 +138,6 @@ export class ValidationManager {
 
   @withSpanAsyncV4
   public async validateUpdate(identifier: string, payload: UpdatePayload): Promise<boolean | string> {
-    let result: boolean | string;
     const record = await this.catalog.getRecord(identifier);
 
     if (record === undefined) {
@@ -148,16 +147,16 @@ export class ValidationManager {
     if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
       const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
       const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
-      result = this.validateDates(sourceDateStart, sourceDateEnd);
-      if (typeof result == 'string') {
-        return result;
+      const isDatesValid = this.isDatesValid(sourceDateStart, sourceDateEnd);
+      if (!isDatesValid) {
+        return 'sourceStartDate should not be later than sourceEndDate';
       }
     }
 
     if (payload.footprint != undefined) {
-      result = this.validatePolygon(payload.footprint);
-      if (typeof result == 'string') {
-        return result;
+      const isFootprintPolygonValid: ValidationResponse = this.isPolygonValid(payload.footprint);
+      if (!isFootprintPolygonValid.isValid) {
+        return isFootprintPolygonValid.message!;
       }
       const tilesetPath = extractLink(record.links);
 
@@ -167,17 +166,21 @@ export class ValidationManager {
         logContext,
         tilesetPath,
       });
-      const file = await this.provider.getFile(tilesetPath);
-      result = this.validateIntersection(file, payload.footprint, payload.productName!);
-      if (typeof result == 'string') {
-        return result;
+      const fileContent: string = await this.provider.getFile(tilesetPath);
+      const polygonResponse = this.getTilesetModelPolygon(fileContent);
+      if (typeof polygonResponse == 'string') {
+        return polygonResponse;
+      }
+      const intersectsResponse = this.isFootprintAndModelIntersects(payload.footprint, polygonResponse);
+      if (!intersectsResponse.isValid) {
+        return intersectsResponse.message!;
       }
     }
 
     if (payload.classification != undefined) {
-      result = await this.validateClassification(payload.classification);
-      if (typeof result == 'string') {
-        return result;
+      const classificationResponse = await this.isClassificationValid(payload.classification);
+      if (!classificationResponse.isValid) {
+        return classificationResponse.message!;
       }
     }
 
@@ -197,136 +200,6 @@ export class ValidationManager {
     return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${this.basePath}`;
   }
 
-  @withSpanV4
-  private validatePolygon(polygon: Polygon): boolean | string {
-    if (!this.validatePolygonSchema(polygon)) {
-      return `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
-        polygon
-      )}`;
-    }
-    if (!this.validateCoordinates(polygon)) {
-      return `Wrong polygon: ${JSON.stringify(polygon)} the first and last coordinates should be equal`;
-    }
-    const logContext = { ...this.logContext, function: this.validatePolygon.name };
-    this.logger.debug({
-      msg: 'polygon validated successfully!',
-      logContext,
-    });
-    return true;
-  }
-
-  @withSpanV4
-  private validateIntersection(fileContent: string, footprint: Polygon, productName: string): boolean | string {
-    let model: Polygon;
-    const logContext = { ...this.logContext, function: this.validateIntersection.name };
-    try {
-      this.logger.debug({
-        msg: 'extract polygon of the model',
-        logContext,
-        modelName: productName,
-      });
-      const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
-
-      if (shape.sphere != undefined) {
-        model = convertSphereFromXYZToWGS84(shape as BoundingSphere);
-      } else if (shape.region != undefined) {
-        model = convertRegionFromRadianToDegrees(shape as BoundingRegion);
-      } else if (shape.box != undefined) {
-        return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
-      } else {
-        return 'Bad tileset format. Should be in 3DTiles format';
-      }
-
-      this.logger.debug({
-        msg: 'extracted successfully polygon of the model',
-        logContext,
-        polygon: model,
-        modelName: productName,
-      });
-
-      const intersection: Feature<Polygon | MultiPolygon> | null = intersect(
-        featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)])
-      );
-
-      this.logger.debug({
-        msg: 'intersected successfully between footprint and polygon of the model',
-        logContext,
-        intersection,
-        modelName: productName,
-      });
-
-      if (intersection == null) {
-        return `Wrong footprint! footprint's coordinates is not even close to the model!`;
-      }
-
-      const combined: Feature<Polygon | MultiPolygon> | null = union(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
-
-      this.logger.debug({
-        msg: 'combined successfully footprint and polygon of the model',
-        logContext,
-        combined,
-        modelName: productName,
-      });
-
-      const areaFootprint = area(footprint);
-      const areaCombined = area(combined!);
-      this.logger.debug({
-        msg: 'calculated successfully the areas',
-        logContext,
-        footprint: areaFootprint,
-        combined: areaCombined,
-        modelName: productName,
-      });
-      /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
-      const coverage = (100 * areaFootprint) / areaCombined;
-
-      if (coverage < this.limit) {
-        return `The footprint intersection with the model doesn't reach minimum required threshold, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`;
-      }
-      this.logger.debug({
-        msg: 'intersection validated successfully!',
-        logContext,
-      });
-      return true;
-    } catch (error) {
-      this.logger.error({
-        msg: `An error caused during the validation of the intersection...`,
-        logContext,
-        modelName: productName,
-        error,
-      });
-      throw new AppError('IntersectionError', StatusCodes.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
-    }
-  }
-
-  @withSpanV4
-  private validateDates(startDate: Date, endDate: Date): boolean | string {
-    if (startDate <= endDate) {
-      const logContext = { ...this.logContext, function: this.validateDates.name };
-      this.logger.debug({
-        msg: 'dates validated successfully!',
-        logContext,
-      });
-      return true;
-    }
-    return 'sourceStartDate should not be later than sourceEndDate';
-  }
-
-  @withSpanV4
-  private async validateClassification(classification: string): Promise<boolean | string> {
-    const classifications = await this.lookupTables.getClassifications();
-    if (classifications.includes(classification)) {
-      const logContext = { ...this.logContext, function: this.validateClassification.name };
-      this.logger.debug({
-        msg: 'classification validated successfully!',
-        logContext,
-      });
-      return true;
-    }
-    return `classification is not a valid value.. Optional values: ${classifications.join()}`;
-  }
-
-  @withSpanV4
   private validateCoordinates(footprint: Polygon): boolean {
     const length = footprint.coordinates[0].length;
     const first = footprint.coordinates[0][0];
@@ -334,7 +207,6 @@ export class ValidationManager {
     return first[0] == last[0] && first[1] == last[1];
   }
 
-  @withSpanV4
   private validatePolygonSchema(footprint: Polygon): boolean {
     const ajv = new Ajv();
     const compiledSchema = ajv.compile(footprintSchema);
@@ -419,10 +291,9 @@ export class ValidationManager {
     return isValid;
   }
 
-  private async getTilesetModelPolygon(fullPath: string): Promise<Polygon | string> {
+  private getTilesetModelPolygon(fileContent: string): Polygon | string {
     const logContext = { ...this.logContext, function: this.getTilesetModelPolygon.name };
     try {
-      const fileContent: string = await readFile(fullPath, { encoding: FILE_ENCODING });
       const tileSetJson: TileSetJson = JSON.parse(fileContent) as TileSetJson;
       const shape = tileSetJson.root.boundingVolume;
       if (shape.sphere != undefined) {
@@ -435,11 +306,11 @@ export class ValidationManager {
         return 'Bad tileset format. Should be in 3DTiles format';
       }
     } catch (error) {
-      const message = `File '${fullPath}' tileset validation failed`;
+      const message = `File tileset validation failed`;
       this.logger.error({
         msg: message,
         logContext,
-        fullPath,
+        fileContent,
         error,
       });
       return message;
