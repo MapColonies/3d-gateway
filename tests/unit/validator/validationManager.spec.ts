@@ -1,4 +1,6 @@
 import { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { Polygon } from 'geojson';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
@@ -6,7 +8,6 @@ import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { ProductType } from '@map-colonies/mc-model-types';
 import { ValidationManager } from '../../../src/validator/validationManager';
-import { ValidationResponse } from '../../../src/common/interfaces';
 import {
   createModelPath,
   createMountedModelPath,
@@ -15,11 +16,12 @@ import {
   createRecord,
   createUpdatePayload,
   getTileset,
-  createValidateSourcesPayload,
   createIngestionPayload,
+  createTilesetFileName,
 } from '../../helpers/helpers';
 import { configMock, lookupTablesMock, catalogMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
+import { FILE_ENCODING } from '../../../src/common/constants';
 
 describe('ValidationManager', () => {
   let validationManager: ValidationManager;
@@ -43,19 +45,17 @@ describe('ValidationManager', () => {
     it('returns true when got all functions valid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
     it('returns false when resolutions are invalid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       payload.metadata.maxResolutionMeter = 554;
       payload.metadata.minResolutionMeter = 555;
@@ -63,19 +63,20 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: 'minResolutionMeter should not be bigger than maxResolutionMeter',
       });
     });
 
-    it.each([{ minResolution: undefined, maxResolution: 10 }, 
+    it.each([
+      { minResolution: undefined, maxResolution: 10 },
       { minResolution: 10, maxResolution: undefined },
-      { minResolution: undefined, maxResolution: undefined }])('returns true for undefeined resolution %p', async (testInput: { minResolution?: number, maxResolution?: number }) => {
+      { minResolution: undefined, maxResolution: undefined },
+    ])('returns true for undefeined resolution %p', async (testInput: { minResolution?: number; maxResolution?: number }) => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       payload.metadata.minResolutionMeter = testInput.minResolution;
       payload.metadata.minResolutionMeter = testInput.maxResolution;
@@ -83,14 +84,13 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
     it('returns false when got dates are invalid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       payload.metadata.sourceDateStart = new Date(555);
       payload.metadata.sourceDateEnd = new Date(554);
@@ -98,14 +98,13 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: 'sourceStartDate should not be later than sourceEndDate' });
     });
 
     it('returns false when footprint polygon scheme is invalid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       payload.metadata.footprint = createWrongFootprintCoordinates();
       payload.metadata.footprint.coordinates = [[[]]];
@@ -113,7 +112,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
@@ -125,14 +124,13 @@ describe('ValidationManager', () => {
     it('returns false when footprint polygon coordinates is invalid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       payload.metadata.footprint = createWrongFootprintCoordinates();
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`,
@@ -143,29 +141,26 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
       payload.tilesetFilename = 'invalidTileset.json';
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
-      expect(response).toStrictEqual({ isValid: false, message: `File tileset validation failed` });
+      const response = await validationManager.isMetadataValid(payload.metadata, {} as unknown as Polygon);
+      expect(response).toStrictEqual({ isValid: false, message: `An error caused during the validation of the intersection` });
     });
 
     it('returns error string when footprint does not intersect to model polygon', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
       payload.metadata.footprint = createFootprint('Region');
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: `Wrong footprint! footprint's coordinates is not even close to the model!` });
     });
 
     it('returns error string when footprint does not intersects enough with model polygon', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       configMock.get.mockReturnValue(100);
       validationManager = new ValidationManager(
@@ -176,7 +171,7 @@ describe('ValidationManager', () => {
         catalogMock as never,
         providerMock
       );
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint('WrongVolume'));
       expect(response.isValid).toBe(false);
       expect(response.message).toContain('The footprint intersectection with the model');
     });
@@ -185,105 +180,88 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
       payload.metadata.productType = faker.animal.bear() as unknown as ProductType;
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload, tilesetLocation);
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true }); // For now, the validation will be only warning. so it's true
     });
-  });
 
-  describe('sourcesValid tests', () => {
-    describe('sourcesValid tests', () => {
-      it.each(['Sphere', 'Region'])('should check if sources are valid and return true for %p', async (testInput: string) => {
-        const payload = createValidateSourcesPayload(testInput);
-        payload.modelPath = createMountedModelPath(testInput);
-        payload.adjustedModelPath = payload.modelPath;
+    it('returns true when product id is undefined', async () => {
+      const payload = createIngestionPayload();
+      payload.modelPath = createMountedModelPath();
 
-        const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
-        const response = await validationManager.sourcesValid(payload, tilesetLocation);
-        const expectedResponse: ValidationResponse = {
-          isValid: true,
-        };
-        expect(response).toStrictEqual(expectedResponse);
+      payload.metadata.productId = undefined;
+
+      catalogMock.isProductIdExist.mockResolvedValue(false);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
+
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      expect(response).toStrictEqual({ isValid: true });
+    });
+
+    it('returns false when product id doesnt exists', async () => {
+      const payload = createIngestionPayload();
+      payload.modelPath = createMountedModelPath();
+
+      catalogMock.isProductIdExist.mockResolvedValue(false);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
+
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      expect(response).toStrictEqual({
+        isValid: false,
+        message: `Record with productId: ${payload.metadata.productId} doesn't exist!`,
       });
     });
 
-    it('should check if sources are valid and return false for Box tileset', async () => {
-      const testInput = 'Box';
-      const payload = createValidateSourcesPayload(testInput);
-      payload.modelPath = createMountedModelPath(testInput);
-      payload.adjustedModelPath = payload.modelPath;
-
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
-      const response = await validationManager.sourcesValid(payload, tilesetLocation);
-      const expectedResponse: ValidationResponse = {
-        isValid: false,
-        message: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
-      };
-      expect(response).toStrictEqual(expectedResponse);
-    });
-
-    it('should check if sources exists and return false if modelPath is invalid', async () => {
-      const payload = createValidateSourcesPayload();
-      payload.modelPath = 'invalidModelName';
-      payload.adjustedModelPath = payload.modelPath;
-
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
-      const response = await validationManager.sourcesValid(payload, tilesetLocation);
-      const expectedResponse: ValidationResponse = {
-        isValid: false,
-        message: `Unknown model name! The model name isn't in the folder!, modelPath: ${payload.modelPath}`,
-      };
-      expect(response).toStrictEqual(expectedResponse);
-    });
-
-    it('should check if sources exists and return false if TilesetJson is invalid', async () => {
-      const payload = createValidateSourcesPayload();
+    it('returns false when classification is not a valid', async () => {
+      const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      payload.tilesetFilename = 'invalidTilesetFilename';
-      payload.adjustedModelPath = payload.modelPath;
 
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
-      const response = await validationManager.sourcesValid(payload, tilesetLocation);
-      const expectedResponse: ValidationResponse = {
+      catalogMock.isProductIdExist.mockResolvedValue(true);
+      lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
+
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      expect(response).toStrictEqual({
         isValid: false,
-        message: `Unknown tileset name! The tileset file wasn't found!, tileset: ${payload.tilesetFilename} doesn't exist`,
-      };
-      expect(response).toStrictEqual(expectedResponse);
+        message: `classification is not a valid value.. Optional values: ${'NonValidClassification'}`,
+      });
     });
+  });
 
-    it('should check if sources exists and return false if TilesetJson is invalid JSON', async () => {
-      const payload = createValidateSourcesPayload();
-      payload.modelPath = createMountedModelPath();
-      payload.tilesetFilename = 'invalidTileset.json';
-      payload.adjustedModelPath = payload.modelPath;
-
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
-      const response = await validationManager.sourcesValid(payload, tilesetLocation);
-
-      const expectedResponse: ValidationResponse = {
-        isValid: false,
-        message: `File tileset validation failed`,
-      };
-      expect(response).toStrictEqual(expectedResponse);
+  describe('validateExist tests', () => {
+    it.each([
+      { path: createMountedModelPath(), result: true },
+      { path: join(createMountedModelPath(), createTilesetFileName()), result: true },
+      { path: join(createMountedModelPath(), 'nonExistsFile.json'), result: false },
+      { path: join('nonExistsFolder', createTilesetFileName()), result: false },
+    ])('should check if sources exists and return true for %p', async (testInput: { path: string; result: boolean }) => {
+      const response = await validationManager.validateExist(testInput.path);
+      expect(response).toBe(testInput.result);
     });
+  });
 
-    it('should check if sources exists and return false if TilesetJson contains invalid 3DTiles format', async () => {
-      const payload = createValidateSourcesPayload();
-      payload.modelPath = createMountedModelPath();
-      payload.tilesetFilename = 'invalidTileset3Dtiles.json';
-      payload.adjustedModelPath = payload.modelPath;
-
-      const tilesetLocation = join(payload.modelPath, payload.tilesetFilename);
-      const response = await validationManager.sourcesValid(payload, tilesetLocation);
-      const expectedResponse: ValidationResponse = {
-        isValid: false,
-        message: 'Bad tileset format. Should be in 3DTiles format',
-      };
-      expect(response).toStrictEqual(expectedResponse);
+  describe('getTilesetModelPolygon tests', () => {
+    it.each([
+      { path: join(createMountedModelPath('Sphere'), createTilesetFileName()), result: {} as Polygon },
+      { path: join(createMountedModelPath('Region'), createTilesetFileName()), result: {} as Polygon },
+      {
+        path: join(createMountedModelPath('Box'), createTilesetFileName()),
+        result: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
+      },
+      { path: join(createMountedModelPath(), 'invalidTileset3Dtiles.json'), result: 'Bad tileset format. Should be in 3DTiles format' },
+      { path: join(createMountedModelPath(), 'invalidTileset.json'), result: `File tileset validation failed` },
+    ])('should check if sources exists and return true for %p', async (testInput: { path: string; result: Polygon | string }) => {
+      const fileContent: string = await readFile(testInput.path, { encoding: FILE_ENCODING });
+      const polygonResponse: string | Polygon = validationManager.getTilesetModelPolygon(fileContent);
+      /* eslint-disable */
+      if (typeof polygonResponse == 'string') {
+        expect(polygonResponse).toBe(testInput.result);
+      } else {
+        expect(polygonResponse as Polygon).toBeDefined();
+      }
+      /* eslint-enable */
     });
   });
 

@@ -8,7 +8,6 @@ const modelRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
 
   router.post('/', controller.createModel);
   router.post('/validate', controller.validate.bind(controller));
-  router.post('/validateSources', controller.validateSources.bind(controller));
 
   return router;
 };

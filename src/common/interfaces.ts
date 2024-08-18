@@ -15,14 +15,10 @@ export interface OpenApiConfig {
 
 export type MetaDataType = Omit<Layer3DMetadata, 'productSource'>;
 
-export interface IngestionPayload extends IngestionSourcesPayload {
-  metadata: MetaDataType;
-}
-
-export interface IngestionSourcesPayload {
+export interface IngestionPayload {
   modelPath: string;
-  adjustedModelPath?: string;
   tilesetFilename: string;
+  metadata: MetaDataType;
 }
 
 export interface ValidationResponse {

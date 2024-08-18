@@ -1,5 +1,5 @@
 import { constants as fsConstants } from 'node:fs';
-import { readFile, access } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
@@ -8,9 +8,8 @@ import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
-import { FILE_ENCODING, SERVICES } from '../common/constants';
-import { IConfig, IngestionSourcesPayload, LogContext, Provider, ValidationResponse, UpdatePayload } from '../common/interfaces';
-import { IngestionPayload } from '../common/interfaces';
+import { SERVICES } from '../common/constants';
+import { IConfig, LogContext, Provider, ValidationResponse, UpdatePayload, MetaDataType } from '../common/interfaces';
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
@@ -41,47 +40,46 @@ export class ValidationManager {
   }
 
   @withSpanAsyncV4
-  public async sourcesValid(payload: IngestionSourcesPayload, tilesetLocation: string): Promise<ValidationResponse> {
-    const isModelFileExists = await this.validateFilesExist(payload.adjustedModelPath!);
-    if (!isModelFileExists) {
-      return {
-        isValid: false,
-        message: `Unknown model name! The model name isn't in the folder!, modelPath: ${payload.adjustedModelPath}`,
-      };
-    }
+  public async validateExist(fullPath: string): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.validateExist.name };
+    this.logger.debug({
+      msg: 'validate file exists started',
+      logContext,
+      fullPath,
+    });
 
-    const isTilesetExists = await this.validateFilesExist(tilesetLocation);
-    if (!isTilesetExists) {
-      return {
-        isValid: false,
-        message: `Unknown tileset name! The tileset file wasn't found!, tileset: ${payload.tilesetFilename} doesn't exist`,
-      };
-    }
-
-    const fileContent: string = await readFile(tilesetLocation, { encoding: FILE_ENCODING });
-    const polygonResponse = this.getTilesetModelPolygon(fileContent);
-    if (typeof polygonResponse == 'string') {
-      return {
-        isValid: false,
-        message: polygonResponse,
-      };
-    }
-
-    // TODO: refactor in next PR in order to return bool and better message
-    const sourcesValidationResponse: ValidationResponse = this.isPolygonValid(polygonResponse);
-    return sourcesValidationResponse;
+    const isValid: boolean = await access(fullPath, fsConstants.F_OK)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        this.logger.error({
+          msg: `File '${fullPath}' doesn't exists`,
+          logContext,
+          fullPath,
+        });
+        return false;
+      });
+    this.logger.debug({
+      msg: 'validate file exists ended',
+      logContext,
+      fullPath,
+      isValid,
+    });
+    return isValid;
   }
 
   @withSpanAsyncV4
-  public async isMetadataValid(payload: IngestionPayload, tilesetLocation: string): Promise<ValidationResponse> {
+  public async isMetadataValid(metadata: MetaDataType, modelPolygon: Polygon): Promise<ValidationResponse> {
     const logContext = { ...this.logContext, function: this.isMetadataValid.name };
     this.logger.debug({
       msg: 'metadataValid started',
-      payload,
+      metadata,
+      modelPolygon,
       logContext,
     });
 
-    let result = this.isDatesValid(payload.metadata.sourceDateStart!, payload.metadata.sourceDateEnd!);
+    let result = this.isDatesValid(metadata.sourceDateStart!, metadata.sourceDateEnd!);
     if (!result) {
       return {
         isValid: false,
@@ -89,7 +87,7 @@ export class ValidationManager {
       };
     }
 
-    result = this.isResolutionMeterValid(payload.metadata.minResolutionMeter, payload.metadata.maxResolutionMeter);
+    result = this.isResolutionMeterValid(metadata.minResolutionMeter, metadata.maxResolutionMeter);
     if (!result) {
       return {
         isValid: false,
@@ -97,26 +95,17 @@ export class ValidationManager {
       };
     }
 
-    const sourcesValidationResponse: ValidationResponse = this.isPolygonValid(payload.metadata.footprint as Polygon);
+    const sourcesValidationResponse: ValidationResponse = this.isPolygonValid(metadata.footprint as Polygon);
     if (!sourcesValidationResponse.isValid) {
       return sourcesValidationResponse;
     }
 
-    const fileContent: string = await readFile(tilesetLocation, { encoding: FILE_ENCODING });
-    const polygonResponse = this.getTilesetModelPolygon(fileContent);
-    if (typeof polygonResponse == 'string') {
-      return {
-        isValid: false,
-        message: polygonResponse, // NOTE: this shouldn't happen as we call validateSources before
-      };
-    }
-
-    const validationResponse: ValidationResponse = this.isFootprintAndModelIntersects(payload.metadata.footprint as Polygon, polygonResponse);
+    const validationResponse: ValidationResponse = this.isFootprintAndModelIntersects(metadata.footprint as Polygon, modelPolygon);
     if (!validationResponse.isValid) {
       return validationResponse;
     }
 
-    result = this.isProductTypeValid(payload.metadata.productType!);
+    result = this.isProductTypeValid(metadata.productType!);
     if (!result) {
       // For now, this validation will not occur as it returns true.
       return {
@@ -125,15 +114,15 @@ export class ValidationManager {
       };
     }
 
-    result = await this.isProductIdValid(payload.metadata.productId!);
+    result = await this.isProductIdValid(metadata.productId!);
     if (!result) {
       return {
         isValid: false,
-        message: `Record with productId: ${payload.metadata.productId} doesn't exist!`,
+        message: `Record with productId: ${metadata.productId} doesn't exist!`,
       };
     }
 
-    return this.isClassificationValid(payload.metadata.classification!);
+    return this.isClassificationValid(metadata.classification!);
   }
 
   @withSpanAsyncV4
@@ -200,20 +189,6 @@ export class ValidationManager {
     return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${this.basePath}`;
   }
 
-  private validateCoordinates(footprint: Polygon): boolean {
-    const length = footprint.coordinates[0].length;
-    const first = footprint.coordinates[0][0];
-    const last = footprint.coordinates[0][length - 1];
-    return first[0] == last[0] && first[1] == last[1];
-  }
-
-  private validatePolygonSchema(footprint: Polygon): boolean {
-    const ajv = new Ajv();
-    const compiledSchema = ajv.compile(footprintSchema);
-    const isPolygon = compiledSchema(footprint);
-    return isPolygon;
-  }
-
   @withSpanAsyncV4
   private async isProductIdValid(productId: string): Promise<boolean> {
     if (!productId) {
@@ -234,7 +209,7 @@ export class ValidationManager {
     return result;
   }
 
-  @withSpanV4
+  @withSpanAsyncV4
   private async isClassificationValid(classification: string): Promise<ValidationResponse> {
     const logContext = { ...this.logContext, function: this.isClassificationValid.name };
     this.logger.debug({
@@ -259,39 +234,7 @@ export class ValidationManager {
     }
   }
 
-  //#region validate sources
-
-  @withSpanV4
-  private async validateFilesExist(fullPath: string): Promise<boolean> {
-    const logContext = { ...this.logContext, function: this.validateFilesExist.name };
-    this.logger.debug({
-      msg: 'validate file exists started',
-      logContext,
-      fullPath,
-    });
-
-    const isValid: boolean = await access(fullPath, fsConstants.F_OK)
-      .then(() => {
-        return true;
-      })
-      .catch(() => {
-        this.logger.error({
-          msg: `File '${fullPath}' doesn't exists`,
-          logContext,
-          fullPath,
-        });
-        return false;
-      });
-    this.logger.debug({
-      msg: 'validate file exists ended',
-      logContext,
-      fullPath,
-      isValid,
-    });
-    return isValid;
-  }
-
-  private getTilesetModelPolygon(fileContent: string): Polygon | string {
+  public getTilesetModelPolygon(fileContent: string): Polygon | string {
     const logContext = { ...this.logContext, function: this.getTilesetModelPolygon.name };
     try {
       const tileSetJson: TileSetJson = JSON.parse(fileContent) as TileSetJson;
@@ -306,18 +249,48 @@ export class ValidationManager {
         return 'Bad tileset format. Should be in 3DTiles format';
       }
     } catch (error) {
-      const message = `File tileset validation failed`;
+      const msg = `File tileset validation failed`;
       this.logger.error({
-        msg: message,
+        msg: msg,
         logContext,
         fileContent,
         error,
       });
-      return message;
+      return msg;
     }
   }
 
-  ////#endregion
+  public isPolygonValid(polygon: Polygon): ValidationResponse {
+    if (!this.validatePolygonSchema(polygon)) {
+      return {
+        isValid: false,
+        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+          polygon
+        )}`,
+      };
+    }
+    if (!this.validateCoordinates(polygon)) {
+      return {
+        isValid: false,
+        message: `Wrong polygon: ${JSON.stringify(polygon)} the first and last coordinates should be equal`,
+      };
+    }
+    return { isValid: true };
+  }
+
+  private validateCoordinates(footprint: Polygon): boolean {
+    const length = footprint.coordinates[0].length;
+    const first = footprint.coordinates[0][0];
+    const last = footprint.coordinates[0][length - 1];
+    return first[0] == last[0] && first[1] == last[1];
+  }
+
+  private validatePolygonSchema(footprint: Polygon): boolean {
+    const ajv = new Ajv();
+    const compiledSchema = ajv.compile(footprintSchema);
+    const isPolygon = compiledSchema(footprint);
+    return isPolygon;
+  }
 
   private isFootprintAndModelIntersects(footprint: Polygon, modelPolygon: Polygon): ValidationResponse {
     const logContext = { ...this.logContext, function: this.isFootprintAndModelIntersects.name };
@@ -381,8 +354,9 @@ export class ValidationManager {
         isValid: true,
       };
     } catch (error) {
+      const msg = `An error caused during the validation of the intersection`;
       this.logger.error({
-        msg: `An error caused during the validation of the intersection...`,
+        msg,
         logContext,
         error,
         modelPolygon,
@@ -390,7 +364,7 @@ export class ValidationManager {
       });
       return {
         isValid: false,
-        message: 'An error caused during the validation of the intersection',
+        message: msg,
       };
     }
   }
@@ -407,24 +381,6 @@ export class ValidationManager {
       return true;
     }
     return minResolutionMeter <= maxResolutionMeter;
-  }
-
-  private isPolygonValid(polygon: Polygon): ValidationResponse {
-    if (!this.validatePolygonSchema(polygon)) {
-      return {
-        isValid: false,
-        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
-          polygon
-        )}`,
-      };
-    }
-    if (!this.validateCoordinates(polygon)) {
-      return {
-        isValid: false,
-        message: `Wrong polygon: ${JSON.stringify(polygon)} the first and last coordinates should be equal`,
-      };
-    }
-    return { isValid: true };
   }
 
   // For now, the validation will be only warning.

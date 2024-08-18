@@ -18,11 +18,12 @@ export const storeTriggerMock = {
 };
 
 export const validationManagerMock = {
-  sourcesValid: jest.fn(),
   isMetadataValid: jest.fn(),
   validateModelPath: jest.fn(),
+  validateExist: jest.fn(),
   validateUpdate: jest.fn(),
-  validateRecordExistence: jest.fn(),
+  getTilesetModelPolygon: jest.fn(),
+  isPolygonValid: jest.fn(),
 };
 
 export const configMock = {

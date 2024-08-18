@@ -47,7 +47,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/payload'
+              $ref: '#/components/schemas/payloadForValidation'
       responses:
         '200':
           description: OK
@@ -55,42 +55,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/validateResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-        5XX:
-          description: Unexpected Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-  /models/validateSources:
-    post:
-      operationId: validateSources
-      summary: Invokes a new model ingestion sources validation
-      tags:
-        - models
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/validateModelSourcesPayload'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/validateResponse'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
         5XX:
           description: Unexpected Error
           content:
@@ -197,9 +161,11 @@ components:
         metadata:
           $ref: '#/components/schemas/basic-payload'
       additionalProperties: false
-    validateModelSourcesPayload:
+    payloadForValidation:
       type: object
-      description: 3d model payload
+      description: >-
+        3d model payload, if metadta is not provided will validate only the
+        sources
       required:
         - modelPath
         - tilesetFilename
@@ -212,6 +178,8 @@ components:
           type: string
           description: Model tileset filename
           example: tileset.json
+        metadata:
+          $ref: '#/components/schemas/basic-payload'
       additionalProperties: false
     validateResponse:
       type: object

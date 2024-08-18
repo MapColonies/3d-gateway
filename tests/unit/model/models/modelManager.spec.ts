@@ -1,8 +1,8 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
-import { IngestionPayload, IngestionSourcesPayload, ValidationResponse } from '../../../../src/common/interfaces';
+import { IngestionPayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
-import { createIngestionPayload, createStoreTriggerPayload, createValidateSourcesPayload } from '../../../helpers/helpers';
+import { createFootprint, createIngestionPayload, createStoreTriggerPayload } from '../../../helpers/helpers';
 import { storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { StoreTriggerPayload } from '../../../../src/externalServices/storeTrigger/interfaces';
 
@@ -19,6 +19,8 @@ describe('ModelManager', () => {
   });
   afterEach(() => {
     jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('createModel tests', () => {
@@ -27,145 +29,169 @@ describe('ModelManager', () => {
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.sourcesValid.mockResolvedValue({
-        isValid: true,
-      });
+      validationManagerMock.validateExist.mockResolvedValue(true);
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
 
       const created = await modelManager.createModel(payload);
 
       expect(created).toMatchObject(expected);
     });
 
+    it('throw if validateModel rejects with error', async () => {
+      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
+      validationManagerMock.validateModelPath.mockReturnValue('some model path error');
+      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isMetadataValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
+
+      const createdResponse = modelManager.createModel(payload);
+      await expect(createdResponse).rejects.toThrow('some model path error');
+    });
+
+    it('throw if StoreTriggerPayload rejects with error', async () => {
+      const payload: IngestionPayload = createIngestionPayload('Sphere');
+
+      storeTriggerMock.postPayload.mockRejectedValue(new Error('storeTrigger error'));
+
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isMetadataValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
+
+      const createdResponse = modelManager.createModel(payload);
+      await expect(createdResponse).rejects.toThrow('store-trigger service is not available');
+    });
+  });
+
+  describe('validateModel tests', () => {
+    it('resolves without errors', async () => {
+      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.isMetadataValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
+
+      const response = await modelManager.validateModel(payload);
+      expect(response).toStrictEqual({ isValid: true });
+    });
+
     it(`rejects if modelPath's validation failed`, async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
       validationManagerMock.validateModelPath.mockReturnValue('Some ModelPath Error');
 
-      const createPromise = modelManager.createModel(payload);
-
-      await expect(createPromise).rejects.toThrow('Some ModelPath Error');
+      const response = await modelManager.validateModel(payload);
+      expect(response).toStrictEqual({ isValid: false, message: 'Some ModelPath Error' });
     });
 
-    it(`rejects if sourcesValid validation failed`, async () => {
+    it(`rejects if validateExist for model file failed`, async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+
+      modelManager = new ModelManager(
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        validationManagerMock as never,
+        storeTriggerMock as never
+      );
+
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
+      validationManagerMock.validateExist.mockResolvedValueOnce(false);
+      validationManagerMock.validateExist.mockResolvedValueOnce(true);
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
-      validationManagerMock.sourcesValid.mockResolvedValue({
-        isValid: false,
-        message: 'Some sourcesValid Error',
-      });
-
-      const createPromise = modelManager.createModel(payload);
-      await expect(createPromise).rejects.toThrow('Some sourcesValid Error');
+      const response = await modelManager.validateModel(payload);
+      expect(response.isValid).toBe(false);
+      expect(response.message).toContain('Unknown model name!');
     });
 
-    it(`rejects if isMetadataValid validation failed`, async () => {
+    it(`rejects if validateExist for tileset failed`, async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+
+      modelManager = new ModelManager(
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        validationManagerMock as never,
+        storeTriggerMock as never
+      );
+
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.sourcesValid.mockResolvedValue({
+      validationManagerMock.validateExist.mockResolvedValueOnce(true);
+      validationManagerMock.validateExist.mockResolvedValueOnce(false);
+      validationManagerMock.isPolygonValid.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
-        isValid: false,
-        message: 'Some isMetadataValid Error',
+        isValid: true,
       });
-
-      const createPromise = modelManager.createModel(payload);
-      await expect(createPromise).rejects.toThrow('Some isMetadataValid Error');
+      const response = await modelManager.validateModel(payload);
+      expect(response.isValid).toBe(false);
+      expect(response.message).toContain('Unknown tileset name!');
     });
 
-    it(`rejects if isMetadataValid throws an error`, async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
-      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+    it(`rejects if getTilesetModelPolygon failed`, async () => {
+      const payload: IngestionPayload = createIngestionPayload('Box');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Box');
+
+      modelManager = new ModelManager(
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        validationManagerMock as never,
+        storeTriggerMock as never
+      );
+
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.sourcesValid.mockRejectedValue(new Error('there is a problem with sourcesValid'));
-      validationManagerMock.isMetadataValid.mockResolvedValue({
-        isValid: true,
-      });
-
-      const createPromise = modelManager.createModel(payload);
-      await expect(createPromise).rejects.toThrow('there is a problem with sourcesValid');
-    });
-
-    it(`rejects if storeTrigger throws an error`, async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
-
-      storeTriggerMock.postPayload.mockRejectedValue(new Error('there is a problem with storeTrigger'));
-
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.sourcesValid.mockResolvedValue({
+      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isPolygonValid.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(`Some getTilesetModelPolygon Error`);
 
-      const createPromise = modelManager.createModel(payload);
-      await expect(createPromise).rejects.toThrow('store-trigger service is not available');
-    });
-  });
-
-  describe('validateModelSources tests', () => {
-    it('resolves without errors', async () => {
-      const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
-
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      const validResponse: ValidationResponse = {
-        isValid: true,
-      };
-      validationManagerMock.sourcesValid.mockResolvedValue(validResponse);
-
-      const expectedSourcesValidationResponse: ValidationResponse = {
-        isValid: true,
-      };
-      const isValidResponse: ValidationResponse = await modelManager.validateModelSources(payload);
-      expect(isValidResponse).toMatchObject(expectedSourcesValidationResponse);
-    });
-
-    it('resolves invalid response for validateModelPath=false', async () => {
-      const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
-
-      const validResponse: ValidationResponse = {
-        isValid: true,
-      };
-      validationManagerMock.validateModelPath.mockReturnValue(`invalidResponse`);
-      validationManagerMock.sourcesValid.mockResolvedValue(validResponse);
-
-      const expectedSourcesValidationResponse: ValidationResponse = {
+      const response = await modelManager.validateModel(payload);
+      expect(response).toStrictEqual({
         isValid: false,
-        message: `invalidResponse`,
-      };
-      const response: ValidationResponse = await modelManager.validateModelSources(payload);
-      expect(response).toMatchObject(expectedSourcesValidationResponse);
-    });
-
-    it('resolves invalid response for sourcesValid=false', async () => {
-      const payload: IngestionSourcesPayload = createValidateSourcesPayload('Sphere');
-
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      const inValidResponse: ValidationResponse = {
-        isValid: false,
-        message: `invalidResponse`,
-      };
-      validationManagerMock.sourcesValid.mockResolvedValue(inValidResponse);
-
-      const expectedSourcesValidationResponse: ValidationResponse = {
-        isValid: false,
-        message: `invalidResponse`,
-      };
-      const response: ValidationResponse = await modelManager.validateModelSources(payload);
-      expect(response).toMatchObject(expectedSourcesValidationResponse);
+        message: `Some getTilesetModelPolygon Error`,
+      });
     });
   });
 });
