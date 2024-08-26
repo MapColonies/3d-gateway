@@ -4,7 +4,7 @@ on: [pull_request]
 
 jobs:
   pull_request:
-    uses: MapColonies/shared-workflows/.github/workflows/pull_request.yaml@master
+    uses: MapColonies/shared-workflows/.github/workflows/pull_request.yaml@v2
     secrets: inherit
     with:
       openApiFilePath: './bundledApi.yaml'
