@@ -82,8 +82,28 @@ describe('ModelManager', () => {
   });
 
   describe('validateModel tests', () => {
-    it('resolves without errors', async () => {
+    it('resolves without errors if all properties exists (modelPath, tilesetFilename and metadata)', async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
+      storeTriggerMock.postPayload.mockResolvedValue(expected);
+      validationManagerMock.validateModelPath.mockReturnValue(true);
+      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isPolygonValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.isMetadataValid.mockResolvedValue({
+        isValid: true,
+      });
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
+
+      const response = await modelManager.validateModel(payload);
+      expect(response).toStrictEqual({ isValid: true });
+    });
+
+    it('resolves without errors if all properties exists (modelPath, tilesetFilename and metadata = undefined)', async () => {
+      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      delete payload.metadata;
+      payload.metadata = undefined;
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);

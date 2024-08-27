@@ -31,7 +31,7 @@ export class ModelController {
         msg: `Failed in ingesting a new model!`,
         logContext,
         error,
-        modelName: req.body.metadata.productName,
+        modelName: req.body.metadata!.productName,
       });
       return next(error);
     }

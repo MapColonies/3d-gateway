@@ -73,6 +73,12 @@ export class ModelManager {
       return sourcesValidationResponse;
     }
 
+    if (payload.metadata == undefined) {
+      return {
+        isValid: true,
+      };
+    }
+    // else {
     const isMetadataValidResponse = await this.validator.isMetadataValid(payload.metadata, polygonResponse);
     return isMetadataValidResponse;
   }
@@ -84,7 +90,7 @@ export class ModelManager {
     this.logger.info({
       msg: 'new model ingestion - start validation',
       logContext,
-      modelName: payload.metadata.productName,
+      modelName: payload.metadata!.productName,
       payload,
     });
 
@@ -92,7 +98,7 @@ export class ModelManager {
     const originalModelPath: string = payload.modelPath;
 
     try {
-      payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
+      payload.metadata!.footprint = convertStringToGeojson(JSON.stringify(payload.metadata!.footprint));
       const isValidResponse = await this.validateModel(payload);
       if (!isValidResponse.isValid) {
         throw new AppError('', StatusCodes.BAD_REQUEST, isValidResponse.message!, true);
@@ -116,7 +122,7 @@ export class ModelManager {
       msg: 'new model ingestion - start ingestion',
       logContext,
       modelId,
-      modelName: payload.metadata.productName,
+      modelName: payload.metadata!.productName,
       payload,
     });
     const spanActive = trace.getActiveSpan();
@@ -128,7 +134,7 @@ export class ModelManager {
       modelId: modelId,
       pathToTileset: removePvPathFromModelPath(payload.modelPath),
       tilesetFilename: payload.tilesetFilename,
-      metadata: { ...payload.metadata, productSource: originalModelPath },
+      metadata: { ...payload.metadata!, productSource: originalModelPath },
     };
     try {
       const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
@@ -138,7 +144,7 @@ export class ModelManager {
         msg: 'Error in creating a flow',
         logContext,
         modelId,
-        modelName: payload.metadata.productName,
+        modelName: payload.metadata!.productName,
         error,
         payload,
       });
