@@ -47,9 +47,9 @@ describe('ValidationManager', () => {
       payload.modelPath = createMountedModelPath();
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -57,13 +57,13 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
-      payload.metadata!.maxResolutionMeter = 554;
-      payload.metadata!.minResolutionMeter = 555;
+      payload.metadata.maxResolutionMeter = 554;
+      payload.metadata.minResolutionMeter = 555;
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: 'minResolutionMeter should not be bigger than maxResolutionMeter',
@@ -78,13 +78,13 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
-      payload.metadata!.minResolutionMeter = testInput.minResolution;
-      payload.metadata!.minResolutionMeter = testInput.maxResolution;
+      payload.metadata.minResolutionMeter = testInput.minResolution;
+      payload.metadata.minResolutionMeter = testInput.maxResolution;
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -92,13 +92,13 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
-      payload.metadata!.sourceDateStart = new Date(555);
-      payload.metadata!.sourceDateEnd = new Date(554);
+      payload.metadata.sourceDateStart = new Date(555);
+      payload.metadata.sourceDateEnd = new Date(554);
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: 'sourceStartDate should not be later than sourceEndDate' });
     });
 
@@ -106,17 +106,17 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
-      payload.metadata!.footprint = createWrongFootprintCoordinates();
-      payload.metadata!.footprint.coordinates = [[[]]];
+      payload.metadata.footprint = createWrongFootprintCoordinates();
+      payload.metadata.footprint.coordinates = [[[]]];
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
-          payload.metadata!.footprint
+          payload.metadata.footprint
         )}`,
       });
     });
@@ -125,15 +125,15 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
-      payload.metadata!.footprint = createWrongFootprintCoordinates();
+      payload.metadata.footprint = createWrongFootprintCoordinates();
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
-        message: `Wrong polygon: ${JSON.stringify(payload.metadata!.footprint)} the first and last coordinates should be equal`,
+        message: `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`,
       });
     });
 
@@ -143,18 +143,18 @@ describe('ValidationManager', () => {
       payload.tilesetFilename = 'invalidTileset.json';
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, {} as unknown as Polygon);
+      const response = await validationManager.isMetadataValid(payload.metadata, {} as unknown as Polygon);
       expect(response).toStrictEqual({ isValid: false, message: `An error caused during the validation of the intersection` });
     });
 
     it('returns error string when footprint does not intersect to model polygon', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      payload.metadata!.footprint = createFootprint('Region');
+      payload.metadata.footprint = createFootprint('Region');
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: `Wrong footprint! footprint's coordinates is not even close to the model!` });
     });
 
@@ -171,7 +171,7 @@ describe('ValidationManager', () => {
         catalogMock as never,
         providerMock
       );
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint('WrongVolume'));
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint('WrongVolume'));
       expect(response.isValid).toBe(false);
       expect(response.message).toContain('The footprint intersectection with the model');
     });
@@ -179,12 +179,12 @@ describe('ValidationManager', () => {
     it('throws error if product type is invalid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      payload.metadata!.productType = faker.animal.bear() as unknown as ProductType;
+      payload.metadata.productType = faker.animal.bear() as unknown as ProductType;
 
       catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true }); // For now, the validation will be only warning. so it's true
     });
 
@@ -192,12 +192,12 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
-      payload.metadata!.productId = undefined;
+      payload.metadata.productId = undefined;
 
       catalogMock.isProductIdExist.mockResolvedValue(false);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -206,12 +206,12 @@ describe('ValidationManager', () => {
       payload.modelPath = createMountedModelPath();
 
       catalogMock.isProductIdExist.mockResolvedValue(false);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata!.classification]);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
-        message: `Record with productId: ${payload.metadata!.productId} doesn't exist!`,
+        message: `Record with productId: ${payload.metadata.productId} doesn't exist!`,
       });
     });
 
@@ -222,7 +222,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
 
-      const response = await validationManager.isMetadataValid(payload.metadata!, createFootprint());
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `classification is not a valid value.. Optional values: ${'NonValidClassification'}`,

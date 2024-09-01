@@ -19,7 +19,7 @@ import {
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { IngestionPayload, ValidationResponse } from '../../../src/common/interfaces';
+import { IngestionPayload, IngestionValidatePayload, ValidationResponse } from '../../../src/common/interfaces';
 import { ModelRequestSender } from './helpers/requestSender';
 
 describe('ModelController', function () {
@@ -49,7 +49,7 @@ describe('ModelController', function () {
           const payload = createIngestionPayload('Sphere');
           const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
           mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-          mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+          mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
           mockAxios.post.mockResolvedValueOnce({ data: expected });
 
           const response = await requestSender.createModel(payload);
@@ -67,7 +67,7 @@ describe('ModelController', function () {
           const payload = createIngestionPayload('Region');
           const expected = { ...payload, metadata: createMetadata('Region'), modelPath: createMountedModelPath('Region'), modelId: '' };
           mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-          mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+          mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
           mockAxios.post.mockResolvedValueOnce({ data: expected });
 
           const response = await requestSender.createModel(payload);
@@ -82,10 +82,10 @@ describe('ModelController', function () {
 
       it('should return 201 status code if productType is not 3DPhotoRealistic', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.productType = ProductType.DTM;
+        payload.metadata.productType = ProductType.DTM;
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
 
         const response = await requestSender.createModel(payload);
@@ -95,10 +95,10 @@ describe('ModelController', function () {
 
       it('should return 201 status code if one of resolutionMeters is not defined', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.maxResolutionMeter = undefined;
+        payload.metadata.maxResolutionMeter = undefined;
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
 
         const response = await requestSender.createModel(payload);
@@ -111,7 +111,7 @@ describe('ModelController', function () {
       it('should return 500 status code if a network exception happens in store-trigger service', async function () {
         const payload = createIngestionPayload();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
 
         const response = await requestSender.createModel(payload);
@@ -175,7 +175,7 @@ describe('ModelController', function () {
         const basePath = getBasePath();
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
 
         const response = await requestSender.createModel(payload);
@@ -208,7 +208,7 @@ describe('ModelController', function () {
         payload.tilesetFilename = faker.word.sample();
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
         const response = await requestSender.createModel(payload);
 
@@ -224,7 +224,7 @@ describe('ModelController', function () {
         payload.tilesetFilename = 'invalidTileset.json';
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
         const response = await requestSender.createModel(payload);
 
@@ -233,14 +233,14 @@ describe('ModelController', function () {
       });
 
       it('should return 400 status code if metadata is missing', async function () {
-        const payload = createIngestionPayload();
+        const payload: IngestionValidatePayload = createIngestionPayload();
         delete payload.metadata;
         payload.metadata = undefined;
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: 'undefined' }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
-        const response = await requestSender.createModel(payload);
+        const response = await requestSender.createModel(payload as IngestionPayload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', "request/body must have required property 'metadata'");
@@ -248,11 +248,11 @@ describe('ModelController', function () {
 
       it('should return 400 status code if metadata is invalid', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.absoluteAccuracyLE90 = 'fda' as unknown as number;
+        payload.metadata.absoluteAccuracyLE90 = 'fda' as unknown as number;
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
 
         const response = await requestSender.createModel(payload);
@@ -270,7 +270,7 @@ describe('ModelController', function () {
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
 
         const response = await requestSender.createModel(payload);
@@ -282,11 +282,11 @@ describe('ModelController', function () {
 
       it('should return 400 status code if region is empty', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.region = [];
+        payload.metadata.region = [];
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -296,11 +296,11 @@ describe('ModelController', function () {
 
       it('should return 400 status code if sensors is empty', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.sensors = [];
+        payload.metadata.sensors = [];
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -310,12 +310,12 @@ describe('ModelController', function () {
 
       it('should return 400 status code if startDate is later than endDate', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.sourceDateEnd = faker.date.past();
-        payload.metadata!.sourceDateStart = faker.date.soon();
+        payload.metadata.sourceDateEnd = faker.date.past();
+        payload.metadata.sourceDateStart = faker.date.soon();
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -325,12 +325,12 @@ describe('ModelController', function () {
 
       it('should return 400 status code if minResolution is greater than maxResolution', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.maxResolutionMeter = faker.number.int({ max: 8000 });
-        payload.metadata!.minResolutionMeter = payload.metadata!.maxResolutionMeter + 1;
+        payload.metadata.maxResolutionMeter = faker.number.int({ max: 8000 });
+        payload.metadata.minResolutionMeter = payload.metadata.maxResolutionMeter + 1;
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -340,28 +340,28 @@ describe('ModelController', function () {
 
       it('should return 400 status code if footprint coordinates does not match', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.footprint = createWrongFootprintCoordinates();
+        payload.metadata.footprint = createWrongFootprintCoordinates();
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Wrong polygon: ${JSON.stringify(payload.metadata!.footprint)} the first and last coordinates should be equal`
+          `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`
         );
       });
 
       it('should return 400 status code if footprint is in invalid schema', async function () {
         const payload = createIngestionPayload();
-        payload.metadata!.footprint = createWrongFootprintSchema();
+        payload.metadata.footprint = createWrongFootprintSchema();
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -369,7 +369,7 @@ describe('ModelController', function () {
         expect(response.body).toHaveProperty(
           'message',
           `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
-            payload.metadata!.footprint
+            payload.metadata.footprint
           )}`
         );
       });
@@ -380,7 +380,7 @@ describe('ModelController', function () {
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -394,7 +394,7 @@ describe('ModelController', function () {
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -408,7 +408,7 @@ describe('ModelController', function () {
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -434,12 +434,12 @@ describe('ModelController', function () {
 
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty('message', `Record with productId: ${payload.metadata!.productId} doesn't exist!`);
+        expect(response.body).toHaveProperty('message', `Record with productId: ${payload.metadata.productId} doesn't exist!`);
       });
     });
   });
@@ -450,7 +450,7 @@ describe('ModelController', function () {
         const payload = createIngestionPayload(testInput);
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
 
         const expectedResponse: ValidationResponse = {
           isValid: true,
@@ -462,7 +462,7 @@ describe('ModelController', function () {
       });
 
       it('should return 200 status with isValid=true for metadata=undefined', async function () {
-        const payload = createIngestionPayload();
+        const payload: IngestionValidatePayload = createIngestionPayload();
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });

@@ -18,6 +18,12 @@ export type MetaDataType = Omit<Layer3DMetadata, 'productSource'>;
 export interface IngestionPayload {
   modelPath: string;
   tilesetFilename: string;
+  metadata: MetaDataType;
+}
+
+export interface IngestionValidatePayload {
+  modelPath: string;
+  tilesetFilename: string;
   metadata?: MetaDataType;
 }
 

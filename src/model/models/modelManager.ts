@@ -12,7 +12,7 @@ import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalService
 import { FILE_ENCODING, SERVICES } from '../../common/constants';
 import { ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
-import { IngestionPayload, LogContext, ValidationResponse } from '../../common/interfaces';
+import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
 @injectable()
@@ -32,7 +32,7 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
-  public async validateModel(payload: IngestionPayload): Promise<ValidationResponse> {
+  public async validateModel(payload: IngestionValidatePayload): Promise<ValidationResponse> {
     const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
     if (typeof resultModelPathValidation === 'string') {
       return {
@@ -90,7 +90,7 @@ export class ModelManager {
     this.logger.info({
       msg: 'new model ingestion - start validation',
       logContext,
-      modelName: payload.metadata!.productName,
+      modelName: payload.metadata.productName,
       payload,
     });
 
@@ -98,7 +98,7 @@ export class ModelManager {
     const originalModelPath: string = payload.modelPath;
 
     try {
-      payload.metadata!.footprint = convertStringToGeojson(JSON.stringify(payload.metadata!.footprint));
+      payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
       const isValidResponse = await this.validateModel(payload);
       if (!isValidResponse.isValid) {
         throw new AppError('', StatusCodes.BAD_REQUEST, isValidResponse.message!, true);
@@ -122,7 +122,7 @@ export class ModelManager {
       msg: 'new model ingestion - start ingestion',
       logContext,
       modelId,
-      modelName: payload.metadata!.productName,
+      modelName: payload.metadata.productName,
       payload,
     });
     const spanActive = trace.getActiveSpan();
@@ -134,7 +134,7 @@ export class ModelManager {
       modelId: modelId,
       pathToTileset: removePvPathFromModelPath(payload.modelPath),
       tilesetFilename: payload.tilesetFilename,
-      metadata: { ...payload.metadata!, productSource: originalModelPath },
+      metadata: { ...payload.metadata, productSource: originalModelPath },
     };
     try {
       const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
@@ -144,7 +144,7 @@ export class ModelManager {
         msg: 'Error in creating a flow',
         logContext,
         modelId,
-        modelName: payload.metadata!.productName,
+        modelName: payload.metadata.productName,
         error,
         payload,
       });

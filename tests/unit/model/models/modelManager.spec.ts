@@ -1,6 +1,6 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
-import { IngestionPayload } from '../../../../src/common/interfaces';
+import { IngestionPayload, IngestionValidatePayload } from '../../../../src/common/interfaces';
 import { ModelManager } from '../../../../src/model/models/modelManager';
 import { createFootprint, createIngestionPayload, createStoreTriggerPayload } from '../../../helpers/helpers';
 import { storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
@@ -83,7 +83,7 @@ describe('ModelManager', () => {
 
   describe('validateModel tests', () => {
     it('resolves without errors if all properties exists (modelPath, tilesetFilename and metadata)', async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.validateModelPath.mockReturnValue(true);
@@ -101,7 +101,7 @@ describe('ModelManager', () => {
     });
 
     it('resolves without errors if all properties exists (modelPath, tilesetFilename and metadata = undefined)', async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       delete payload.metadata;
       payload.metadata = undefined;
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
@@ -121,7 +121,7 @@ describe('ModelManager', () => {
     });
 
     it(`rejects if modelPath's validation failed`, async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
       validationManagerMock.isPolygonValid.mockResolvedValue({
@@ -134,7 +134,7 @@ describe('ModelManager', () => {
     });
 
     it(`rejects if validateExist for model file failed`, async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
 
       modelManager = new ModelManager(
@@ -160,7 +160,7 @@ describe('ModelManager', () => {
     });
 
     it(`rejects if validateExist for tileset failed`, async () => {
-      const payload: IngestionPayload = createIngestionPayload('Sphere');
+      const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
 
       modelManager = new ModelManager(
@@ -186,7 +186,7 @@ describe('ModelManager', () => {
     });
 
     it(`rejects if getTilesetModelPolygon failed`, async () => {
-      const payload: IngestionPayload = createIngestionPayload('Box');
+      const payload: IngestionValidatePayload = createIngestionPayload('Box');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Box');
 
       modelManager = new ModelManager(

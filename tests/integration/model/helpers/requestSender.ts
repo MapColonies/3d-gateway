@@ -1,5 +1,5 @@
 import * as supertest from 'supertest';
-import { IngestionPayload } from '../../../../src/common/interfaces';
+import { IngestionPayload, IngestionValidatePayload } from '../../../../src/common/interfaces';
 
 export class ModelRequestSender {
   public constructor(private readonly app: Express.Application) {}
@@ -8,7 +8,7 @@ export class ModelRequestSender {
     return supertest.agent(this.app).post('/models').set('Content-Type', 'application/json').send(payload);
   }
 
-  public async validate(payload: IngestionPayload): Promise<supertest.Response> {
+  public async validate(payload: IngestionValidatePayload): Promise<supertest.Response> {
     return supertest.agent(this.app).post('/models/validate').set('Content-Type', 'application/json').send(payload);
   }
 }

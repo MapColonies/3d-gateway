@@ -3,12 +3,12 @@ import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload, LogContext, ValidationResponse } from '../../common/interfaces';
+import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
-type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionPayload>;
+type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionValidatePayload>;
 
 @injectable()
 export class ModelController {
@@ -31,7 +31,7 @@ export class ModelController {
         msg: `Failed in ingesting a new model!`,
         logContext,
         error,
-        modelName: req.body.metadata!.productName,
+        modelName: req.body.metadata.productName,
       });
       return next(error);
     }
