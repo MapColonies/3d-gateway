@@ -17,6 +17,14 @@ import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from '.
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
 
+export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
+export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
+export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not 3DPhotoRealistic!';
+export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
+export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
+export const ERROR_METADATA_ERRORED_TILESET = `File tileset validation failed`;
+export const ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL = `Wrong footprint! footprint's coordinates is not even close to the model!`;
+
 @injectable()
 export class ValidationManager {
   private readonly basePath: string;
@@ -83,7 +91,7 @@ export class ValidationManager {
     if (!result) {
       return {
         isValid: false,
-        message: 'sourceStartDate should not be later than sourceEndDate',
+        message: ERROR_METADATA_DATE,
       };
     }
 
@@ -91,7 +99,7 @@ export class ValidationManager {
     if (!result) {
       return {
         isValid: false,
-        message: 'minResolutionMeter should not be bigger than maxResolutionMeter',
+        message: ERROR_METADATA_RESOLUTION,
       };
     }
 
@@ -110,7 +118,7 @@ export class ValidationManager {
       // For now, this validation will not occur as it returns true.
       return {
         isValid: false,
-        message: 'product type is not 3DPhotoRealistic!',
+        message: ERROR_METADATA_PRODUCT_TYPE,
       };
     }
 
@@ -122,7 +130,7 @@ export class ValidationManager {
       };
     }
 
-    return await this.isClassificationValid(metadata.classification!);
+    return this.isClassificationValid(metadata.classification!);
   }
 
   @withSpanAsyncV4
@@ -138,7 +146,7 @@ export class ValidationManager {
       const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
       const isDatesValid = this.isDatesValid(sourceDateStart, sourceDateEnd);
       if (!isDatesValid) {
-        return 'sourceStartDate should not be later than sourceEndDate';
+        return ERROR_METADATA_DATE;
       }
     }
 
@@ -244,12 +252,12 @@ export class ValidationManager {
       } else if (shape.region != undefined) {
         return convertRegionFromRadianToDegrees(shape as BoundingRegion);
       } else if (shape.box != undefined) {
-        return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
+        return ERROR_METADATA_BOX_TILESET;
       } else {
-        return 'Bad tileset format. Should be in 3DTiles format';
+        return ERROR_METADATA_BAD_FORMAT_TILESET;
       }
     } catch (error) {
-      const msg = `File tileset validation failed`;
+      const msg = ERROR_METADATA_ERRORED_TILESET;
       this.logger.error({
         msg: msg,
         logContext,
@@ -315,7 +323,7 @@ export class ValidationManager {
       if (intersection == null) {
         return {
           isValid: false,
-          message: `Wrong footprint! footprint's coordinates is not even close to the model!`,
+          message: ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
         };
       }
 
@@ -388,7 +396,7 @@ export class ValidationManager {
     const logContext = { ...this.logContext, function: this.isProductTypeValid.name };
     if (productType != ProductType.PHOTO_REALISTIC_3D) {
       this.logger.warn({
-        msg: 'product type is not 3DPhotoRealistic!',
+        msg: ERROR_METADATA_PRODUCT_TYPE,
         logContext,
       });
       return true; // TODO: lets check if it should be returned as false

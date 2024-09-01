@@ -20,6 +20,12 @@ import {
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { IngestionPayload, IngestionValidatePayload, ValidationResponse } from '../../../src/common/interfaces';
+import {
+  ERROR_METADATA_BOX_TILESET,
+  ERROR_METADATA_ERRORED_TILESET,
+  ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+} from '../../../src/validator/validationManager';
+import { ERROR_STORE_TRIGGER_ERROR } from '../../../src/model/models/modelManager';
 import { ModelRequestSender } from './helpers/requestSender';
 
 describe('ModelController', function () {
@@ -112,12 +118,12 @@ describe('ModelController', function () {
         const payload = createIngestionPayload();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
-        mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
+        mockAxios.post.mockRejectedValueOnce(new Error(ERROR_STORE_TRIGGER_ERROR));
 
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'store-trigger service is not available');
+        expect(response.body).toHaveProperty('message', ERROR_STORE_TRIGGER_ERROR);
       });
 
       it('should return 500 status code if a network exception happens in lookup-tables service', async function () {
@@ -229,7 +235,7 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty('message', `File tileset validation failed`);
+        expect(response.body).toHaveProperty('message', ERROR_METADATA_ERRORED_TILESET);
       });
 
       it('should return 400 status code if metadata is missing', async function () {
@@ -385,7 +391,7 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty('message', `Wrong footprint! footprint's coordinates is not even close to the model!`);
+        expect(response.body).toHaveProperty('message', ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL);
       });
 
       it('should return 400 status code if tileset is in box format', async function () {
@@ -399,7 +405,7 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty('message', `BoundingVolume of box is not supported yet... Please contact 3D team.`);
+        expect(response.body).toHaveProperty('message', ERROR_METADATA_BOX_TILESET);
       });
 
       it('should return 400 status code if tileset is not in 3D Tiles format', async function () {
@@ -484,7 +490,7 @@ describe('ModelController', function () {
 
         const expectedResponse: ValidationResponse = {
           isValid: false,
-          message: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
+          message: ERROR_METADATA_BOX_TILESET,
         };
         const response = await requestSender.validate(payload);
 

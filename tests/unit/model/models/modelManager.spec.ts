@@ -1,7 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { IngestionPayload, IngestionValidatePayload } from '../../../../src/common/interfaces';
-import { ModelManager } from '../../../../src/model/models/modelManager';
+import { ERROR_STORE_TRIGGER_ERROR, ModelManager } from '../../../../src/model/models/modelManager';
 import { createFootprint, createIngestionPayload, createStoreTriggerPayload } from '../../../helpers/helpers';
 import { storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { StoreTriggerPayload } from '../../../../src/externalServices/storeTrigger/interfaces';
@@ -77,7 +77,7 @@ describe('ModelManager', () => {
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
 
       const createdResponse = modelManager.createModel(payload);
-      await expect(createdResponse).rejects.toThrow('store-trigger service is not available');
+      await expect(createdResponse).rejects.toThrow(ERROR_STORE_TRIGGER_ERROR );
     });
   });
 

@@ -7,7 +7,15 @@ import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { ProductType } from '@map-colonies/mc-model-types';
-import { ValidationManager } from '../../../src/validator/validationManager';
+import {
+  ERROR_METADATA_BAD_FORMAT_TILESET,
+  ERROR_METADATA_BOX_TILESET,
+  ERROR_METADATA_DATE,
+  ERROR_METADATA_ERRORED_TILESET,
+  ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+  ERROR_METADATA_RESOLUTION,
+  ValidationManager,
+} from '../../../src/validator/validationManager';
 import {
   createModelPath,
   createMountedModelPath,
@@ -66,7 +74,7 @@ describe('ValidationManager', () => {
       const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
-        message: 'minResolutionMeter should not be bigger than maxResolutionMeter',
+        message: ERROR_METADATA_RESOLUTION,
       });
     });
 
@@ -99,7 +107,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
-      expect(response).toStrictEqual({ isValid: false, message: 'sourceStartDate should not be later than sourceEndDate' });
+      expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_DATE });
     });
 
     it('returns false when footprint polygon scheme is invalid', async () => {
@@ -155,7 +163,7 @@ describe('ValidationManager', () => {
       payload.metadata.footprint = createFootprint('Region');
 
       const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
-      expect(response).toStrictEqual({ isValid: false, message: `Wrong footprint! footprint's coordinates is not even close to the model!` });
+      expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL });
     });
 
     it('returns error string when footprint does not intersects enough with model polygon', async () => {
@@ -248,10 +256,10 @@ describe('ValidationManager', () => {
       { path: join(createMountedModelPath('Region'), createTilesetFileName()), result: {} as Polygon },
       {
         path: join(createMountedModelPath('Box'), createTilesetFileName()),
-        result: `BoundingVolume of box is not supported yet... Please contact 3D team.`,
+        result: ERROR_METADATA_BOX_TILESET,
       },
-      { path: join(createMountedModelPath(), 'invalidTileset3Dtiles.json'), result: 'Bad tileset format. Should be in 3DTiles format' },
-      { path: join(createMountedModelPath(), 'invalidTileset.json'), result: `File tileset validation failed` },
+      { path: join(createMountedModelPath(), 'invalidTileset3Dtiles.json'), result: ERROR_METADATA_BAD_FORMAT_TILESET },
+      { path: join(createMountedModelPath(), 'invalidTileset.json'), result: ERROR_METADATA_ERRORED_TILESET },
     ])('should check if sources exists and return true for %p', async (testInput: { path: string; result: Polygon | string }) => {
       const fileContent: string = await readFile(testInput.path, { encoding: FILE_ENCODING });
       const polygonResponse: string | Polygon = validationManager.getTilesetModelPolygon(fileContent);

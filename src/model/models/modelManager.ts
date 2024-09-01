@@ -15,6 +15,8 @@ import { AppError } from '../../common/appError';
 import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
+export const ERROR_STORE_TRIGGER_ERROR: string = 'store-trigger service is not available';
+
 @injectable()
 export class ModelManager {
   private readonly logContext: LogContext;
@@ -107,7 +109,7 @@ export class ModelManager {
       if (error instanceof AppError) {
         throw error;
       }
-       // else
+      // else
       this.logger.error({
         msg: 'unfamiliar error',
         logContext,
@@ -148,7 +150,7 @@ export class ModelManager {
         error,
         payload,
       });
-      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'store-trigger service is not available', true);
+      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, ERROR_STORE_TRIGGER_ERROR, true);
     }
   }
 
