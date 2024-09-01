@@ -104,15 +104,15 @@ export class ModelManager {
         throw new AppError('', StatusCodes.BAD_REQUEST, isValidResponse.message!, true);
       }
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+       // else
       this.logger.error({
         msg: 'unfamiliar error',
         logContext,
         error,
       });
-      const appError = error as AppError;
-      if (appError.status == StatusCodes.BAD_REQUEST) {
-        throw appError;
-      } // else
       throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
 
