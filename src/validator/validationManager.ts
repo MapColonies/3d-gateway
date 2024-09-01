@@ -122,7 +122,7 @@ export class ValidationManager {
       };
     }
 
-    return this.isClassificationValid(metadata.classification!);
+    return await this.isClassificationValid(metadata.classification!);
   }
 
   @withSpanAsyncV4
