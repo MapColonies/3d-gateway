@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
-import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
+import { OpenapiViewerRouter } from '@map-colonies/openapi-express-viewer';
 import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { inject, injectable } from 'tsyringe';
@@ -11,18 +11,18 @@ import httpLogger from '@map-colonies/express-access-log-middleware';
 import { collectMetricsExpressMiddleware, getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
 import { Registry } from 'prom-client';
 import { SERVICES } from './common/constants';
-import { IConfig } from './common/interfaces';
 import { MODEL_ROUTER_SYMBOL } from './model/routes/modelRouter';
 import { mountDirs } from './common/constants';
 import { handleError } from './common/handleError';
 import { METADATA_ROUTER_SYMBOL } from './metadata/routes/metadataRouter';
+import { ConfigType } from './common/config';
 
 @injectable()
 export class ServerBuilder {
   private readonly serverInstance: express.Application;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(MODEL_ROUTER_SYMBOL) private readonly modelRouter: Router,
     @inject(METADATA_ROUTER_SYMBOL) private readonly metadataRouter: Router,
@@ -41,11 +41,11 @@ export class ServerBuilder {
 
   private buildDocsRoutes(): void {
     const openapiRouter = new OpenapiViewerRouter({
-      ...this.config.get<OpenapiRouterConfig>('openapiConfig'),
-      filePathOrSpec: this.config.get<string>('openapiConfig.filePath'),
+      ...this.config.get('openapiConfig'),
+      filePathOrSpec: this.config.get('openapiConfig.filePath'),
     });
     openapiRouter.setup();
-    this.serverInstance.use(this.config.get<string>('openapiConfig.basePath'), openapiRouter.getRouter());
+    this.serverInstance.use(this.config.get('openapiConfig.basePath'), openapiRouter.getRouter());
   }
 
   private buildRoutes(): void {
@@ -62,15 +62,15 @@ export class ServerBuilder {
 
     this.serverInstance.use(httpLogger({ logger: this.logger, ignorePaths: ['/metrics'] }));
 
-    if (this.config.get<boolean>('server.response.compression.enabled')) {
-      this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
+    if (this.config.get('server.response.compression.enabled')) {
+      this.serverInstance.use(compression(this.config.get('server.response.compression.options') as compression.CompressionOptions));
     }
 
-    this.serverInstance.use(bodyParser.json(this.config.get<bodyParser.Options>('server.request.payload')));
+    this.serverInstance.use(bodyParser.json(this.config.get('server.request.payload')));
     this.serverInstance.use(getTraceContexHeaderMiddleware());
 
-    const ignorePathRegex = new RegExp(`^(${this.config.get<string>('openapiConfig.basePath')})|(explorer)/.*`, 'i');
-    const apiSpecPath = this.config.get<string>('openapiConfig.filePath');
+    const ignorePathRegex = new RegExp(`^(${this.config.get('openapiConfig.basePath')})|(explorer)/.*`, 'i');
+    const apiSpecPath = this.config.get('openapiConfig.filePath');
     this.serverInstance.use(OpenApiMiddleware({ apiSpec: apiSpecPath, validateRequests: true, ignorePaths: ignorePathRegex }));
   }
 

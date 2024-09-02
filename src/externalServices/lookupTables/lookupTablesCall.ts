@@ -6,20 +6,21 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
-import { IConfig, LogContext } from '../../common/interfaces';
-import { ILookupOption, LookupTablesConfig } from './interfaces';
+import { LogContext } from '../../common/interfaces';
+import { ConfigType } from '../../common/config';
+import { ILookupOption } from './interfaces';
 
 @injectable()
 export class LookupTablesCall {
   private readonly logContext: LogContext;
-  private readonly lookupTables: LookupTablesConfig;
+  private readonly lookupTables;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {
-    this.lookupTables = this.config.get<LookupTablesConfig>('externalServices.lookupTables');
+    this.lookupTables = this.config.get('externalServices.lookupTables');
     this.logContext = {
       fileName: __filename,
       class: LookupTablesCall.name,

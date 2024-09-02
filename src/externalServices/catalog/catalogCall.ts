@@ -6,7 +6,8 @@ import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
-import { IConfig, LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
+import { LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
+import { ConfigType } from '../../common/config';
 import { Record3D } from './interfaces';
 
 @injectable()
@@ -15,11 +16,11 @@ export class CatalogCall {
   private readonly catalog: string;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
-    this.catalog = this.config.get<string>('externalServices.catalog');
+    this.catalog = this.config.get('externalServices.catalog');
     this.logContext = {
       fileName: __filename,
       class: CatalogCall.name,

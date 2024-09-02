@@ -20,7 +20,7 @@
     }
   },
   "server": {
-    "port": "8080",
+    "port": 8080,
     "request": {
       "payload": {
         "limit": "1mb"
@@ -48,15 +48,16 @@
   "validation": {
     "percentageLimit": 10
   },
-  "provider": "S3",
-  "S3": {
-    "accessKeyId": "minioadmin",
-    "secretAccessKey": "minioadmin",
-    "endpointUrl": "http://127.0.0.1:9000",
-    "bucket": "3dtiles",
-    "region": "ui-east-1",
-    "forcePathStyle": true,
-    "sslEnabled": false,
-    "maxAttempts": 3
+  "storage": {
+    "provider": "S3",
+    "config": {
+      "accessKeyId": "minioadmin",
+      "secretAccessKey": "minioadmin",
+      "bucket": "3dtiles",
+      "region": "ui-east-1",
+      "forcePathStyle": true,
+      "sslEnabled": false,
+      "maxAttempts": 3
+    }
   }
 }

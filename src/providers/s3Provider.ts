@@ -4,8 +4,9 @@ import { GetObjectCommandInput, GetObjectCommand, S3Client, S3ClientConfig } fro
 import { StatusCodes } from 'http-status-codes';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
+import { commonS3FullV1Type } from '@map-colonies/schemas';
 import { SERVICES } from '../common/constants';
-import { LogContext, Provider, S3Config } from '../common/interfaces';
+import { LogContext, Provider } from '../common/interfaces';
 import { AppError } from '../common/appError';
 
 @injectable()
@@ -14,7 +15,7 @@ export class S3Provider implements Provider {
   private readonly logContext: LogContext;
 
   public constructor(
-    @inject(SERVICES.PROVIDER_CONFIG) protected readonly s3Config: S3Config,
+    @inject(SERVICES.PROVIDER_CONFIG) protected readonly s3Config: commonS3FullV1Type,
     @inject(SERVICES.LOGGER) protected readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer
   ) {
@@ -23,7 +24,7 @@ export class S3Provider implements Provider {
       class: S3Provider.name,
     };
     const s3ClientConfig: S3ClientConfig = {
-      endpoint: this.s3Config.endpointUrl,
+      endpoint: `${this.s3Config.protocol}://${this.s3Config.host}:${this.s3Config.port}`,
       forcePathStyle: this.s3Config.forcePathStyle,
       credentials: {
         accessKeyId: this.s3Config.accessKeyId,

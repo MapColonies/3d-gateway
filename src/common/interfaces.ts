@@ -1,10 +1,6 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
+import { commonS3FullV1Type } from '@map-colonies/schemas';
 import { Polygon } from 'geojson';
-
-export interface IConfig {
-  get: <T>(setting: string) => T;
-  has: (setting: string) => boolean;
-}
 
 export interface OpenApiConfig {
   filePath: string;
@@ -51,18 +47,7 @@ export interface Provider {
   getFile: (filePath: string) => Promise<string>;
 }
 
-export type ProviderConfig = S3Config;
-
-export interface S3Config {
-  accessKeyId: string;
-  secretAccessKey: string;
-  endpointUrl: string;
-  bucket: string;
-  region: string;
-  sslEnabled: boolean;
-  forcePathStyle: boolean;
-  maxAttempts: number;
-}
+export type ProviderConfig = commonS3FullV1Type;
 
 export interface LogContext {
   fileName: string;

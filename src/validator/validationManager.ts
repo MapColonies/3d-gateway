@@ -9,12 +9,13 @@ import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
-import { IConfig, LogContext, Provider, UpdatePayload } from '../common/interfaces';
+import { LogContext, Provider, UpdatePayload } from '../common/interfaces';
 import { IngestionPayload } from '../common/interfaces';
 import { AppError } from '../common/appError';
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
+import { ConfigType } from '../common/config';
 import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
@@ -26,7 +27,7 @@ export class ValidationManager {
   private readonly logContext: LogContext;
 
   public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
@@ -37,8 +38,8 @@ export class ValidationManager {
       fileName: __filename,
       class: ValidationManager.name,
     };
-    this.basePath = this.config.get<string>('paths.basePath');
-    this.limit = this.config.get<number>('validation.percentageLimit');
+    this.basePath = this.config.get('paths.basePath');
+    this.limit = this.config.get('validation.percentageLimit');
   }
 
   @withSpanAsyncV4
