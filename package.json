@@ -47,7 +47,6 @@
     "@aws-sdk/client-s3": "^3.511.0",
     "@godaddy/terminus": "^4.12.1",
     "@map-colonies/error-express-handler": "^2.1.0",
-    "@map-colonies/error-types": "^1.1.5",
     "@map-colonies/express-access-log-middleware": "^2.0.1",
     "@map-colonies/js-logger": "^1.0.1",
     "@map-colonies/mc-model-types": "^15.1.1",
