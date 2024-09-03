@@ -5,7 +5,7 @@ import { Tracer, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { SERVICES } from '../../common/constants';
-import { ValidationManager } from '../../validator/validationManager';
+import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { CatalogCall } from '../../externalServices/catalog/catalogCall';
 import { LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
@@ -47,9 +47,10 @@ export class MetadataManager {
     });
 
     try {
-      const validated: boolean | string = await this.validator.validateUpdate(identifier, payload);
-      if (typeof validated == 'string') {
-        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, validated, true);
+      const refReason: FailedReason = { outFailedReason: '' };
+      const isValid: boolean = await this.validator.validateUpdate(identifier, payload, refReason);
+      if (!isValid) {
+        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, refReason.outFailedReason, true);
       }
       this.logger.info({
         msg: 'model validated successfully',

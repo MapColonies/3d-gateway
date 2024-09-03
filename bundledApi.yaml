@@ -37,6 +37,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /models/validate:
+    post:
+      operationId: validate
+      summary: Invokes a new model ingestion validation
+      tags:
+        - models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/payloadForValidation'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validateResponse'
+        5XX:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
   /metadata/{identifier}:
     patch:
       operationId: updateMetadata
@@ -137,6 +161,37 @@ components:
         metadata:
           $ref: '#/components/schemas/basic-payload'
       additionalProperties: false
+    payloadForValidation:
+      type: object
+      description: >-
+        3d model payload, if metadta is not provided will validate only the
+        sources
+      required:
+        - modelPath
+        - tilesetFilename
+      properties:
+        modelPath:
+          type: string
+          description: Model files location path
+          example: \\domtest\mimi\archi\maz\silver\libot\NewYork
+        tilesetFilename:
+          type: string
+          description: Model tileset filename
+          example: tileset.json
+        metadata:
+          $ref: '#/components/schemas/basic-payload'
+      additionalProperties: false
+    validateResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Files are valid
+      required:
+        - isValid
     job:
       type: object
       description: job for ingestion 3d model

@@ -1,6 +1,19 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
 import { Polygon } from 'geojson';
 
+interface BaseIngestionPayload {
+  modelPath: string;
+  tilesetFilename: string;
+}
+
+export interface IngestionPayload extends BaseIngestionPayload {
+  metadata: MetaDataType;
+}
+
+export interface IngestionValidatePayload extends BaseIngestionPayload {
+  metadata?: MetaDataType;
+}
+
 export interface IConfig {
   get: <T>(setting: string) => T;
   has: (setting: string) => boolean;
@@ -13,10 +26,11 @@ export interface OpenApiConfig {
   uiPath: string;
 }
 
-export interface IngestionPayload {
-  modelPath: string;
-  tilesetFilename: string;
-  metadata: Omit<Layer3DMetadata, 'productSource'>;
+export type MetaDataType = Omit<Layer3DMetadata, 'productSource'>;
+
+export interface ValidationResponse {
+  isValid: boolean;
+  message?: string;
 }
 
 export interface UpdatePayload {

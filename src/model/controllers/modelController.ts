@@ -3,11 +3,12 @@ import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
-import { IngestionPayload, LogContext } from '../../common/interfaces';
+import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
+type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionValidatePayload>;
 
 @injectable()
 export class ModelController {
@@ -31,6 +32,34 @@ export class ModelController {
         logContext,
         error,
         modelName: req.body.metadata.productName,
+      });
+      return next(error);
+    }
+  };
+
+  public validate: ValidateModelHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.validate.name };
+    const payload = req.body;
+    try {
+      this.logger.info({
+        msg: 'model validate started',
+        logContext,
+        payload,
+      });
+      const response = await this.manager.validateModel(payload);
+      this.logger.info({
+        msg: 'model validate ended',
+        logContext,
+        payload,
+        validateResponse: response,
+      });
+      return res.status(StatusCodes.OK).json(response);
+    } catch (error) {
+      this.logger.error({
+        msg: `model validate failed!`,
+        logContext,
+        error,
+        payload,
       });
       return next(error);
     }

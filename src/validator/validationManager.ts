@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { constants as fsConstants } from 'node:fs';
+import { access } from 'node:fs/promises';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { StatusCodes } from 'http-status-codes';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
@@ -9,9 +9,7 @@ import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
-import { IConfig, LogContext, Provider, UpdatePayload } from '../common/interfaces';
-import { IngestionPayload } from '../common/interfaces';
-import { AppError } from '../common/appError';
+import { IConfig, LogContext, Provider, ValidationResponse, UpdatePayload, MetaDataType } from '../common/interfaces';
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
@@ -19,9 +17,20 @@ import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from '.
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
 
+export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
+export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
+export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not 3DPhotoRealistic!';
+export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
+export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
+export const ERROR_METADATA_ERRORED_TILESET = `File tileset validation failed`;
+export const ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL = `Wrong footprint! footprint's coordinates is not even close to the model!`;
+
+export interface FailedReason {
+  outFailedReason: string;
+}
+
 @injectable()
 export class ValidationManager {
-  private readonly basePath: string;
   private readonly limit: number;
   private readonly logContext: LogContext;
 
@@ -37,81 +46,119 @@ export class ValidationManager {
       fileName: __filename,
       class: ValidationManager.name,
     };
-    this.basePath = this.config.get<string>('paths.basePath');
     this.limit = this.config.get<number>('validation.percentageLimit');
   }
 
   @withSpanAsyncV4
-  public async validateIngestion(payload: IngestionPayload): Promise<boolean | string> {
-    let result: boolean | string;
+  public async isPathExist(fullPath: string): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.isPathExist.name };
+    this.logger.debug({
+      msg: 'isPathExist started',
+      logContext,
+      fullPath,
+    });
 
-    result = this.validateModelName(payload.modelPath);
-    if (typeof result == 'string') {
-      return result;
-    }
-    result = this.validateTilesetJson(payload.modelPath, payload.tilesetFilename);
-    if (typeof result == 'string') {
-      return result;
-    }
-    result = this.validateDates(payload.metadata.sourceDateStart!, payload.metadata.sourceDateEnd!);
-    if (typeof result == 'string') {
-      return result;
-    }
-    result = this.validateResolutionMeter(payload.metadata.minResolutionMeter, payload.metadata.maxResolutionMeter);
-    if (typeof result == 'string') {
-      return result;
-    }
-    result = this.validateFootprint(payload.metadata.footprint as Polygon);
-    if (typeof result == 'string') {
-      return result;
-    }
-    const tilesetPath = `${payload.modelPath}/${payload.tilesetFilename}`;
-    const file: string = readFileSync(`${tilesetPath}`, 'utf8');
-    result = this.validateIntersection(file, payload.metadata.footprint as Polygon, payload.metadata.productName!);
-
-    if (typeof result == 'string') {
-      return result;
-    }
-    result = this.validateProductType(payload.metadata.productType!, payload.metadata.productName!);
-    if (typeof result == 'string') {
-      return result;
-    }
-    if (payload.metadata.productId != undefined) {
-      result = await this.validateProductID(payload.metadata.productId);
-      if (typeof result == 'string') {
-        return result;
-      }
-    }
-    result = await this.validateClassification(payload.metadata.classification!);
-    if (typeof result == 'string') {
-      return result;
-    }
-
-    return true;
+    const isValid: boolean = await access(fullPath, fsConstants.F_OK)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        this.logger.error({
+          msg: `Path '${fullPath}' doesn't exists`,
+          logContext,
+          fullPath,
+        });
+        return false;
+      });
+    this.logger.debug({
+      msg: 'isPathExist ended',
+      logContext,
+      fullPath,
+      isValid,
+    });
+    return isValid;
   }
 
   @withSpanAsyncV4
-  public async validateUpdate(identifier: string, payload: UpdatePayload): Promise<boolean | string> {
-    let result: boolean | string;
+  public async isMetadataValid(metadata: MetaDataType, modelPolygon: Polygon): Promise<ValidationResponse> {
+    const logContext = { ...this.logContext, function: this.isMetadataValid.name };
+    this.logger.debug({
+      msg: 'metadataValid started',
+      metadata,
+      modelPolygon,
+      logContext,
+    });
+
+    let result = this.isDatesValid(metadata.sourceDateStart!, metadata.sourceDateEnd!);
+    if (!result) {
+      return {
+        isValid: false,
+        message: ERROR_METADATA_DATE,
+      };
+    }
+
+    result = this.isResolutionMeterValid(metadata.minResolutionMeter, metadata.maxResolutionMeter);
+    if (!result) {
+      return {
+        isValid: false,
+        message: ERROR_METADATA_RESOLUTION,
+      };
+    }
+
+    const sourcesValidationResponse: ValidationResponse = this.isPolygonValid(metadata.footprint as Polygon);
+    if (!sourcesValidationResponse.isValid) {
+      return sourcesValidationResponse;
+    }
+
+    const validationResponse: ValidationResponse = this.isFootprintAndModelIntersects(metadata.footprint as Polygon, modelPolygon);
+    if (!validationResponse.isValid) {
+      return validationResponse;
+    }
+
+    result = this.isProductTypeValid(metadata.productType!);
+    if (!result) {
+      // For now, this validation will not occur as it returns true.
+      return {
+        isValid: false,
+        message: ERROR_METADATA_PRODUCT_TYPE,
+      };
+    }
+
+    result = await this.isProductIdValid(metadata.productId!);
+    if (!result) {
+      return {
+        isValid: false,
+        message: `Record with productId: ${metadata.productId} doesn't exist!`,
+      };
+    }
+
+    return this.isClassificationValid(metadata.classification!);
+  }
+
+  @withSpanAsyncV4
+  public async validateUpdate(identifier: string, payload: UpdatePayload, refReason: FailedReason): Promise<boolean> {
     const record = await this.catalog.getRecord(identifier);
 
     if (record === undefined) {
-      return `Record with identifier: ${identifier} doesn't exist!`;
+      refReason.outFailedReason = `Record with identifier: ${identifier} doesn't exist!`;
+      return false;
     }
 
     if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
       const sourceDateStart = payload.sourceDateStart ?? record.sourceDateStart!;
       const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
-      result = this.validateDates(sourceDateStart, sourceDateEnd);
-      if (typeof result == 'string') {
-        return result;
+      const isDatesValid = this.isDatesValid(sourceDateStart, sourceDateEnd);
+      if (!isDatesValid) {
+        refReason.outFailedReason = ERROR_METADATA_DATE;
+        return false;
       }
     }
 
     if (payload.footprint != undefined) {
-      result = this.validateFootprint(payload.footprint);
-      if (typeof result == 'string') {
-        return result;
+      const isFootprintPolygonValid: ValidationResponse = this.isPolygonValid(payload.footprint);
+      if (!isFootprintPolygonValid.isValid) {
+        refReason.outFailedReason = isFootprintPolygonValid.message!;
+        return false;
       }
       const tilesetPath = extractLink(record.links);
 
@@ -121,17 +168,25 @@ export class ValidationManager {
         logContext,
         tilesetPath,
       });
-      const file = await this.provider.getFile(tilesetPath);
-      result = this.validateIntersection(file, payload.footprint, payload.productName!);
-      if (typeof result == 'string') {
-        return result;
+      const fileContent: string = await this.provider.getFile(tilesetPath);
+      const failedReason: FailedReason = { outFailedReason: '' };
+      const polygonResponse = this.getTilesetModelPolygon(fileContent, failedReason);
+      if (polygonResponse == undefined) {
+        refReason.outFailedReason = failedReason.outFailedReason;
+        return false;
+      }
+      const intersectsResponse = this.isFootprintAndModelIntersects(payload.footprint, polygonResponse);
+      if (!intersectsResponse.isValid) {
+        refReason.outFailedReason = intersectsResponse.message!;
+        return false;
       }
     }
 
     if (payload.classification != undefined) {
-      result = await this.validateClassification(payload.classification);
-      if (typeof result == 'string') {
-        return result;
+      const classificationResponse = await this.isClassificationValid(payload.classification);
+      if (!classificationResponse.isValid) {
+        refReason.outFailedReason = classificationResponse.message!;
+        return false;
       }
     }
 
@@ -139,150 +194,157 @@ export class ValidationManager {
   }
 
   @withSpanV4
-  public validateModelPath(sourcePath: string): boolean | string {
-    if (sourcePath.includes(this.basePath)) {
-      const logContext = { ...this.logContext, function: this.validateModelPath.name };
-      this.logger.debug({
-        msg: 'modelPath validated successfully!',
-        logContext,
-      });
-      return true;
-    }
-    return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${this.basePath}`;
-  }
-
-  @withSpanV4
-  private validateModelName(modelPath: string): boolean | string {
-    if (existsSync(`${modelPath}`)) {
-      const logContext = { ...this.logContext, function: this.validateModelName.name };
-      this.logger.debug({
-        msg: 'modelName validated successfully!',
-        logContext,
-      });
-      return true;
-    }
-    return `Unknown model name! The model name isn't in the folder!, modelPath: ${modelPath}`;
-  }
-
-  @withSpanV4
-  private validateTilesetJson(modelPath: string, tilesetFilename: string): boolean | string {
-    if (!existsSync(`${modelPath}/${tilesetFilename}`)) {
-      return `Unknown tileset name! The tileset file wasn't found!, tileset: ${tilesetFilename} doesn't exist`;
-    }
-    const fileContent: string = readFileSync(`${modelPath}/${tilesetFilename}`, 'utf-8');
-    try {
-      JSON.parse(fileContent);
-    } catch (error) {
-      return `${tilesetFilename} file that was provided isn't in a valid json format!`;
-    }
-    const logContext = { ...this.logContext, function: this.validateTilesetJson.name };
+  public isModelPathValid(sourcePath: string, basePath: string): boolean {
+    const logContext = { ...this.logContext, function: this.isModelPathValid.name };
+    const isValid = sourcePath.includes(basePath);
     this.logger.debug({
-      msg: 'tileset validated successfully!',
+      msg: 'modelPath validation',
+      isValid,
       logContext,
     });
-    return true;
+    return isValid;
   }
 
   @withSpanAsyncV4
-  private async validateProductID(productId: string): Promise<boolean | string> {
-    if (!(await this.catalog.isProductIdExist(productId))) {
-      return `Record with productId: ${productId} doesn't exist!`;
+  private async isProductIdValid(productId: string): Promise<boolean> {
+    if (!productId) {
+      return true;
     }
-    const logContext = { ...this.logContext, function: this.validateProductID.name };
+    const logContext = { ...this.logContext, function: this.isProductIdValid.name };
     this.logger.debug({
-      msg: 'productId validated successfully!',
+      msg: 'productId validation started',
+      productId,
       logContext,
     });
-    return true;
+    const result = await this.catalog.isProductIdExist(productId);
+    this.logger.debug({
+      msg: `productId validation finished: ${result}`,
+      productId,
+      logContext,
+    });
+    return result;
   }
 
-  @withSpanV4
-  // For now, the validation will be only warning.
-  private validateProductType(productType: ProductType, modelName: string): boolean | string {
-    const logContext = { ...this.logContext, function: this.validateProductType.name };
-    if (productType != ProductType.PHOTO_REALISTIC_3D) {
-      this.logger.warn({
-        msg: 'product type is not 3DPhotoRealistic. skipping intersection validation',
+  @withSpanAsyncV4
+  private async isClassificationValid(classification: string): Promise<ValidationResponse> {
+    const logContext = { ...this.logContext, function: this.isClassificationValid.name };
+    this.logger.debug({
+      msg: 'Classification validation started',
+      logContext,
+    });
+    const classifications = await this.lookupTables.getClassifications();
+    const result = classifications.includes(classification);
+    this.logger.debug({
+      msg: `Classification validation ended: ${result}`,
+      classifications,
+      logContext,
+    });
+
+    if (!result) {
+      return {
+        isValid: false,
+        message: `classification is not a valid value.. Optional values: ${classifications.join()}`,
+      };
+    } else {
+      return { isValid: true };
+    }
+  }
+
+  public getTilesetModelPolygon(fileContent: string, outReason: FailedReason): Polygon | undefined {
+    const logContext = { ...this.logContext, function: this.getTilesetModelPolygon.name };
+    try {
+      const tileSetJson: TileSetJson = JSON.parse(fileContent) as TileSetJson;
+      const shape = tileSetJson.root.boundingVolume;
+      if (shape.sphere != undefined) {
+        return convertSphereFromXYZToWGS84(shape as BoundingSphere);
+      } else if (shape.region != undefined) {
+        return convertRegionFromRadianToDegrees(shape as BoundingRegion);
+      } else if (shape.box != undefined) {
+        outReason.outFailedReason = ERROR_METADATA_BOX_TILESET;
+      } else {
+        outReason.outFailedReason = ERROR_METADATA_BAD_FORMAT_TILESET;
+      }
+    } catch (error) {
+      const msg = ERROR_METADATA_ERRORED_TILESET;
+      this.logger.error({
+        msg: msg,
         logContext,
-        modelName,
+        fileContent,
+        error,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      outReason.outFailedReason = msg;
     }
-    this.logger.debug({
-      msg: 'productType validated successfully!',
-      logContext,
-    });
-    return true;
+    return undefined;
   }
 
-  @withSpanV4
-  private validateFootprint(footprint: Polygon): boolean | string {
-    if (!this.validatePolygonSchema(footprint)) {
-      return `Invalid footprint provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. footprint: ${JSON.stringify(
-        footprint
-      )}`;
+  public isPolygonValid(polygon: Polygon): ValidationResponse {
+    if (!this.validatePolygonSchema(polygon)) {
+      return {
+        isValid: false,
+        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+          polygon
+        )}`,
+      };
     }
-    if (!this.validateCoordinates(footprint)) {
-      return `Wrong footprint: ${JSON.stringify(footprint)} the first and last coordinates should be equal`;
+    if (!this.validateCoordinates(polygon)) {
+      return {
+        isValid: false,
+        message: `Wrong polygon: ${JSON.stringify(polygon)} the first and last coordinates should be equal`,
+      };
     }
-    const logContext = { ...this.logContext, function: this.validateFootprint.name };
-    this.logger.debug({
-      msg: 'footprint validated successfully!',
-      logContext,
-    });
-    return true;
+    return { isValid: true };
   }
 
-  @withSpanV4
-  private validateIntersection(fileContent: string, footprint: Polygon, productName: string): boolean | string {
-    let model: Polygon;
-    const logContext = { ...this.logContext, function: this.validateIntersection.name };
+  private validateCoordinates(footprint: Polygon): boolean {
+    const length = footprint.coordinates[0].length;
+    const first = footprint.coordinates[0][0];
+    const last = footprint.coordinates[0][length - 1];
+    return first[0] == last[0] && first[1] == last[1];
+  }
+
+  private validatePolygonSchema(footprint: Polygon): boolean {
+    const ajv = new Ajv();
+    const compiledSchema = ajv.compile(footprintSchema);
+    const isPolygon = compiledSchema(footprint);
+    return isPolygon;
+  }
+
+  private isFootprintAndModelIntersects(footprint: Polygon, modelPolygon: Polygon): ValidationResponse {
+    const logContext = { ...this.logContext, function: this.isFootprintAndModelIntersects.name };
     try {
       this.logger.debug({
-        msg: 'extract polygon of the model',
+        msg: 'isFootprintAndModelIntersects started',
         logContext,
-        modelName: productName,
-      });
-      const shape = (JSON.parse(fileContent) as TileSetJson).root.boundingVolume;
-
-      if (shape.sphere != undefined) {
-        model = convertSphereFromXYZToWGS84(shape as BoundingSphere);
-      } else if (shape.region != undefined) {
-        model = convertRegionFromRadianToDegrees(shape as BoundingRegion);
-      } else if (shape.box != undefined) {
-        return `BoundingVolume of box is not supported yet... Please contact 3D team.`;
-      } else {
-        return 'Bad tileset format. Should be in 3DTiles format';
-      }
-
-      this.logger.debug({
-        msg: 'extracted successfully polygon of the model',
-        logContext,
-        polygon: model,
-        modelName: productName,
+        modelPolygon,
+        footprint,
       });
 
       const intersection: Feature<Polygon | MultiPolygon> | null = intersect(
-        featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)])
+        featureCollection([polygon(footprint.coordinates), polygon(modelPolygon.coordinates)])
       );
 
       this.logger.debug({
         msg: 'intersected successfully between footprint and polygon of the model',
         logContext,
         intersection,
-        modelName: productName,
       });
 
       if (intersection == null) {
-        return `Wrong footprint! footprint's coordinates is not even close to the model!`;
+        return {
+          isValid: false,
+          message: ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+        };
       }
 
-      const combined: Feature<Polygon | MultiPolygon> | null = union(featureCollection([polygon(footprint.coordinates), polygon(model.coordinates)]));
+      const combined: Feature<Polygon | MultiPolygon> | null = union(
+        featureCollection([polygon(footprint.coordinates), polygon(modelPolygon.coordinates)])
+      );
 
       this.logger.debug({
         msg: 'combined successfully footprint and polygon of the model',
         logContext,
         combined,
-        modelName: productName,
       });
 
       const areaFootprint = area(footprint);
@@ -292,86 +354,67 @@ export class ValidationManager {
         logContext,
         footprint: areaFootprint,
         combined: areaCombined,
-        modelName: productName,
       });
       /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
       const coverage = (100 * areaFootprint) / areaCombined;
 
       if (coverage < this.limit) {
-        return `The footprint is not intersected enough with the model, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`;
+        return {
+          isValid: false,
+          message: `The footprint intersectection with the model doesn't reach minimum required threshhold, the coverage is: ${coverage}% when the minimum coverage is ${this.limit}%`,
+        };
       }
       this.logger.debug({
         msg: 'intersection validated successfully!',
         logContext,
       });
-      return true;
+      return {
+        isValid: true,
+      };
     } catch (error) {
+      const msg = `An error caused during the validation of the intersection`;
       this.logger.error({
-        msg: `An error caused during the validation of the intersection...`,
+        msg,
         logContext,
-        modelName: productName,
         error,
+        modelPolygon,
+        footprint,
       });
-      throw new AppError('IntersectionError', StatusCodes.INTERNAL_SERVER_ERROR, 'An error caused during the validation of the intersection', true);
+      return {
+        isValid: false,
+        message: msg,
+      };
     }
   }
 
-  @withSpanV4
-  private validateDates(startDate: Date, endDate: Date): boolean | string {
+  private isDatesValid(startDate: Date, endDate: Date): boolean {
     if (startDate <= endDate) {
-      const logContext = { ...this.logContext, function: this.validateDates.name };
-      this.logger.debug({
-        msg: 'dates validated successfully!',
-        logContext,
-      });
       return true;
     }
-    return 'sourceStartDate should not be later than sourceEndDate';
+    return false;
   }
 
-  @withSpanV4
-  private validateResolutionMeter(minResolutionMeter: number | undefined, maxResolutionMeter: number | undefined): boolean | string {
+  private isResolutionMeterValid(minResolutionMeter?: number, maxResolutionMeter?: number): boolean {
     if (minResolutionMeter == undefined || maxResolutionMeter == undefined) {
       return true;
     }
-    if (minResolutionMeter <= maxResolutionMeter) {
-      const logContext = { ...this.logContext, function: this.validateResolutionMeter.name };
-      this.logger.debug({
-        msg: 'resolutionMeters validated successfully!',
+    return minResolutionMeter <= maxResolutionMeter;
+  }
+
+  // For now, the validation will be only warning.
+  private isProductTypeValid(productType: ProductType): boolean {
+    const logContext = { ...this.logContext, function: this.isProductTypeValid.name };
+    if (productType != ProductType.PHOTO_REALISTIC_3D) {
+      this.logger.warn({
+        msg: ERROR_METADATA_PRODUCT_TYPE,
         logContext,
       });
-      return true;
+      return true; // TODO: lets check if it should be returned as false
     }
-    return 'minResolutionMeter should not be bigger than maxResolutionMeter';
-  }
-
-  @withSpanV4
-  private async validateClassification(classification: string): Promise<boolean | string> {
-    const classifications = await this.lookupTables.getClassifications();
-    if (classifications.includes(classification)) {
-      const logContext = { ...this.logContext, function: this.validateClassification.name };
-      this.logger.debug({
-        msg: 'classification validated successfully!',
-        logContext,
-      });
-      return true;
-    }
-    return `classification is not a valid value.. Optional values: ${classifications.join()}`;
-  }
-
-  @withSpanV4
-  private validateCoordinates(footprint: Polygon): boolean {
-    const length = footprint.coordinates[0].length;
-    const first = footprint.coordinates[0][0];
-    const last = footprint.coordinates[0][length - 1];
-    return first[0] == last[0] && first[1] == last[1];
-  }
-
-  @withSpanV4
-  private validatePolygonSchema(footprint: Polygon): boolean {
-    const ajv = new Ajv();
-    const compiledSchema = ajv.compile(footprintSchema);
-    const isPolygon = compiledSchema(footprint);
-    return isPolygon;
+    this.logger.debug({
+      msg: 'productType validated successfully!',
+      logContext,
+    });
+    return true;
   }
 }

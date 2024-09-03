@@ -7,6 +7,7 @@ export const SERVICE_VERSION = packageJsonData.version ?? 'unknown_version';
 export const DEFAULT_SERVER_PORT = 80;
 
 export const NODE_VERSION = process.versions.node;
+export const FILE_ENCODING = 'utf-8';
 
 export const PROJECTIONS = {
   sphere: '+proj=geocent +datum=WGS84 +units=m +no_defs +type=crs',
