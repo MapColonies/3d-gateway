@@ -134,7 +134,7 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'lookup-tables: there is a problem with lookup-tables');
+        expect(response.body).toHaveProperty('message', 'there is a problem with lookup-tables');
       });
 
       it('should return 500 status code if got unexpected response from catalog service', async function () {
@@ -144,7 +144,7 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'catalog: Problem with the catalog during validation of productId existence');
+        expect(response.body).toHaveProperty('message', 'Problem with the catalog during validation of productId existence');
       });
 
       it('should return 500 status code if a network exception happens in catalog service', async function () {
@@ -154,7 +154,7 @@ describe('ModelController', function () {
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'catalog: there is a problem with catalog');
+        expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
       });
     });
 
@@ -189,7 +189,7 @@ describe('ModelController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${payload.modelPath}, basePath: ${basePath}`
+          `Unknown model path! The model isn't in the agreed folder!, modelPath: ${payload.modelPath}, basePath: ${basePath}`
         );
       });
 

@@ -25,9 +25,12 @@ export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be 
 export const ERROR_METADATA_ERRORED_TILESET = `File tileset validation failed`;
 export const ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL = `Wrong footprint! footprint's coordinates is not even close to the model!`;
 
+export interface FailedReason {
+  outFailedReason: string;
+}
+
 @injectable()
 export class ValidationManager {
-  private readonly basePath: string;
   private readonly limit: number;
   private readonly logContext: LogContext;
 
@@ -43,15 +46,14 @@ export class ValidationManager {
       fileName: __filename,
       class: ValidationManager.name,
     };
-    this.basePath = this.config.get<string>('paths.basePath');
     this.limit = this.config.get<number>('validation.percentageLimit');
   }
 
   @withSpanAsyncV4
-  public async validateExist(fullPath: string): Promise<boolean> {
-    const logContext = { ...this.logContext, function: this.validateExist.name };
+  public async isPathExist(fullPath: string): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.isPathExist.name };
     this.logger.debug({
-      msg: 'validate file exists started',
+      msg: 'isPathExist started',
       logContext,
       fullPath,
     });
@@ -62,14 +64,14 @@ export class ValidationManager {
       })
       .catch(() => {
         this.logger.error({
-          msg: `File '${fullPath}' doesn't exists`,
+          msg: `Path '${fullPath}' doesn't exists`,
           logContext,
           fullPath,
         });
         return false;
       });
     this.logger.debug({
-      msg: 'validate file exists ended',
+      msg: 'isPathExist ended',
       logContext,
       fullPath,
       isValid,
@@ -134,11 +136,12 @@ export class ValidationManager {
   }
 
   @withSpanAsyncV4
-  public async validateUpdate(identifier: string, payload: UpdatePayload): Promise<boolean | string> {
+  public async validateUpdate(identifier: string, payload: UpdatePayload, refReason: FailedReason): Promise<boolean> {
     const record = await this.catalog.getRecord(identifier);
 
     if (record === undefined) {
-      return `Record with identifier: ${identifier} doesn't exist!`;
+      refReason.outFailedReason = `Record with identifier: ${identifier} doesn't exist!`;
+      return false;
     }
 
     if (payload.sourceDateStart != undefined || payload.sourceDateEnd != undefined) {
@@ -146,14 +149,16 @@ export class ValidationManager {
       const sourceDateEnd = payload.sourceDateEnd ?? record.sourceDateEnd!;
       const isDatesValid = this.isDatesValid(sourceDateStart, sourceDateEnd);
       if (!isDatesValid) {
-        return ERROR_METADATA_DATE;
+        refReason.outFailedReason = ERROR_METADATA_DATE;
+        return false;
       }
     }
 
     if (payload.footprint != undefined) {
       const isFootprintPolygonValid: ValidationResponse = this.isPolygonValid(payload.footprint);
       if (!isFootprintPolygonValid.isValid) {
-        return isFootprintPolygonValid.message!;
+        refReason.outFailedReason = isFootprintPolygonValid.message!;
+        return false;
       }
       const tilesetPath = extractLink(record.links);
 
@@ -164,20 +169,24 @@ export class ValidationManager {
         tilesetPath,
       });
       const fileContent: string = await this.provider.getFile(tilesetPath);
-      const polygonResponse = this.getTilesetModelPolygon(fileContent);
-      if (typeof polygonResponse == 'string') {
-        return polygonResponse;
+      const failedReason: FailedReason = { outFailedReason: '' };
+      const polygonResponse = this.getTilesetModelPolygon(fileContent, failedReason);
+      if (polygonResponse == undefined) {
+        refReason.outFailedReason = failedReason.outFailedReason;
+        return false;
       }
       const intersectsResponse = this.isFootprintAndModelIntersects(payload.footprint, polygonResponse);
       if (!intersectsResponse.isValid) {
-        return intersectsResponse.message!;
+        refReason.outFailedReason = intersectsResponse.message!;
+        return false;
       }
     }
 
     if (payload.classification != undefined) {
       const classificationResponse = await this.isClassificationValid(payload.classification);
       if (!classificationResponse.isValid) {
-        return classificationResponse.message!;
+        refReason.outFailedReason = classificationResponse.message!;
+        return false;
       }
     }
 
@@ -185,16 +194,15 @@ export class ValidationManager {
   }
 
   @withSpanV4
-  public validateModelPath(sourcePath: string): boolean | string {
-    if (sourcePath.includes(this.basePath)) {
-      const logContext = { ...this.logContext, function: this.validateModelPath.name };
-      this.logger.debug({
-        msg: 'modelPath validated successfully!',
-        logContext,
-      });
-      return true;
-    }
-    return `Unknown model path! The model isn't in the agreed folder!, sourcePath: ${sourcePath}, basePath: ${this.basePath}`;
+  public isModelPathValid(sourcePath: string, basePath: string): boolean {
+    const logContext = { ...this.logContext, function: this.isModelPathValid.name };
+    const isValid = sourcePath.includes(basePath);
+    this.logger.debug({
+      msg: 'modelPath validation',
+      isValid,
+      logContext,
+    });
+    return isValid;
   }
 
   @withSpanAsyncV4
@@ -242,7 +250,7 @@ export class ValidationManager {
     }
   }
 
-  public getTilesetModelPolygon(fileContent: string): Polygon | string {
+  public getTilesetModelPolygon(fileContent: string, outReason: FailedReason): Polygon | undefined {
     const logContext = { ...this.logContext, function: this.getTilesetModelPolygon.name };
     try {
       const tileSetJson: TileSetJson = JSON.parse(fileContent) as TileSetJson;
@@ -252,9 +260,9 @@ export class ValidationManager {
       } else if (shape.region != undefined) {
         return convertRegionFromRadianToDegrees(shape as BoundingRegion);
       } else if (shape.box != undefined) {
-        return ERROR_METADATA_BOX_TILESET;
+        outReason.outFailedReason = ERROR_METADATA_BOX_TILESET;
       } else {
-        return ERROR_METADATA_BAD_FORMAT_TILESET;
+        outReason.outFailedReason = ERROR_METADATA_BAD_FORMAT_TILESET;
       }
     } catch (error) {
       const msg = ERROR_METADATA_ERRORED_TILESET;
@@ -264,8 +272,10 @@ export class ValidationManager {
         fileContent,
         error,
       });
-      return msg;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      outReason.outFailedReason = msg;
     }
+    return undefined;
   }
 
   public isPolygonValid(polygon: Polygon): ValidationResponse {

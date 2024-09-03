@@ -1,5 +1,6 @@
-import jsLogger from '@map-colonies/js-logger';
+import config from 'config';
 import { trace } from '@opentelemetry/api';
+import jsLogger from '@map-colonies/js-logger';
 import { IngestionPayload, IngestionValidatePayload } from '../../../../src/common/interfaces';
 import { ERROR_STORE_TRIGGER_ERROR, ModelManager } from '../../../../src/model/models/modelManager';
 import { createFootprint, createIngestionPayload, createStoreTriggerPayload } from '../../../helpers/helpers';
@@ -11,6 +12,7 @@ let modelManager: ModelManager;
 describe('ModelManager', () => {
   beforeEach(() => {
     modelManager = new ModelManager(
+      config,
       jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
       validationManagerMock as never,
@@ -28,12 +30,12 @@ describe('ModelManager', () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValue(true);
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
@@ -47,18 +49,20 @@ describe('ModelManager', () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue('some model path error');
-      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isModelPathValid.mockReturnValue(false);
+      validationManagerMock.isPathExist.mockResolvedValue(true);
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
 
       const createdResponse = modelManager.createModel(payload);
-      await expect(createdResponse).rejects.toThrow('some model path error');
+      await expect(createdResponse).rejects.toThrow(
+        "Unknown model path! The model isn't in the agreed folder!, modelPath: \\\\tmp\\tilesets\\models\\Sphere, basePath: \\\\tmp\\tilesets\\models"
+      );
     });
 
     it('throw if StoreTriggerPayload rejects with error', async () => {
@@ -66,18 +70,18 @@ describe('ModelManager', () => {
 
       storeTriggerMock.postPayload.mockRejectedValue(new Error('storeTrigger error'));
 
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValue(true);
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValue(true);
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
 
       const createdResponse = modelManager.createModel(payload);
-      await expect(createdResponse).rejects.toThrow(ERROR_STORE_TRIGGER_ERROR );
+      await expect(createdResponse).rejects.toThrow(ERROR_STORE_TRIGGER_ERROR);
     });
   });
 
@@ -86,9 +90,9 @@ describe('ModelManager', () => {
       const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValue(true);
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValue(true);
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
@@ -106,9 +110,9 @@ describe('ModelManager', () => {
       payload.metadata = undefined;
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValue(true);
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValue(true);
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
@@ -124,20 +128,25 @@ describe('ModelManager', () => {
       const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
-      validationManagerMock.validateModelPath.mockReturnValue('Some ModelPath Error');
+      validationManagerMock.isModelPathValid.mockReturnValue(false);
 
       const response = await modelManager.validateModel(payload);
-      expect(response).toStrictEqual({ isValid: false, message: 'Some ModelPath Error' });
+      expect(response).toStrictEqual({
+        isValid: false,
+        message:
+          "Unknown model path! The model isn't in the agreed folder!, modelPath: \\\\tmp\\tilesets\\models\\Sphere, basePath: \\\\tmp\\tilesets\\models",
+      });
     });
 
-    it(`rejects if validateExist for model file failed`, async () => {
+    it(`rejects if isPathExist for model file failed`, async () => {
       const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
 
       modelManager = new ModelManager(
+        config,
         jsLogger({ enabled: false }),
         trace.getTracer('testTracer'),
         validationManagerMock as never,
@@ -145,10 +154,10 @@ describe('ModelManager', () => {
       );
 
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValueOnce(false);
-      validationManagerMock.validateExist.mockResolvedValueOnce(true);
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValueOnce(false);
+      validationManagerMock.isPathExist.mockResolvedValueOnce(true);
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
@@ -159,11 +168,12 @@ describe('ModelManager', () => {
       expect(response.message).toContain('Unknown model name!');
     });
 
-    it(`rejects if validateExist for tileset failed`, async () => {
+    it(`rejects if isPathExist for tileset failed`, async () => {
       const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Sphere');
 
       modelManager = new ModelManager(
+        config,
         jsLogger({ enabled: false }),
         trace.getTracer('testTracer'),
         validationManagerMock as never,
@@ -171,10 +181,10 @@ describe('ModelManager', () => {
       );
 
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValueOnce(true);
-      validationManagerMock.validateExist.mockResolvedValueOnce(false);
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValueOnce(true);
+      validationManagerMock.isPathExist.mockResolvedValueOnce(false);
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
@@ -190,6 +200,7 @@ describe('ModelManager', () => {
       const expected: StoreTriggerPayload = createStoreTriggerPayload('Box');
 
       modelManager = new ModelManager(
+        config,
         jsLogger({ enabled: false }),
         trace.getTracer('testTracer'),
         validationManagerMock as never,
@@ -197,20 +208,20 @@ describe('ModelManager', () => {
       );
 
       storeTriggerMock.postPayload.mockResolvedValue(expected);
-      validationManagerMock.validateModelPath.mockReturnValue(true);
-      validationManagerMock.validateExist.mockResolvedValue(true);
-      validationManagerMock.isPolygonValid.mockResolvedValue({
+      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      validationManagerMock.isPathExist.mockResolvedValue(true);
+      validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
       validationManagerMock.isMetadataValid.mockResolvedValue({
         isValid: true,
       });
-      validationManagerMock.getTilesetModelPolygon.mockReturnValue(`Some getTilesetModelPolygon Error`);
+      validationManagerMock.getTilesetModelPolygon.mockReturnValue(undefined);
 
       const response = await modelManager.validateModel(payload);
       expect(response).toStrictEqual({
         isValid: false,
-        message: `Some getTilesetModelPolygon Error`,
+        message: '',
       });
     });
   });

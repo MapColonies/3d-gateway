@@ -10,18 +10,20 @@ import { StatusCodes } from 'http-status-codes';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/storeTriggerCall';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { FILE_ENCODING, SERVICES } from '../../common/constants';
-import { ValidationManager } from '../../validator/validationManager';
+import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
-import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
+import { IConfig, IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
 
 export const ERROR_STORE_TRIGGER_ERROR: string = 'store-trigger service is not available';
 
 @injectable()
 export class ModelManager {
+  private readonly basePath: string;
   private readonly logContext: LogContext;
 
   public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(ValidationManager) private readonly validator: ValidationManager,
@@ -31,20 +33,21 @@ export class ModelManager {
       fileName: __filename,
       class: ModelManager.name,
     };
+    this.basePath = this.config.get<string>('paths.basePath');
   }
 
   @withSpanAsyncV4
   public async validateModel(payload: IngestionValidatePayload): Promise<ValidationResponse> {
-    const resultModelPathValidation = this.validator.validateModelPath(payload.modelPath);
-    if (typeof resultModelPathValidation === 'string') {
+    const isValid = this.validator.isModelPathValid(payload.modelPath, this.basePath);
+    if (!isValid) {
       return {
         isValid: false,
-        message: resultModelPathValidation,
+        message: `Unknown model path! The model isn't in the agreed folder!, modelPath: ${payload.modelPath}, basePath: ${this.basePath}`,
       };
     }
 
     const adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
-    const isModelFileExists = await this.validator.validateExist(adjustedModelPath);
+    const isModelFileExists = await this.validator.isPathExist(adjustedModelPath);
     if (!isModelFileExists) {
       return {
         isValid: false,
@@ -53,7 +56,7 @@ export class ModelManager {
     }
 
     const tilesetLocation = join(adjustedModelPath, payload.tilesetFilename);
-    const isTilesetExists = await this.validator.validateExist(tilesetLocation);
+    const isTilesetExists = await this.validator.isPathExist(tilesetLocation);
     if (!isTilesetExists) {
       return {
         isValid: false,
@@ -62,11 +65,12 @@ export class ModelManager {
     }
 
     const fileContent: string = await readFile(tilesetLocation, { encoding: FILE_ENCODING });
-    const polygonResponse = this.validator.getTilesetModelPolygon(fileContent);
-    if (typeof polygonResponse == 'string') {
+    const failedReason: FailedReason = { outFailedReason: '' };
+    const polygonResponse = this.validator.getTilesetModelPolygon(fileContent, failedReason);
+    if (polygonResponse == undefined) {
       return {
         isValid: false,
-        message: polygonResponse,
+        message: failedReason.outFailedReason,
       };
     }
 

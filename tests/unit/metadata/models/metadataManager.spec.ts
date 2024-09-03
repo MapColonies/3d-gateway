@@ -37,7 +37,7 @@ describe('MetadataManager', () => {
     it(`rejects if update's validation failed`, async () => {
       const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
-      validationManagerMock.validateUpdate.mockReturnValue('Some Error');
+      validationManagerMock.validateUpdate.mockReturnValue(false);
 
       const response = metadataManager.updateMetadata(identifier, payload);
 

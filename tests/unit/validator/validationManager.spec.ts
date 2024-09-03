@@ -14,6 +14,7 @@ import {
   ERROR_METADATA_ERRORED_TILESET,
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
   ERROR_METADATA_RESOLUTION,
+  FailedReason,
   ValidationManager,
 } from '../../../src/validator/validationManager';
 import {
@@ -26,6 +27,7 @@ import {
   getTileset,
   createIngestionPayload,
   createTilesetFileName,
+  getBasePath,
 } from '../../helpers/helpers';
 import { configMock, lookupTablesMock, catalogMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
@@ -238,14 +240,14 @@ describe('ValidationManager', () => {
     });
   });
 
-  describe('validateExist tests', () => {
+  describe('isPathExist tests', () => {
     it.each([
       { path: createMountedModelPath(), result: true },
       { path: join(createMountedModelPath(), createTilesetFileName()), result: true },
       { path: join(createMountedModelPath(), 'nonExistsFile.json'), result: false },
       { path: join('nonExistsFolder', createTilesetFileName()), result: false },
     ])('should check if sources exists and return true for %p', async (testInput: { path: string; result: boolean }) => {
-      const response = await validationManager.validateExist(testInput.path);
+      const response = await validationManager.isPathExist(testInput.path);
       expect(response).toBe(testInput.result);
     });
   });
@@ -262,10 +264,11 @@ describe('ValidationManager', () => {
       { path: join(createMountedModelPath(), 'invalidTileset.json'), result: ERROR_METADATA_ERRORED_TILESET },
     ])('should check if sources exists and return true for %p', async (testInput: { path: string; result: Polygon | string }) => {
       const fileContent: string = await readFile(testInput.path, { encoding: FILE_ENCODING });
-      const polygonResponse: string | Polygon = validationManager.getTilesetModelPolygon(fileContent);
+      const failedReason: FailedReason = { outFailedReason: '' };
+      const polygonResponse: Polygon | undefined = validationManager.getTilesetModelPolygon(fileContent, failedReason);
       /* eslint-disable */
-      if (typeof polygonResponse == 'string') {
-        expect(polygonResponse).toBe(testInput.result);
+      if (polygonResponse == undefined) {
+        expect(failedReason!.outFailedReason).toBe(testInput.result);
       } else {
         expect(polygonResponse as Polygon).toBeDefined();
       }
@@ -277,17 +280,17 @@ describe('ValidationManager', () => {
     it('returns true when got valid model path', () => {
       const modelPath = createModelPath();
 
-      const result = validationManager.validateModelPath(modelPath);
+      const result = validationManager.isModelPathValid(modelPath, getBasePath());
 
       expect(result).toBe(true);
     });
 
-    it('returns error string when model path not in the agreed path', () => {
+    it('returns false when model path not in the agreed path', () => {
       const modelPath = 'some/path';
 
-      const result = validationManager.validateModelPath(modelPath);
+      const result = validationManager.isModelPathValid(modelPath, getBasePath());
 
-      expect(result).toContain(`Unknown model path! The model isn't in the agreed folder!`);
+      expect(result).toBe(false);
     });
   });
 
@@ -300,29 +303,87 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
       providerMock.getFile.mockResolvedValue(getTileset());
 
-      const response = await validationManager.validateUpdate(identifier, payload);
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
 
       expect(response).toBe(true);
     });
 
-    it('returns error string when has one invalid function', async () => {
+    it('returns error if catalog dont contain the requested record', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       catalogMock.getRecord.mockResolvedValue(undefined);
 
-      const response = await validationManager.validateUpdate(identifier, payload);
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
 
-      expect(typeof response).toBe('string');
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(`Record with identifier: ${identifier} doesn't exist!`);
     });
 
-    it('throws error when one of the external services does not properly responded', async () => {
+    it('throws error when catalog services does not properly responded', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       catalogMock.getRecord.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'catalog error', true));
 
-      const response = validationManager.validateUpdate(identifier, payload);
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = validationManager.validateUpdate(identifier, payload, refReason);
 
       await expect(response).rejects.toThrow('catalog error');
+    });
+
+    it('returns false when got dates are invalid', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
+      providerMock.getFile.mockResolvedValue(getTileset());
+
+      payload.sourceDateStart = new Date(555);
+      payload.sourceDateEnd = new Date(554);
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(ERROR_METADATA_DATE);
+    });
+
+
+    it('returns false when footprint polygon scheme is invalid', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
+      providerMock.getFile.mockResolvedValue(getTileset());
+
+      payload.footprint = createWrongFootprintCoordinates();
+      payload.footprint.coordinates = [[[]]];
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(`Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+          payload.footprint
+        )}`);
+    });
+
+    it('returns false when classification is not a valid', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
+      lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
+      providerMock.getFile.mockResolvedValue(getTileset());
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(`classification is not a valid value.. Optional values: ${'NonValidClassification'}`);
     });
   });
 });
