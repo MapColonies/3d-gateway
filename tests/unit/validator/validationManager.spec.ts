@@ -350,7 +350,6 @@ describe('ValidationManager', () => {
       expect(refReason.outFailedReason).toBe(ERROR_METADATA_DATE);
     });
 
-
     it('returns false when footprint polygon scheme is invalid', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
@@ -366,9 +365,11 @@ describe('ValidationManager', () => {
       const response = await validationManager.validateUpdate(identifier, payload, refReason);
 
       expect(response).toBe(false);
-      expect(refReason.outFailedReason).toBe(`Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+      expect(refReason.outFailedReason).toBe(
+        `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
           payload.footprint
-        )}`);
+        )}`
+      );
     });
 
     it('returns false when classification is not a valid', async () => {
