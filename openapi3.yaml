@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 1.0.0
+  version: 2.4.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -19,13 +19,13 @@ paths:
             schema:
               $ref: '#/components/schemas/payload'
       responses:
-        201:
+        '201':
           description: Created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/job'
-        400:
+        '400':
           description: Bad Request
           content:
             application/json:
@@ -37,7 +37,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-
   /models/validate:
     post:
       operationId: validate
@@ -50,7 +49,7 @@ paths:
             schema:
               $ref: '#/components/schemas/payloadForValidation'
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -62,7 +61,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-
   /metadata/{identifier}:
     patch:
       operationId: updateMetadata
@@ -75,21 +73,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updatePayload'
+              $ref: >-
+                ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updatePayload
       responses:
-        201:
+        '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
-        400:
+                $ref: >-
+                  ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+        '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        '5XX':
+        5XX:
           description: Unexpected Error
           content:
             application/json:
@@ -107,21 +107,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updateStatus'
+              $ref: >-
+                ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updateStatus
       responses:
-        201:
+        '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata'
-        400:
+                $ref: >-
+                  ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+        '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        '5XX':
+        5XX:
           description: Unexpected Error
           content:
             application/json:
@@ -155,17 +157,19 @@ components:
         modelPath:
           type: string
           description: Model files location path
-          example: '\\domtest\mimi\archi\maz\silver\libot\NewYork'
+          example: \\domtest\mimi\archi\maz\silver\libot\NewYork
         tilesetFilename:
           type: string
           description: Model tileset filename
-          example: 'tileset.json'
+          example: tileset.json
         metadata:
-          $ref: './Schema/3dCatalog/3dMetadata.yaml#/components/schemas/basic-payload'
+          $ref: ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/basic-payload
       additionalProperties: false
     payloadForValidation:
       type: object
-      description: 3d model payload, if metadta is not provided will validate only the sources
+      description: >-
+        3d model payload, if metadta is not provided will validate only the
+        sources
       required:
         - modelPath
         - tilesetFilename

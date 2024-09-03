@@ -1,6 +1,6 @@
 {
   "name": "3d-gateway",
-  "version": "1.0.0",
+  "version": "2.4.0",
   "description": "A gateway betweem clients and interval services of 3D",
   "main": "./src/index.ts",
   "scripts": {
