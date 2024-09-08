@@ -9,6 +9,7 @@ import { FailedReason, ValidationManager } from '../../validator/validationManag
 import { AppError } from '../../common/appError';
 import { CatalogCall } from '../../externalServices/catalog/catalogCall';
 import { LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
+import { Record3D } from '../../externalServices/catalog/interfaces';
 
 @injectable()
 export class MetadataManager {
@@ -84,7 +85,7 @@ export class MetadataManager {
   }
 
   @withSpanAsyncV4
-  public async updateStatus(identifier: string, payload: UpdateStatusPayload): Promise<unknown> {
+  public async updateStatus(identifier: string, payload: UpdateStatusPayload): Promise<Record3D> {
     const logContext = { ...this.logContext, function: this.updateStatus.name };
     this.logger.info({
       msg: 'started update of metadata',

@@ -38,7 +38,7 @@ export class StoreTriggerCall {
     this.logger.info({
       msg: 'sent to store-trigger successfully',
       logContext,
-      jobId: response.data.jobID,
+      jobId: response.data.jobId,
       modelId: payload.modelId,
       modelName: payload.metadata.productName,
       payload,

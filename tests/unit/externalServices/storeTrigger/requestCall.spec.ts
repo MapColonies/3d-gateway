@@ -23,7 +23,7 @@ describe('StoreTriggerCall', () => {
       const storeTriggerUrl = config.get<string>('externalServices.storeTrigger');
       const request = createStoreTriggerPayload(faker.word.sample());
       const expected: StoreTriggerResponse = {
-        jobID: faker.string.uuid(),
+        jobId: faker.string.uuid(),
         status: OperationStatus.IN_PROGRESS,
       };
       mockAxios.post.mockResolvedValue({ data: expected });

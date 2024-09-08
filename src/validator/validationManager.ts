@@ -160,7 +160,7 @@ export class ValidationManager {
         refReason.outFailedReason = isFootprintPolygonValid.message!;
         return false;
       }
-      const tilesetPath = extractLink(record.links);
+      const tilesetPath = extractLink(record.links[0].url);
 
       const logContext = { ...this.logContext, function: this.validateUpdate.name };
       this.logger.debug({
