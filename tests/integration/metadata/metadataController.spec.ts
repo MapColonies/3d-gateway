@@ -51,7 +51,7 @@ describe('MetadataController', function () {
         const payload = createUpdatePayload();
         const expected = createRecord();
         const record = createRecord();
-        const linkUrl = extractLink(record.links[0].url);
+        const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
@@ -70,7 +70,7 @@ describe('MetadataController', function () {
         const payload = createUpdatePayload();
         const classification = faker.word.sample();
         const record = createRecord();
-        const linkUrl = extractLink(record.links[0].url);
+        const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] });
@@ -149,7 +149,7 @@ describe('MetadataController', function () {
         const payload = createUpdatePayload();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        const linkUrl = extractLink(record.links[0].url);
+        const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockRejectedValueOnce(new Error('lookup-tables error'));
 
@@ -178,7 +178,7 @@ describe('MetadataController', function () {
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        const linkUrl = extractLink(record.links[0].url);
+        const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
@@ -193,7 +193,7 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
-        record.links[0].url = faker.word.sample();
+        record.links = faker.word.sample();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
 
         const response = await requestSender.updateMetadata(identifier, payload);

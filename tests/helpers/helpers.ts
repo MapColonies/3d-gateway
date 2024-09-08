@@ -7,7 +7,7 @@ import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-col
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
 import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
-import { ILink, Record3D } from '../../src/externalServices/catalog/interfaces';
+import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
 const maxResolutionMeter = 8000;
 const noData = 999;
@@ -64,16 +64,8 @@ export const getBasePath = (): string => {
   return basePath;
 };
 
-export const createLinks = (tileset = 'tileset.json'): ILink[] => {
-  const links: ILink[] = [
-    {
-      name: 'aa',
-      description: 'aa',
-      protocol: 'aa',
-      url: `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${faker.string.uuid()}/${tileset}`,
-    },
-  ];
-  return links;
+export const createLinks = (tileset = 'tileset.json'): string => {
+  return `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${faker.string.uuid()}/${tileset}`;
 };
 
 export const createModelPath = (modelName = 'Sphere'): string => {

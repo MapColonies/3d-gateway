@@ -81,8 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+                $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
           content:
@@ -115,8 +114,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+                $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
           content:
@@ -216,3 +214,15 @@ components:
             - Failed
             - Expired
             - Aborted
+    metadataResponse:
+      type: object
+      properties:
+        metadata:
+          allOf:
+            - $ref: >-
+                ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+            - type: object
+              properties:
+                links:
+                  type: string
+                  example: This is example
