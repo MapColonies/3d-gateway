@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 1.0.0
+  version: 2.4.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -31,7 +31,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -55,7 +55,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/validateResponse'
-        5XX:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -75,19 +75,19 @@ paths:
             schema:
               $ref: '#/components/schemas/updatePayload'
       responses:
-        '201':
+        '200':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/metadata'
+                $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -107,19 +107,19 @@ paths:
             schema:
               $ref: '#/components/schemas/updateStatus'
       responses:
-        '201':
+        '200':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/metadata'
+                $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -212,6 +212,17 @@ components:
             - Failed
             - Expired
             - Aborted
+    metadataResponse:
+      type: object
+      properties:
+        metadata:
+          allOf:
+            - $ref: '#/components/schemas/metadata'
+            - type: object
+              properties:
+                links:
+                  type: string
+                  example: This is example
     GeometryBase:
       type: object
       description: GeoJSon geometry

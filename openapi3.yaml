@@ -31,7 +31,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        500:
           description: Unexpected Error
           content:
             application/json:
@@ -55,7 +55,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/validateResponse'
-        5XX:
+        500:
           description: Unexpected Error
           content:
             application/json:
@@ -76,20 +76,19 @@ paths:
               $ref: >-
                 ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updatePayload
       responses:
-        '201':
+        '200':
           description: Created
           content:
             application/json:
               schema:
-                $ref: >-
-                  ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+                $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        500:
           description: Unexpected Error
           content:
             application/json:
@@ -110,20 +109,19 @@ paths:
               $ref: >-
                 ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/updateStatus
       responses:
-        '201':
+        '200':
           description: Created
           content:
             application/json:
               schema:
-                $ref: >-
-                  ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+                $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        5XX:
+        500:
           description: Unexpected Error
           content:
             application/json:
@@ -216,3 +214,15 @@ components:
             - Failed
             - Expired
             - Aborted
+    metadataResponse:
+      type: object
+      properties:
+        metadata:
+          allOf:
+            - $ref: >-
+                ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+            - type: object
+              properties:
+                links:
+                  type: string
+                  example: This is example

@@ -1,3 +1,4 @@
+import { join, sep } from 'node:path';
 import config from 'config';
 import {
   convertStringToGeojson,
@@ -32,8 +33,7 @@ describe('utilities tests', () => {
   describe('removePvPathFromModelPath tests', () => {
     it('Should return model name from base path', () => {
       const modelName = 'model\\path';
-      const modelPath = config.get<string>('paths.pvPath') + `/${modelName}`;
-
+      const modelPath = join(config.get<string>('paths.pvPath'), sep, `${modelName}`);
       const result: string = removePvPathFromModelPath(modelPath);
 
       expect(result).toBe(modelName);
@@ -43,8 +43,7 @@ describe('utilities tests', () => {
   describe('replaceBackQuotesWithQuotes tests', () => {
     it('Should replace all the back quotes to quotes', () => {
       const path = 'path\\to\\model\\with\\quotes';
-      const expected = 'path/to/model/with/quotes';
-
+      const expected = join('path', sep, 'to', sep, 'model', sep, 'with', sep, 'quotes');
       const result: string = replaceBackQuotesWithQuotes(path);
 
       expect(result).toBe(expected);

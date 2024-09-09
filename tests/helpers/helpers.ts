@@ -64,12 +64,16 @@ export const getBasePath = (): string => {
   return basePath;
 };
 
-export const createLink = (tileset = 'tileset.json'): string => {
+export const createLinks = (tileset = 'tileset.json'): string => {
   return `https://localhost:8080/route/to/tiles/api/3d/v1/b3dm/${faker.string.uuid()}/${tileset}`;
 };
 
 export const createModelPath = (modelName = 'Sphere'): string => {
   return `${getBasePath()}\\${modelName}`;
+};
+
+export const getModelNameByPath = (modelPath: string): string => {
+  return modelPath.replace(`${getBasePath()}\\`, '');
 };
 
 export const createMountedModelPath = (modelName = 'Sphere'): string => {
@@ -138,7 +142,7 @@ export const createRecord = (modelName = 'Sphere'): Record3D => {
   return {
     ...createMetadata(modelName),
     id: faker.string.uuid(),
-    links: createLink(),
+    links: createLinks(),
   };
 };
 

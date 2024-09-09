@@ -1,3 +1,4 @@
+import { sep, relative } from 'node:path';
 import { Polygon } from 'geojson';
 import config from 'config';
 
@@ -9,12 +10,13 @@ export const changeBasePathToPVPath = (modelPath: string): string => {
 };
 
 export const removePvPathFromModelPath = (modelPath: string): string => {
-  const pvPath = config.get<string>('paths.pvPath');
-  return modelPath.replace(`${pvPath}/`, '');
+  const configedPvPath = config.get<string>('paths.pvPath');
+  const relativePathFromPvPToModel = relative(configedPvPath, modelPath);
+  return relativePathFromPvPToModel;
 };
 
 export const replaceBackQuotesWithQuotes = (path: string): string => {
-  return path.replaceAll('\\', '/');
+  return path.replaceAll('\\', sep);
 };
 
 export const convertStringToGeojson = (geojson: string): Polygon => {

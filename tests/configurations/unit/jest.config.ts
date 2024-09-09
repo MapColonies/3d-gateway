@@ -22,7 +22,7 @@ module.exports = {
     ['jest-html-reporters', { multipleReportsUnitePath: './reports', pageTitle: 'unit', publicPath: './reports', filename: 'unit.html' }],
   ],
   rootDir: '../../../.',
-  setupFiles: ['<rootDir>/tests/configurations/jest.setup.js'],
+  setupFiles: ['<rootDir>/tests/configurations/jest.setup.ts'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   coverageThreshold: {

@@ -49,9 +49,10 @@ describe('MetadataController', function () {
       it(`Should return 200 status code and metadata if payload is valid`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
-        const expected = faker.word.words();
+        const expected = createRecord();
         const record = createRecord();
-        await s3Helper.createFile(extractLink(record.links), true);
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
@@ -59,7 +60,7 @@ describe('MetadataController', function () {
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.OK);
-        expect(response.body).toBe(expected);
+        expect(response).toSatisfyApiSpec();
       });
     });
 
@@ -69,7 +70,8 @@ describe('MetadataController', function () {
         const payload = createUpdatePayload();
         const classification = faker.word.sample();
         const record = createRecord();
-        await s3Helper.createFile(extractLink(record.links), true);
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] });
 
@@ -77,6 +79,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `classification is not a valid value.. Optional values: ${classification}`);
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 400 status code if the footprint is not in the footprint schema`, async function () {
@@ -94,6 +97,7 @@ describe('MetadataController', function () {
             payload.footprint
           )}`
         );
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 400 status code if the first and the last coordinates of footprint are not the same`, async function () {
@@ -109,6 +113,7 @@ describe('MetadataController', function () {
           'message',
           `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
         );
+        expect(response).toSatisfyApiSpec();
       });
 
       it('Should return 400 status code if startDate is later than endDate', async function () {
@@ -122,6 +127,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `sourceStartDate should not be later than sourceEndDate`);
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 400 status code if record does not exist in catalog`, async function () {
@@ -133,6 +139,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `Record with identifier: ${identifier} doesn't exist!`);
+        expect(response).toSatisfyApiSpec();
       });
     });
 
@@ -142,13 +149,15 @@ describe('MetadataController', function () {
         const payload = createUpdatePayload();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        await s3Helper.createFile(extractLink(record.links), true);
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockRejectedValueOnce(new Error('lookup-tables error'));
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is a problem with lookup-tables');
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 500 status code if catalog is not working properly`, async function () {
@@ -160,6 +169,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
@@ -168,13 +178,15 @@ describe('MetadataController', function () {
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        await s3Helper.createFile(extractLink(record.links), true);
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is an error with catalog');
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 500 status code if the link is not valid`, async function () {
@@ -188,6 +200,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', `Link extraction failed`);
+        expect(response).toSatisfyApiSpec();
       });
     });
   });
@@ -197,14 +210,14 @@ describe('MetadataController', function () {
       it(`Should return 200 status code and metadata if payload is valid`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
-        const expected = faker.word.words();
+        const expected = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateStatus(identifier, payload);
 
-        expect(response.body).toBe(expected);
         expect(response.status).toBe(StatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
       });
     });
 
@@ -218,6 +231,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `Record with identifier: ${identifier} doesn't exist!`);
+        expect(response).toSatisfyApiSpec();
       });
     });
 
@@ -231,6 +245,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is a problem with catalog');
+        expect(response).toSatisfyApiSpec();
       });
 
       it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
@@ -243,6 +258,7 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is an error with catalog');
+        expect(response).toSatisfyApiSpec();
       });
     });
   });

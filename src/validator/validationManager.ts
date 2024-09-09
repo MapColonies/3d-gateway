@@ -161,7 +161,6 @@ export class ValidationManager {
         return false;
       }
       const tilesetPath = extractLink(record.links);
-
       const logContext = { ...this.logContext, function: this.validateUpdate.name };
       this.logger.debug({
         msg: 'Extracted full path to tileset',

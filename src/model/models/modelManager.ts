@@ -136,9 +136,10 @@ export class ModelManager {
       [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
     });
 
+    const adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
     const request: StoreTriggerPayload = {
       modelId: modelId,
-      pathToTileset: removePvPathFromModelPath(payload.modelPath),
+      pathToTileset: removePvPathFromModelPath(adjustedModelPath),
       tilesetFilename: payload.tilesetFilename,
       metadata: { ...payload.metadata, productSource: originalModelPath },
     };
