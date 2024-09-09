@@ -1,3 +1,4 @@
+import config from 'config';
 import { Tracing } from '@map-colonies/telemetry';
 import { context } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
@@ -15,5 +16,6 @@ export const tracing = new Tracing(
     // eslint-disable-next-line @typescript-eslint/naming-convention
     '@opentelemetry/instrumentation-express': { enabled: false },
   },
-  { [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'nodejs', [SEMRESATTRS_PROCESS_RUNTIME_VERSION]: NODE_VERSION }
+  { [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'nodejs', [SEMRESATTRS_PROCESS_RUNTIME_VERSION]: NODE_VERSION },
+  config.get<string>('telemetry.logger.level').toLowerCase() === 'debug'
 );

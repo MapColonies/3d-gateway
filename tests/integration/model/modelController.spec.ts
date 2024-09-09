@@ -1,3 +1,4 @@
+import { sep } from 'node:path';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
@@ -17,6 +18,7 @@ import {
   createWrongFootprintCoordinates,
   createWrongFootprintSchema,
   getBasePath,
+  getModelNameByPath,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -53,50 +55,14 @@ describe('ModelController', function () {
 
   describe('POST /models (createModel)', function () {
     describe('Happy Path 🙂', function () {
-      describe('Sphere', function () {
-        it('should return 201 status code and the added model', async function () {
-          const payload = createIngestionPayload('Sphere');
+      it.each(['Sphere', 'Region', `nestedModelPath${sep}Region`])(
+        'should return 201 status code and the added model for %p',
+        async (testInput: string) => {
+          const payload = createIngestionPayload(testInput);
           const expected: StoreTriggerPayload = {
             ...payload,
             metadata: createMetadata(),
-            pathToTileset: createMountedModelPath('Sphere'),
-            modelId: '',
-          };
-          const storeTriggerResult: StoreTriggerResponse = {
-            jobId: faker.string.uuid(),
-            status: OperationStatus.IN_PROGRESS,
-          };
-
-          mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
-          mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
-          mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
-
-          const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
-
-          const response = await requestSender.createModel(payload);
-
-          expect(response.status).toBe(StatusCodes.CREATED);
-          expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledTimes(1);
-          /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-          expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-              modelId: expect.any(String),
-              pathToTileset: expected.pathToTileset, // todo: This is a BUG Need to fixed!
-              tilesetFilename: expected.tilesetFilename,
-              metadata: expect.anything(), // todo: check why expect.any(Layer3DMetadata) fails!
-            })
-          );
-          expect(response).toSatisfyApiSpec();
-        });
-      });
-
-      describe('Region', function () {
-        it('should return 201 status code and the added model', async function () {
-          const payload = createIngestionPayload('Region');
-          const expected: StoreTriggerPayload = {
-            ...payload,
-            metadata: createMetadata(),
-            pathToTileset: createMountedModelPath('Region'),
+            pathToTileset: getModelNameByPath(payload.modelPath),
             modelId: '',
           };
           const storeTriggerResult: StoreTriggerResponse = {
@@ -117,14 +83,14 @@ describe('ModelController', function () {
           expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledWith(
             expect.objectContaining({
               modelId: expect.any(String),
-              pathToTileset: expect.any(String), // expected.pathToTileset, // todo: This is a BUG Need to fixed!
+              pathToTileset: expected.pathToTileset,
               tilesetFilename: expected.tilesetFilename,
               metadata: expect.anything(), // todo: check why expect.any(Layer3DMetadata) fails!
             })
           );
           expect(response).toSatisfyApiSpec();
-        });
-      });
+        }
+      );
 
       it('should return 201 status code if productType is not 3DPhotoRealistic', async function () {
         const payload = createIngestionPayload();

@@ -72,6 +72,10 @@ export const createModelPath = (modelName = 'Sphere'): string => {
   return `${getBasePath()}\\${modelName}`;
 };
 
+export const getModelNameByPath = (modelPath: string): string => {
+  return modelPath.replace(`${getBasePath()}\\`, '');
+};
+
 export const createMountedModelPath = (modelName = 'Sphere'): string => {
   const mountedPath = join(pvPath, modelName);
   return mountedPath;
