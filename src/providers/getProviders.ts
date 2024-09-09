@@ -1,24 +1,16 @@
-import config from 'config';
 import { StatusCodes } from 'http-status-codes';
 import { container } from 'tsyringe';
 import { AppError } from '../common/appError';
-import { ProviderConfig } from '../common/interfaces';
 import { S3Provider } from './s3Provider';
 
-function getProvider(): S3Provider {
-  return container.resolve(S3Provider);
-}
-function getProviderConfig(provider: string): ProviderConfig {
-  try {
-    return config.get(provider);
-  } catch (err) {
-    throw new AppError(
-      'configError',
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      `Invalid config provider received: ${provider} - available values: "nfs" or "s3"`,
-      false
-    );
+function getProvider(provider: "NFS" | "S3"): S3Provider {
+  switch (provider) {
+    case 'NFS':
+      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, 'Service does not support NFS as provider yet!', false);
+      // return container.resolve(NFSProvider);
+    case 'S3':
+      return container.resolve(S3Provider);
   }
 }
 
-export { getProvider, getProviderConfig };
+export { getProvider };

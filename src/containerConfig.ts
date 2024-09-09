@@ -5,13 +5,14 @@ import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { instanceCachingFactory } from 'tsyringe';
 import jsLogger from '@map-colonies/js-logger';
 import client from 'prom-client';
+import { commonNfsV1Type, commonS3FullV1Type } from '@map-colonies/schemas';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { modelRouterFactory, MODEL_ROUTER_SYMBOL } from './model/routes/modelRouter';
 import { METADATA_ROUTER_SYMBOL, metadataRouterFactory } from './metadata/routes/metadataRouter';
-import { getProvider, getProviderConfig } from './providers/getProviders';
-import { Provider, ProviderConfig } from './common/interfaces';
+import { getProvider } from './providers/getProviders';
+import { Provider } from './common/interfaces';
 import { getConfig } from './common/config';
 
 export interface RegisterOptions {
@@ -22,7 +23,7 @@ export interface RegisterOptions {
 export const registerExternalValues = (options?: RegisterOptions): DependencyContainer => {
   const configInstance = getConfig();
 
-  const provider = configInstance.get('storage.provider');
+  const storage = configInstance.get('storage');
   const loggerConfig = configInstance.get('telemetry.logger');
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
 
@@ -51,8 +52,8 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     {
       token: SERVICES.PROVIDER_CONFIG,
       provider: {
-        useFactory: (): ProviderConfig => {
-          return getProviderConfig(provider);
+        useFactory: (): commonS3FullV1Type | commonNfsV1Type => {
+          return storage.config;
         },
       },
     },
@@ -60,7 +61,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
       token: SERVICES.PROVIDER,
       provider: {
         useFactory: (): Provider => {
-          return getProvider();
+          return getProvider(storage.provider);
         },
       },
     },

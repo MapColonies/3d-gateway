@@ -1,5 +1,4 @@
 import { Layer3DMetadata } from '@map-colonies/mc-model-types';
-import { commonS3FullV1Type } from '@map-colonies/schemas';
 import { Polygon } from 'geojson';
 
 export interface OpenApiConfig {
@@ -46,8 +45,6 @@ export interface UpdateStatusPayload {
 export interface Provider {
   getFile: (filePath: string) => Promise<string>;
 }
-
-export type ProviderConfig = commonS3FullV1Type;
 
 export interface LogContext {
   fileName: string;
