@@ -17,6 +17,7 @@ import {
   createWrongFootprintCoordinates,
   createWrongFootprintSchema,
   getBasePath,
+  getModelNameByPath,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -59,7 +60,7 @@ describe('ModelController', function () {
           const expected: StoreTriggerPayload = {
             ...payload,
             metadata: createMetadata(),
-            pathToTileset: createMountedModelPath('Sphere'),
+            pathToTileset: getModelNameByPath(payload.modelPath),
             modelId: '',
           };
           const storeTriggerResult: StoreTriggerResponse = {
@@ -81,7 +82,7 @@ describe('ModelController', function () {
           expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledWith(
             expect.objectContaining({
               modelId: expect.any(String),
-              pathToTileset: expected.pathToTileset, // todo: This is a BUG Need to fixed!
+              pathToTileset: expected.pathToTileset,
               tilesetFilename: expected.tilesetFilename,
               metadata: expect.anything(), // todo: check why expect.any(Layer3DMetadata) fails!
             })
@@ -96,7 +97,7 @@ describe('ModelController', function () {
           const expected: StoreTriggerPayload = {
             ...payload,
             metadata: createMetadata(),
-            pathToTileset: createMountedModelPath('Region'),
+            pathToTileset: getModelNameByPath(payload.modelPath),
             modelId: '',
           };
           const storeTriggerResult: StoreTriggerResponse = {
@@ -117,7 +118,7 @@ describe('ModelController', function () {
           expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledWith(
             expect.objectContaining({
               modelId: expect.any(String),
-              pathToTileset: expect.any(String), // expected.pathToTileset, // todo: This is a BUG Need to fixed!
+              pathToTileset: expected.pathToTileset,
               tilesetFilename: expected.tilesetFilename,
               metadata: expect.anything(), // todo: check why expect.any(Layer3DMetadata) fails!
             })
