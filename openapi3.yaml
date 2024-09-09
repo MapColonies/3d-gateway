@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.4.0
+  version: 2.4.1
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -31,7 +31,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        500:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -55,7 +55,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/validateResponse'
-        500:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -88,7 +88,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        500:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -121,7 +121,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        500:
+        '500':
           description: Unexpected Error
           content:
             application/json:
@@ -219,8 +219,7 @@ components:
       properties:
         metadata:
           allOf:
-            - $ref: >-
-                ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
+            - $ref: ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/metadata
             - type: object
               properties:
                 links:

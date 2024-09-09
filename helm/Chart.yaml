@@ -1,5 +1,5 @@
 apiVersion: v2
 name: gateway
 description: A Helm chart for 3D gateway service
-version: 2.4.0
-appVersion: 2.4.0
+version: 2.4.1
+appVersion: 2.4.1
