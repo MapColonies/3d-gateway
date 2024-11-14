@@ -93,7 +93,7 @@ describe('MetadataController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+          `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
             payload.footprint
           )}`
         );

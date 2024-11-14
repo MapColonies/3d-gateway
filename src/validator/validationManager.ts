@@ -281,7 +281,7 @@ export class ValidationManager {
     if (!this.validatePolygonSchema(polygon)) {
       return {
         isValid: false,
-        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
           polygon
         )}`,
       };
