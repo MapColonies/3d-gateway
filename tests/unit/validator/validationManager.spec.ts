@@ -389,30 +389,27 @@ describe('ValidationManager', () => {
   });
 
   describe('isPolygonValid', () => {
-    it('returns true when Polygon is valid', async () => {
+    it('returns true when Polygon is valid', () => {
       const footprint = createFootprint('Region');
-      const response = await validationManager.isPolygonValid(footprint);
+      const response = validationManager.isPolygonValid(footprint);
       expect(response.isValid).toBe(true);
     });
 
-    it('returns true when Polygon has BBOX', async () => {
+    it('returns true when Polygon has BBOX', () => {
       const footprint = createFootprint('Region');
-      footprint.bbox = [
-        34.4077734887818,
-        31.454120054543704,
-        34.4780703169442,
-        31.5127352949048
-      ];
-      const response = await validationManager.isPolygonValid(footprint);
+      footprint.bbox = [34.4077734887818, 31.454120054543704, 34.4780703169442, 31.5127352949048];
+      const response = validationManager.isPolygonValid(footprint);
       expect(response.isValid).toBe(true);
     });
 
-    it('returns false when Polygon is invalid', async () => {
+    it('returns false when Polygon is invalid', () => {
       const footprint = createFootprint('Region');
       footprint.coordinates = [][0] as unknown as Position[][];
-      const response = await validationManager.isPolygonValid(footprint);
+      const response = validationManager.isPolygonValid(footprint);
       expect(response.isValid).toBe(false);
-      expect(response.message).toContain(`Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only.`);
+      expect(response.message).toContain(
+        `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only.`
+      );
     });
   });
 });
