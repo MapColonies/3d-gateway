@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { Polygon } from 'geojson';
+import { Polygon, Position } from 'geojson';
 import config from 'config';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
@@ -125,7 +125,7 @@ describe('ValidationManager', () => {
       const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
-        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+        message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
           payload.metadata.footprint
         )}`,
       });
@@ -366,7 +366,7 @@ describe('ValidationManager', () => {
 
       expect(response).toBe(false);
       expect(refReason.outFailedReason).toBe(
-        `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type" and "coordinates" only. polygon: ${JSON.stringify(
+        `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
           payload.footprint
         )}`
       );
@@ -385,6 +385,31 @@ describe('ValidationManager', () => {
 
       expect(response).toBe(false);
       expect(refReason.outFailedReason).toBe(`classification is not a valid value.. Optional values: ${'NonValidClassification'}`);
+    });
+  });
+
+  describe('isPolygonValid', () => {
+    it('returns true when Polygon is valid', () => {
+      const footprint = createFootprint('Region');
+      const response = validationManager.isPolygonValid(footprint);
+      expect(response.isValid).toBe(true);
+    });
+
+    it('returns true when Polygon has BBOX', () => {
+      const footprint = createFootprint('Region');
+      footprint.bbox = [faker.location.longitude(), faker.location.latitude(), faker.location.longitude(), faker.location.latitude()];
+      const response = validationManager.isPolygonValid(footprint);
+      expect(response.isValid).toBe(true);
+    });
+
+    it('returns false when Polygon is invalid', () => {
+      const footprint = createFootprint('Region');
+      footprint.coordinates = [][0] as unknown as Position[][];
+      const response = validationManager.isPolygonValid(footprint);
+      expect(response.isValid).toBe(false);
+      expect(response.message).toContain(
+        `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only.`
+      );
     });
   });
 });

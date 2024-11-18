@@ -32,23 +32,38 @@ export const mountDirs = [
   },
 ];
 
+// from https://geojson.org/schema/Polygon.json
 export const footprintSchema = {
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  $id: 'https://geojson.org/schema/Polygon.json',
+  title: 'GeoJSON Polygon',
   type: 'object',
+  required: ['type', 'coordinates'],
   properties: {
-    type: { type: 'string', enum: ['Polygon'] },
+    type: {
+      type: 'string',
+      enum: ['Polygon'],
+    },
     coordinates: {
       type: 'array',
       items: {
         type: 'array',
+        minItems: 4,
         items: {
           type: 'array',
-          items: { type: 'number' },
           minItems: 2,
-          maxItems: 2,
+          items: {
+            type: 'number',
+          },
         },
       },
     },
+    bbox: {
+      type: 'array',
+      minItems: 4,
+      items: {
+        type: 'number',
+      },
+    },
   },
-  required: ['type', 'coordinates'],
-  additionalProperties: false,
 };
