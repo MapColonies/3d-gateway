@@ -397,7 +397,7 @@ describe('ValidationManager', () => {
 
     it('returns true when Polygon has BBOX', () => {
       const footprint = createFootprint('Region');
-      footprint.bbox = [34.4077734887818, 31.454120054543704, 34.4780703169442, 31.5127352949048];
+      footprint.bbox = [faker.location.longitude(), faker.location.latitude(), faker.location.longitude(), faker.location.latitude()];
       const response = validationManager.isPolygonValid(footprint);
       expect(response.isValid).toBe(true);
     });
