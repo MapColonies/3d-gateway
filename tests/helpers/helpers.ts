@@ -44,7 +44,7 @@ export const createWrongFootprintCoordinates = (): Polygon => {
 export const createWrongFootprintSchema = (): Polygon => {
   return {
     box: 'bla',
-    type: 'Polygon',
+    type: 'Point',
     coordinates: [
       [
         [minX, minY],
