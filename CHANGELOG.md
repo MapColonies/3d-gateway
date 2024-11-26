@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.4.3](https://github.com/MapColonies/3d-gateway/compare/v2.4.2...v2.4.3) (2024-11-26)
+
+
+### Bug Fixes
+
+* fix polygon bbox validation bug ([#25](https://github.com/MapColonies/3d-gateway/issues/25)) ([45d3b22](https://github.com/MapColonies/3d-gateway/commit/45d3b223d1a6021b8fd81aa4e89e7c68d024ae1e))
+
 ### [2.4.2](https://github.com/MapColonies/3d-gateway/compare/v2.4.1...v2.4.2) (2024-09-09)
 
 ### [2.4.1](https://github.com/MapColonies/3d-gateway/compare/v2.4.0...v2.4.1) (2024-09-09)
