@@ -107,7 +107,13 @@ export class ModelManager {
       payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
       const isValidResponse = await this.validateModel(payload);
       if (!isValidResponse.isValid) {
-        throw new AppError('', StatusCodes.BAD_REQUEST, isValidResponse.message!, true);
+        const validationMessage = isValidResponse.message!;
+        this.logger.warn({
+          msg: `new model ingestion - validation failed ${validationMessage}`,
+          logContext,
+          modelName: payload.metadata.productName,
+        });
+        throw new AppError('', StatusCodes.BAD_REQUEST, validationMessage, true);
       }
     } catch (error) {
       if (error instanceof AppError) {
