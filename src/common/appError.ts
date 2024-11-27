@@ -13,6 +13,7 @@ export class AppError extends Error {
     this.name = name;
     this.status = status;
     this.isOperational = isOperational;
+    this.message = description;
 
     Error.captureStackTrace(this);
   }
