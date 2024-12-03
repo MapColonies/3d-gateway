@@ -41,11 +41,11 @@ export class CatalogCall {
         logContext,
       });
       return response.data;
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: 'Something went wrong in catalog',
         logContext,
-        error,
+        err,
       });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is a problem with catalog', true);
     }
@@ -72,14 +72,14 @@ export class CatalogCall {
         response,
       });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during validation of productId existence', true);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
       }
       this.logger.error({
         msg: 'Something went wrong in catalog',
         logContext,
-        error,
+        err,
       });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is a problem with catalog', true);
     }

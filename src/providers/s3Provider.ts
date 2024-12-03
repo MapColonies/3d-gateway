@@ -54,15 +54,15 @@ export class S3Provider implements Provider {
     try {
       const response = await this.s3.send(new GetObjectCommand(getParams));
       return await response.Body!.transformToString();
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         mag: 'Problem during get file from S3',
         logContext,
         bucket: this.s3Config.bucket,
         path: filePath,
-        error,
+        err,
       });
-      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, String(err), true);
     }
   }
 }

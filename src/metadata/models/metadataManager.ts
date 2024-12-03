@@ -58,26 +58,26 @@ export class MetadataManager {
         logContext,
         modelId: identifier,
       });
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
       }
       this.logger.error({
         msg: 'unfamiliar error',
         logContext,
-        error,
+        err,
       });
       throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
     try {
       const response = await this.catalog.patchMetadata(identifier, payload);
       return response;
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: 'Error while sending to catalog service',
         logContext,
         modelId: identifier,
-        error,
+        err,
         payload,
       });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is an error with catalog', true);
@@ -108,26 +108,26 @@ export class MetadataManager {
         logContext,
         modelId: identifier,
       });
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
       }
       this.logger.error({
         msg: 'unfamiliar error',
         logContext,
-        error,
+        err,
       });
       throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
     }
     try {
       const response = await this.catalog.changeStatus(identifier, payload);
       return response;
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: 'Error while sending to catalog service',
         logContext,
         modelId: identifier,
-        error,
+        err,
         payload,
       });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is an error with catalog', true);
