@@ -67,7 +67,7 @@ export class MetadataManager {
         logContext,
         err,
       });
-      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(err), true);
     }
     try {
       const response = await this.catalog.patchMetadata(identifier, payload);
@@ -117,7 +117,7 @@ export class MetadataManager {
         logContext,
         err,
       });
-      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(err), true);
     }
     try {
       const response = await this.catalog.changeStatus(identifier, payload);

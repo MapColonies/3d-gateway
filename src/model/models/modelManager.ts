@@ -125,7 +125,7 @@ export class ModelManager {
         logContext,
         err,
       });
-      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(err), true);
     }
 
     // else
