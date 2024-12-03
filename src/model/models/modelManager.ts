@@ -115,17 +115,17 @@ export class ModelManager {
         });
         throw new AppError('', StatusCodes.BAD_REQUEST, validationMessage, true);
       }
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
       }
       // else
       this.logger.error({
         msg: 'unfamiliar error',
         logContext,
-        error,
+        err,
       });
-      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(error), true);
+      throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(err), true);
     }
 
     // else
@@ -152,13 +152,13 @@ export class ModelManager {
     try {
       const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
       return response;
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: 'Error in creating a flow',
         logContext,
         modelId,
         modelName: payload.metadata.productName,
-        error,
+        err,
         payload,
       });
       throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, ERROR_STORE_TRIGGER_ERROR, true);

@@ -26,14 +26,14 @@ export class ModelController {
       const payload = req.body;
       const response = await this.manager.createModel(payload);
       return res.status(StatusCodes.CREATED).json(response);
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: `Failed in ingesting a new model!`,
         logContext,
-        error,
+        err,
         modelName: req.body.metadata.productName,
       });
-      return next(error);
+      return next(err);
     }
   };
 
@@ -54,14 +54,14 @@ export class ModelController {
         validateResponse: response,
       });
       return res.status(StatusCodes.OK).json(response);
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: `model validate failed!`,
         logContext,
-        error,
+        err,
         payload,
       });
-      return next(error);
+      return next(err);
     }
   };
 }

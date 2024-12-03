@@ -28,13 +28,13 @@ export class MetadataController {
       const payload = req.body;
       const response = await this.manager.updateMetadata(identifier, payload);
       return res.status(StatusCodes.OK).json(response);
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: `Failed in updating the metadata!`,
         logContext,
-        error,
+        err,
       });
-      return next(error);
+      return next(err);
     }
   };
 
@@ -45,13 +45,13 @@ export class MetadataController {
       const payload = req.body;
       const response = await this.manager.updateStatus(identifier, payload);
       return res.status(StatusCodes.OK).json(response);
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: `Failed in changing the status!`,
         logContext,
-        error,
+        err,
       });
-      return next(error);
+      return next(err);
     }
   };
 }

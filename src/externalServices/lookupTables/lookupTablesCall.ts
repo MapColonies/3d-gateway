@@ -45,11 +45,11 @@ export class LookupTablesCall {
         classifications,
       });
       return classifications;
-    } catch (error) {
+    } catch (err) {
       this.logger.error({
         msg: 'something went wrong with lookup-tables service',
         logContext,
-        error,
+        err,
       });
       throw new AppError('lookup-tables', StatusCodes.INTERNAL_SERVER_ERROR, 'there is a problem with lookup-tables', true);
     }

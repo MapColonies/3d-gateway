@@ -263,13 +263,13 @@ export class ValidationManager {
       } else {
         outReason.outFailedReason = ERROR_METADATA_BAD_FORMAT_TILESET;
       }
-    } catch (error) {
+    } catch (err) {
       const msg = ERROR_METADATA_ERRORED_TILESET;
       this.logger.error({
         msg: msg,
         logContext,
         fileContent,
-        error,
+        err,
       });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       outReason.outFailedReason = msg;
@@ -370,12 +370,12 @@ export class ValidationManager {
       return {
         isValid: true,
       };
-    } catch (error) {
+    } catch (err) {
       const msg = `An error caused during the validation of the intersection`;
       this.logger.error({
         msg,
         logContext,
-        error,
+        err,
         modelPolygon,
         footprint,
       });
