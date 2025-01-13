@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.4.6](https://github.com/MapColonies/3d-gateway/compare/v2.4.4...v2.4.6) (2025-01-13)
+
+
+### Bug Fixes
+
+* fix polygon to recieve polygon with height ([#28](https://github.com/MapColonies/3d-gateway/issues/28)) ([7bcf070](https://github.com/MapColonies/3d-gateway/commit/7bcf070cf652010a2a88b6c6a6454c11082c7dc6))
+
 ### [2.4.5](https://github.com/MapColonies/3d-gateway/compare/v2.4.4...v2.4.5) (2024-12-03)
 
 ### [2.4.4](https://github.com/MapColonies/3d-gateway/compare/v2.4.3...v2.4.4) (2024-11-27)
