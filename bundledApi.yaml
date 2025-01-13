@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.4.0
+  version: 2.4.5
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -223,112 +223,214 @@ components:
                 links:
                   type: string
                   example: This is example
-    GeometryBase:
+    Point3D:
+      type: array
+      minItems: 2
+      maxItems: 3
+      items:
+        type: number
+    BBox:
+      type: array
+      minItems: 4
+      items:
+        type: number
+      example:
+        - -180
+        - -90
+        - 180
+        - 90
+    Point:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON Point
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id2
       required:
         - type
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#geometry-objects
+        - coordinates
       properties:
         type:
           type: string
           enum:
             - Point
-            - LineString
-            - Polygon
-            - MultiPoint
-            - MultiLineString
-            - MultiPolygon
-          description: the geometry type
-    Point2D:
-      type: array
-      maxItems: 2
-      minItems: 2
-      items:
-        type: number
-        minimum: -180
-        maximum: 180
-    Point:
-      type: object
-      description: GeoJSon geometry
-      externalDocs:
-        url: http://geojson.org/geojson-spec.html#id2
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              $ref: '#/components/schemas/Point2D'
+        coordinates:
+          $ref: '#/components/schemas/Point3D'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+      example:
+        type: Point
+        coordinates:
+          - -180
+          - -90
     LineString:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON LineString
       externalDocs:
         url: http://geojson.org/geojson-spec.html#id3
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                $ref: '#/components/schemas/Point2D'
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - LineString
+        coordinates:
+          type: array
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/Point3D'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+      example:
+        type: LineString
+        coordinates:
+          - - -180
+            - -90
+          - - 180
+            - 90
     Polygon:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON Polygon
       externalDocs:
         url: http://geojson.org/geojson-spec.html#id4
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Point2D'
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - Polygon
+        coordinates:
+          type: array
+          items:
+            type: array
+            minItems: 4
+            items:
+              $ref: '#/components/schemas/Point3D'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+      example:
+        type: Polygon
+        coordinates:
+          - - - -180
+              - -90
+            - - 180
+              - -90
+            - - 180
+              - 90
+            - - -180
+              - 90
+            - - -180
+              - -90
     MultiPoint:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON MultiPoint
       externalDocs:
         url: http://geojson.org/geojson-spec.html#id5
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                $ref: '#/components/schemas/Point2D'
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiPoint
+        coordinates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Point3D'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+      example:
+        type: MultiPoint
+        coordinates:
+          - - -180
+            - -90
+          - - 180
+            - 90
     MultiLineString:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON MultiLineString
       externalDocs:
         url: http://geojson.org/geojson-spec.html#id6
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Point2D'
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiLineString
+        coordinates:
+          type: array
+          items:
+            type: array
+            minItems: 2
+            items:
+              $ref: '#/components/schemas/Point3D'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+      example:
+        type: MultiLineString
+        coordinates:
+          - - - -180
+              - -90
+            - - 180
+              - 90
+          - - - -180
+              - 90
+            - - 180
+              - 90
     MultiPolygon:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON MultiPolygon
       externalDocs:
         url: http://geojson.org/geojson-spec.html#id6
-      allOf:
-        - $ref: '#/components/schemas/GeometryBase'
-        - properties:
-            coordinates:
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiPolygon
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
               type: array
+              minItems: 4
               items:
-                type: array
-                items:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Point2D'
+                $ref: '#/components/schemas/Point3D'
+        bbox:
+          $ref: '#/components/schemas/BBox'
+      example:
+        type: MultiPolygon
+        coordinates:
+          - - - - -180
+                - -90
+              - - 0
+                - -90
+              - - 0
+                - 90
+              - - -180
+                - 90
+              - - -180
+                - -90
+          - - - - 0
+                - -90
+              - - 180
+                - -90
+              - - 180
+                - 90
+              - - 0
+                - 90
+              - - 0
+                - -90
     Geometry:
-      description: GeoJSon geometry
+      description: GeoJSON Geometry
       discriminator:
         propertyName: type
       type: object

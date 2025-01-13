@@ -40,6 +40,9 @@ describe('MetadataController', function () {
   });
 
   afterEach(async () => {
+    jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.restoreAllMocks();
     await s3Helper.terminate();
     mockAxios.reset();
   });
@@ -93,9 +96,7 @@ describe('MetadataController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
-            payload.footprint
-          )}`
+          `request/body/footprint/coordinates must NOT have fewer than 2 items, request/body/footprint/coordinates/0 must be number, request/body/footprint/type must be equal to one of the allowed values: LineString, request/body/footprint/coordinates must NOT have fewer than 2 items, request/body/footprint/coordinates/0 must NOT have more than 3 items, request/body/footprint/coordinates/0/0 must be number, request/body/footprint/coordinates/0/1 must be number, request/body/footprint/coordinates/0/2 must be number, request/body/footprint/coordinates/0/3 must be number, request/body/footprint/type must be equal to one of the allowed values: Polygon, request/body/footprint/type must be equal to one of the allowed values: MultiPoint, request/body/footprint/coordinates/0 must NOT have more than 3 items, request/body/footprint/coordinates/0/0 must be number, request/body/footprint/coordinates/0/1 must be number, request/body/footprint/coordinates/0/2 must be number, request/body/footprint/coordinates/0/3 must be number, request/body/footprint/type must be equal to one of the allowed values: MultiLineString, request/body/footprint/type must be equal to one of the allowed values: MultiPolygon, request/body/footprint/coordinates/0/0 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/0/0 must be array, request/body/footprint/coordinates/0/0/1 must be array, request/body/footprint/coordinates/0/1 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/1/0 must be array, request/body/footprint/coordinates/0/1/1 must be array, request/body/footprint/coordinates/0/2 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/2/0 must be array, request/body/footprint/coordinates/0/2/1 must be array, request/body/footprint/coordinates/0/3 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/3/0 must be array, request/body/footprint/coordinates/0/3/1 must be array, request/body/footprint must match a schema in anyOf`
         );
         expect(response).toSatisfyApiSpec();
       });
