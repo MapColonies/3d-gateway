@@ -11,6 +11,7 @@ import {
   createWrongFootprintCoordinates,
   createWrongFootprintSchema,
   createRecord,
+  createWrongFootprintMixed2D3D,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -114,6 +115,19 @@ describe('MetadataController', function () {
           'message',
           `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
         );
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it(`Should return 400 status code if some coordinates of footprint are not in the same dimension`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        payload.footprint = createWrongFootprintMixed2D3D();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `Wrong footprint! footprint's coordinates should be all in the same dimension 2D or 3D`);
         expect(response).toSatisfyApiSpec();
       });
 

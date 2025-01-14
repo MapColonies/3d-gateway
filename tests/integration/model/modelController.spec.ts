@@ -19,6 +19,7 @@ import {
   createWrongFootprintSchema,
   getBasePath,
   getModelNameByPath,
+  createWrongFootprintMixed2D3D,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -390,6 +391,21 @@ describe('ModelController', function () {
           'message',
           `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`
         );
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it(`Should return 400 status code if some coordinates of footprint are not in the same dimension`, async function () {
+        const payload = createIngestionPayload();
+        payload.metadata.footprint = createWrongFootprintMixed2D3D();
+
+        const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ data: expected });
+        const response = await requestSender.createModel(payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `Wrong footprint! footprint's coordinates should be all in the same dimension 2D or 3D`);
         expect(response).toSatisfyApiSpec();
       });
 

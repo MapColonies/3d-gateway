@@ -41,6 +41,20 @@ export const createWrongFootprintCoordinates = (): Polygon => {
   };
 };
 
+export const createWrongFootprintMixed2D3D = (): Polygon => {
+  return {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [minX, minY, maxY],
+        [maxX, maxY],
+        [maxX, maxY],
+        [minX, minY, maxY],
+      ],
+    ],
+  } as unknown as Polygon;
+};
+
 export const createWrongFootprintSchema = (): Polygon => {
   return {
     box: 'bla',

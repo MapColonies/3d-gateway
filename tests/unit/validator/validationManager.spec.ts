@@ -28,6 +28,7 @@ import {
   createIngestionPayload,
   createTilesetFileName,
   getBasePath,
+  createWrongFootprintMixed2D3D,
 } from '../../helpers/helpers';
 import { configMock, lookupTablesMock, catalogMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
@@ -144,6 +145,22 @@ describe('ValidationManager', () => {
       expect(response).toStrictEqual({
         isValid: false,
         message: `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`,
+      });
+    });
+
+    it('returns false when footprint polygon coordinates are mixed 2D and 3D', async () => {
+      const payload = createIngestionPayload();
+      payload.modelPath = createMountedModelPath();
+
+      payload.metadata.footprint = createWrongFootprintMixed2D3D();
+
+      catalogMock.isProductIdExist.mockResolvedValue(true);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
+
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      expect(response).toStrictEqual({
+        isValid: false,
+        message: `Wrong footprint! footprint's coordinates should be all in the same dimension 2D or 3D`,
       });
     });
 
