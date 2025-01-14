@@ -3,7 +3,7 @@ import { access } from 'node:fs/promises';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
-import { Feature, MultiPolygon, Polygon } from 'geojson';
+import { Feature, MultiPolygon, Polygon, Position } from 'geojson';
 import { ProductType } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
@@ -292,6 +292,12 @@ export class ValidationManager {
         message: `Wrong polygon: ${JSON.stringify(polygon)} the first and last coordinates should be equal`,
       };
     }
+    if (!this.validateCoordinatesAreAll2DOr3D(polygon)) {
+      return {
+        isValid: false,
+        message: `Wrong footprint! footprint's coordinates should be all in the same dimension 2D or 3D`,
+      };
+    }
     return { isValid: true };
   }
 
@@ -300,6 +306,15 @@ export class ValidationManager {
     const first = footprint.coordinates[0][0];
     const last = footprint.coordinates[0][length - 1];
     return first[0] == last[0] && first[1] == last[1];
+  }
+
+  private validateCoordinatesAreAll2DOr3D(footprint: Polygon): boolean {
+    const expectedLength = footprint.coordinates[0][0].length;
+    const isAllPolygonsCoordinatesHasSameDimention = footprint.coordinates.every((polygonInPolygon: Position[]) => {
+      const isSameLength = polygonInPolygon.every((coordinate: Position) => coordinate.length === expectedLength);
+      return isSameLength;
+    });
+    return isAllPolygonsCoordinatesHasSameDimention;
   }
 
   private validatePolygonSchema(footprint: Polygon): boolean {
