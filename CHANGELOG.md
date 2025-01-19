@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.5.0](https://github.com/MapColonies/3d-gateway/compare/v2.4.6...v2.5.0) (2025-01-19)
+
+
+### Features
+
+* trim footprints to 2D coordinates ([#30](https://github.com/MapColonies/3d-gateway/issues/30)) ([40cf8d3](https://github.com/MapColonies/3d-gateway/commit/40cf8d3138c9b0c76967e465b725d8a4ac700a9e))
+
 ### [2.4.6](https://github.com/MapColonies/3d-gateway/compare/v2.4.4...v2.4.6) (2025-01-13)
 
 
