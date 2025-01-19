@@ -69,7 +69,7 @@ describe('MetadataController', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it(`Should return 200 status code and metadata if payload is valid and footprint is 3D`, async function () {
+      it(`Should return 200 status code and metadata if payload is valid and footprint is 3D and pass footprint 2D to catalog`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload('Sphere');
         payload.footprint = createFootprint('Sphere', true);
@@ -83,7 +83,7 @@ describe('MetadataController', function () {
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const catalogCallPatchPayloadSpy = jest.spyOn(CatalogCall.prototype, 'patchMetadata');
-        const subsetParchPayloadMetadata = {
+        const patchMetadataPayload = {
           productName: payload.productName,
           sourceDateStart: payload.sourceDateStart?.toISOString(),
           sourceDateEnd: payload.sourceDateEnd?.toISOString(),
@@ -110,7 +110,7 @@ describe('MetadataController', function () {
 
         /* eslint-disable @typescript-eslint/no-unsafe-assignment */
         expect(catalogCallPatchPayloadSpy).toHaveBeenCalledTimes(1);
-        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledWith(expect.any(String), subsetParchPayloadMetadata);
+        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledWith(expect.any(String), patchMetadataPayload);
 
         expect(response.status).toBe(StatusCodes.OK);
         expect(response).toSatisfyApiSpec();

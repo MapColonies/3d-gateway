@@ -24,10 +24,10 @@ describe('utilities tests', () => {
   describe('convertPolygonTo2DPolygon tests', () => {
     it('Should return footprint 2D from 3D', () => {
       const footprint3D = createFootprint('Sphere', true);
-      const expected = createFootprint('Sphere', false);
+      const expectedFootprint2D = createFootprint('Sphere', false);
 
       const result = convertPolygonTo2DPolygon(footprint3D);
-      expect(result).toStrictEqual(expected);
+      expect(result).toStrictEqual(expectedFootprint2D);
     });
   });
 

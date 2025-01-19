@@ -129,11 +129,13 @@ describe('ModelController', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it('should return 201 status code if footprint has 3D coordinates', async function () {
+      it('should return 201 status code if footprint has 3D coordinates and pass footprint 2D to storeTrigger', async function () {
         const payload = createIngestionPayload('Sphere');
-        payload.metadata.footprint = createFootprint('Sphere', true);
         payload.metadata.minResolutionMeter = 11;
         payload.metadata.producerName = 'aa';
+        payload.metadata.footprint = createFootprint('Sphere', true);
+        const expectedFootprint = createFootprint('Sphere', false);
+
         const storeTriggerResult: StoreTriggerResponse = {
           jobId: faker.string.uuid(),
           status: OperationStatus.IN_PROGRESS,
@@ -154,7 +156,7 @@ describe('ModelController', function () {
           classification: payload.metadata.classification,
           creationDate: payload.metadata.creationDate?.toISOString(),
           description: payload.metadata.description,
-          footprint: createFootprint('Sphere', false),
+          footprint: expectedFootprint,
           geographicArea: payload.metadata.geographicArea,
           heightRangeFrom: payload.metadata.heightRangeFrom,
           heightRangeTo: payload.metadata.heightRangeTo,
