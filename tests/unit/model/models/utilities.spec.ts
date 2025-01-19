@@ -5,7 +5,9 @@ import {
   changeBasePathToPVPath,
   removePvPathFromModelPath,
   replaceBackQuotesWithQuotes,
+  convertPolygonTo2DPolygon,
 } from '../../../../src/model/models/utilities';
+import { createFootprint } from '../../../helpers/helpers';
 
 describe('utilities tests', () => {
   describe('removeFootprintSpaces tests', () => {
@@ -16,6 +18,16 @@ describe('utilities tests', () => {
       const result = convertStringToGeojson(footprint);
 
       expect(result).toStrictEqual(expected);
+    });
+  });
+
+  describe('convertPolygonTo2DPolygon tests', () => {
+    it('Should return footprint 2D from 3D', () => {
+      const footprint3D = createFootprint('Sphere', true);
+      const expectedFootprint2D = createFootprint('Sphere', false);
+
+      const result = convertPolygonTo2DPolygon(footprint3D);
+      expect(result).toStrictEqual(expectedFootprint2D);
     });
   });
 

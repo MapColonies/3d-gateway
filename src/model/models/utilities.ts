@@ -1,5 +1,5 @@
 import { sep, relative } from 'node:path';
-import { Polygon } from 'geojson';
+import { Polygon, Position } from 'geojson';
 import config from 'config';
 
 export const changeBasePathToPVPath = (modelPath: string): string => {
@@ -21,4 +21,12 @@ export const replaceBackQuotesWithQuotes = (path: string): string => {
 
 export const convertStringToGeojson = (geojson: string): Polygon => {
   return JSON.parse(geojson) as Polygon;
+};
+
+export const convertPolygonTo2DPolygon = (polygon: Polygon): Polygon => {
+  polygon.coordinates = polygon.coordinates.map((polygonInPolygon: Position[]) => {
+    /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
+    return polygonInPolygon.map((coordinate: Position) => coordinate.slice(0, 2));
+  });
+  return polygon;
 };
