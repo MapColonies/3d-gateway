@@ -13,7 +13,13 @@ import { FILE_ENCODING, SERVICES } from '../../common/constants';
 import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IConfig, IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
-import { convertStringToGeojson, changeBasePathToPVPath, replaceBackQuotesWithQuotes, removePvPathFromModelPath } from './utilities';
+import {
+  convertStringToGeojson,
+  changeBasePathToPVPath,
+  replaceBackQuotesWithQuotes,
+  removePvPathFromModelPath,
+  convertPolygonTo2DPolygon,
+} from './utilities';
 
 export const ERROR_STORE_TRIGGER_ERROR: string = 'store-trigger service is not available';
 
@@ -141,8 +147,8 @@ export class ModelManager {
     spanActive?.setAttributes({
       [THREE_D_CONVENTIONS.three_d.catalogManager.catalogId]: modelId,
     });
-
     const adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
+    payload.metadata.footprint = convertPolygonTo2DPolygon(payload.metadata.footprint);
     const request: StoreTriggerPayload = {
       modelId: modelId,
       pathToTileset: removePvPathFromModelPath(adjustedModelPath),

@@ -10,6 +10,7 @@ import { AppError } from '../../common/appError';
 import { CatalogCall } from '../../externalServices/catalog/catalogCall';
 import { LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
 import { Record3D } from '../../externalServices/catalog/interfaces';
+import { convertPolygonTo2DPolygon, convertStringToGeojson } from '../../model/models/utilities';
 
 @injectable()
 export class MetadataManager {
@@ -70,6 +71,10 @@ export class MetadataManager {
       throw new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, String(err), true);
     }
     try {
+      if (payload.footprint != undefined) {
+        const footprint3DOr2D = convertStringToGeojson(JSON.stringify(payload.footprint));
+        payload.footprint = convertPolygonTo2DPolygon(footprint3DOr2D);
+      }
       const response = await this.catalog.patchMetadata(identifier, payload);
       return response;
     } catch (err) {

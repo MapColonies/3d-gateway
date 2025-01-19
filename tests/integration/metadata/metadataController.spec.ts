@@ -12,12 +12,14 @@ import {
   createWrongFootprintSchema,
   createRecord,
   createWrongFootprintMixed2D3D,
+  createFootprint,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { S3Helper } from '../../helpers/s3Helper';
 import { S3Config } from '../../../src/common/interfaces';
 import { extractLink } from '../../../src/validator/extractPathFromLink';
+import { CatalogCall } from '../../../src/externalServices/catalog/catalogCall';
 import { MetadataRequestSender } from './helpers/requestSender';
 
 describe('MetadataController', function () {
@@ -62,6 +64,53 @@ describe('MetadataController', function () {
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it(`Should return 200 status code and metadata if payload is valid and footprint is 3D`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload('Sphere');
+        payload.footprint = createFootprint('Sphere', true);
+        const expectedFootprint = createFootprint('Sphere', false);
+        const expected = createRecord();
+        const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const catalogCallPatchPayloadSpy = jest.spyOn(CatalogCall.prototype, 'patchMetadata');
+        const subsetParchPayloadMetadata = {
+          productName: payload.productName,
+          sourceDateStart: payload.sourceDateStart?.toISOString(),
+          sourceDateEnd: payload.sourceDateEnd?.toISOString(),
+          footprint: expectedFootprint,
+          description: payload.description,
+          creationDate: payload.creationDate?.toISOString(),
+          minResolutionMeter: payload.minResolutionMeter,
+          maxResolutionMeter: payload.maxResolutionMeter,
+          maxAccuracyCE90: payload.maxAccuracyCE90,
+          absoluteAccuracyLE90: payload.absoluteAccuracyLE90,
+          accuracySE90: payload.accuracySE90,
+          relativeAccuracySE90: payload.relativeAccuracySE90,
+          visualAccuracy: payload.visualAccuracy,
+          heightRangeFrom: payload.heightRangeFrom,
+          heightRangeTo: payload.heightRangeTo,
+          classification: payload.classification,
+          producerName: payload.producerName,
+          maxFlightAlt: payload.maxFlightAlt,
+          minFlightAlt: payload.minFlightAlt,
+          geographicArea: payload.geographicArea,
+        };
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledTimes(1);
+        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledWith(expect.any(String), subsetParchPayloadMetadata);
 
         expect(response.status).toBe(StatusCodes.OK);
         expect(response).toSatisfyApiSpec();

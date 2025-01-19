@@ -20,6 +20,7 @@ import {
   getBasePath,
   getModelNameByPath,
   createWrongFootprintMixed2D3D,
+  createFootprint,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -123,6 +124,73 @@ describe('ModelController', function () {
         mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
         const response = await requestSender.createModel(payload);
+
+        expect(response.status).toBe(StatusCodes.CREATED);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 201 status code if footprint has 3D coordinates', async function () {
+        const payload = createIngestionPayload('Sphere');
+        payload.metadata.footprint = createFootprint('Sphere', true);
+        payload.metadata.minResolutionMeter = 11;
+        payload.metadata.producerName = 'aa';
+        const storeTriggerResult: StoreTriggerResponse = {
+          jobId: faker.string.uuid(),
+          status: OperationStatus.IN_PROGRESS,
+        };
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
+
+        const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
+
+        const response = await requestSender.createModel(payload);
+
+        expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledTimes(1);
+
+        const subsetPostPayloadMetadata = {
+          absoluteAccuracyLE90: payload.metadata.absoluteAccuracyLE90,
+          accuracySE90: payload.metadata.accuracySE90,
+          classification: payload.metadata.classification,
+          creationDate: payload.metadata.creationDate?.toISOString(),
+          description: payload.metadata.description,
+          footprint: createFootprint('Sphere', false),
+          geographicArea: payload.metadata.geographicArea,
+          heightRangeFrom: payload.metadata.heightRangeFrom,
+          heightRangeTo: payload.metadata.heightRangeTo,
+          maxAccuracyCE90: payload.metadata.maxAccuracyCE90,
+          maxFlightAlt: payload.metadata.maxFlightAlt,
+          maxResolutionMeter: payload.metadata.maxResolutionMeter,
+          minFlightAlt: payload.metadata.minFlightAlt,
+          minResolutionMeter: payload.metadata.minResolutionMeter,
+          producerName: payload.metadata.producerName,
+          productId: payload.metadata.productId,
+          productName: payload.metadata.productName,
+          productSource: '\\\\tmp\\tilesets\\models\\Sphere',
+          productStatus: 'UNPUBLISHED',
+          productType: '3DPhotoRealistic',
+          productionSystem: payload.metadata.productionSystem,
+          productionSystemVer: payload.metadata.productionSystemVer,
+          region: payload.metadata.region,
+          relativeAccuracySE90: payload.metadata.relativeAccuracySE90,
+          sensors: payload.metadata.sensors,
+          sourceDateEnd: `${payload.metadata.sourceDateEnd?.toISOString()}`,
+          sourceDateStart: `${payload.metadata.sourceDateStart?.toISOString()}`,
+          srsId: payload.metadata.srsId,
+          srsName: payload.metadata.srsName,
+          type: 'RECORD_3D',
+          visualAccuracy: payload.metadata.visualAccuracy,
+        };
+
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+        expect(storeTriggerCallPostPayloadSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            modelId: expect.any(String),
+            pathToTileset: 'Sphere',
+            tilesetFilename: 'tileset.json',
+            metadata: subsetPostPayloadMetadata,
+          })
+        );
 
         expect(response.status).toBe(StatusCodes.CREATED);
         expect(response).toSatisfyApiSpec();

@@ -99,8 +99,9 @@ export const createTilesetFileName = (): string => {
   return 'tileset.json';
 };
 
-export const createFootprint = (modelName = 'Sphere'): Polygon => {
-  const jsonString: string = readFileSync(`${pvPath}/${modelName}/footprint.json`, 'utf8');
+export const createFootprint = (modelName = 'Sphere', is3D = false): Polygon => {
+  const fileName = !is3D ? 'footprint' : 'footprint3D';
+  const jsonString: string = readFileSync(`${pvPath}/${modelName}/${fileName}.json`, 'utf8');
   return JSON.parse(jsonString) as Polygon;
 };
 
