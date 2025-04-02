@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.1](https://github.com/MapColonies/3d-gateway/compare/v2.5.0...v2.5.1) (2025-04-02)
+
+
+### Bug Fixes
+
+* set name to 120 chars ([#31](https://github.com/MapColonies/3d-gateway/issues/31)) ([2611c5f](https://github.com/MapColonies/3d-gateway/commit/2611c5f2db93f2426bc5be614d6a976ab17cd48b))
+
 ## [2.5.0](https://github.com/MapColonies/3d-gateway/compare/v2.4.6...v2.5.0) (2025-01-19)
 
 
