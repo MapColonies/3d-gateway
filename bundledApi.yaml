@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.4.5
+  version: 2.5.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -473,7 +473,7 @@ components:
           description: ID of product
         productName:
           type: string
-          maxLength: 50
+          maxLength: 120
           description: Name of product
         productType:
           type: string
@@ -628,7 +628,7 @@ components:
       properties:
         productName:
           type: string
-          maxLength: 50
+          maxLength: 120
           description: Name of product
         description:
           type: string
@@ -800,7 +800,7 @@ components:
           description: ID of product
         productName:
           type: string
-          maxLength: 50
+          maxLength: 120
           description: Name of product
         productType:
           type: string
