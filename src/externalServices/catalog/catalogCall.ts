@@ -7,7 +7,7 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { AppError } from '../../common/appError';
 import { IConfig, LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
-import { Record3D } from './interfaces';
+import { IFindRecordsPayload, Record3D } from './interfaces';
 
 @injectable()
 export class CatalogCall {
@@ -48,6 +48,39 @@ export class CatalogCall {
         err,
       });
       throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'there is a problem with catalog', true);
+    }
+  }
+
+  @withSpanAsyncV4
+  public async findRecords(payload: IFindRecordsPayload): Promise<Record3D[]> {
+    const logContext = { ...this.logContext, function: this.findRecords.name };
+    this.logger.debug({
+      msg: 'Find Records in catalog service',
+      logContext,
+    });
+    try {
+      const response = await axios.post<Record3D[]>(`${this.catalog}/metadata/find`, payload);
+      if (response.status === StatusCodes.OK.valueOf()) {
+        this.logger.debug({
+          msg: `Find ${response.data.length} Records in catalog service`,
+          logContext,
+        });
+        return response.data;
+      } else {
+        this.logger.error({
+          msg: `Something went wrong in catalog when tring to find records, service returned ${response.status}`,
+          logContext,
+          response,
+        });
+        throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during Finding Records', true);
+      }
+    } catch (err) {
+      this.logger.error({
+        msg: 'Something went wrong in catalog when tring to find records',
+        logContext,
+        err,
+      });
+      throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with catalog find', true);
     }
   }
 

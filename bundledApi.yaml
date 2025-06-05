@@ -2,10 +2,11 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.5.0
+  version: 2.5.1
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
+security: []
 paths:
   /models:
     post:
@@ -55,6 +56,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/validateResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
         '500':
           description: Unexpected Error
           content:
@@ -163,9 +170,7 @@ components:
       additionalProperties: false
     payloadForValidation:
       type: object
-      description: >-
-        3d model payload, if metadta is not provided will validate only the
-        sources
+      description: 3d model payload, if metadta is not provided will validate only the sources
       required:
         - modelPath
         - tilesetFilename
@@ -558,8 +563,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Geometry'
             - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+            - example: '{"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}'
         heightRangeFrom:
           type: number
           format: double
@@ -652,8 +656,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Geometry'
             - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+            - example: '{"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}'
         minResolutionMeter:
           type: number
           format: double
@@ -885,8 +888,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Geometry'
             - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+            - example: '{"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}'
         heightRangeFrom:
           type: number
           format: double

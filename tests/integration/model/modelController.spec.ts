@@ -21,6 +21,7 @@ import {
   getModelNameByPath,
   createWrongFootprintMixed2D3D,
   createFootprint,
+  createRecord,
 } from '../../helpers/helpers';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
@@ -29,6 +30,7 @@ import {
   ERROR_METADATA_BOX_TILESET,
   ERROR_METADATA_ERRORED_TILESET,
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+  ERROR_METADATA_PRODUCT_NAME_UNIQUE,
 } from '../../../src/validator/validationManager';
 import { ERROR_STORE_TRIGGER_ERROR } from '../../../src/model/models/modelManager';
 import { StoreTriggerPayload, StoreTriggerResponse } from '../../../src/externalServices/storeTrigger/interfaces';
@@ -73,6 +75,7 @@ describe('ModelController', function () {
           };
           mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
           mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+          mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
           mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
           const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
@@ -104,6 +107,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
         const response = await requestSender.createModel(payload);
@@ -121,6 +125,7 @@ describe('ModelController', function () {
         };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
         const response = await requestSender.createModel(payload);
@@ -142,6 +147,7 @@ describe('ModelController', function () {
         };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
         const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
@@ -204,6 +210,7 @@ describe('ModelController', function () {
         const payload = createIngestionPayload();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockRejectedValueOnce(new Error(ERROR_STORE_TRIGGER_ERROR));
 
         const response = await requestSender.createModel(payload);
@@ -217,6 +224,7 @@ describe('ModelController', function () {
         const payload = createIngestionPayload();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockRejectedValueOnce(new Error('there is a problem with lookup-tables'));
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
 
         const response = await requestSender.createModel(payload);
 
@@ -257,6 +265,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
 
         const response = await requestSender.createModel(payload as unknown as IngestionPayload);
@@ -273,6 +282,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
 
         const response = await requestSender.createModel(payload);
@@ -293,6 +303,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
 
         const response = await requestSender.createModel(payload as unknown as IngestionPayload);
@@ -308,6 +319,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
         const response = await requestSender.createModel(payload);
 
@@ -325,6 +337,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
         const response = await requestSender.createModel(payload);
 
@@ -340,6 +353,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: 'undefined' }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: payload });
         const response = await requestSender.createModel(payload as IngestionPayload);
 
@@ -355,6 +369,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
 
         const response = await requestSender.createModel(payload);
@@ -374,6 +389,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
 
         const response = await requestSender.createModel(payload);
@@ -391,6 +407,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -406,6 +423,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -422,6 +440,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -438,6 +457,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -453,6 +473,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -471,6 +492,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -486,6 +508,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -504,6 +527,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -519,6 +543,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -534,6 +559,7 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
@@ -547,6 +573,7 @@ describe('ModelController', function () {
         const validClassification = faker.word.sample();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: validClassification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
 
         const response = await requestSender.createModel(payload);
 
@@ -562,11 +589,32 @@ describe('ModelController', function () {
         const expected = { ...payload, metadata: createMetadata(), modelPath: createMountedModelPath('Sphere'), modelId: '' };
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: expected });
         const response = await requestSender.createModel(payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', `Record with productId: ${payload.metadata.productId} doesn't exist!`);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 400 status code if productName already exists in DB', async function () {
+        const payload = createIngestionPayload();
+        const dummyRecordWithSameName = createRecord();
+        dummyRecordWithSameName.productName = payload.metadata.productName;
+        const storeTriggerResult: StoreTriggerResponse = {
+          jobId: faker.string.uuid(),
+          status: OperationStatus.IN_PROGRESS,
+        };
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [dummyRecordWithSameName] });
+        mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
+
+        const response = await requestSender.createModel(payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_UNIQUE);
         expect(response).toSatisfyApiSpec();
       });
     });
@@ -579,6 +627,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
 
         const expectedResponse: ValidationResponse = {
           isValid: true,
@@ -595,6 +644,7 @@ describe('ModelController', function () {
 
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata!.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
 
         const expectedResponse: ValidationResponse = {
           isValid: true,
@@ -611,6 +661,7 @@ describe('ModelController', function () {
       it('should return 200 status code and isValid=false for Box', async function () {
         const testInput = 'Box';
         const payload = createIngestionPayload(testInput);
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
 
         const expectedResponse: ValidationResponse = {
           isValid: false,
@@ -626,6 +677,7 @@ describe('ModelController', function () {
       it('should return 200 status and isValid=false code for bad model', async function () {
         const testInput = 'Sphere';
         const payload = createIngestionPayload(testInput);
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         payload.modelPath = 'InvalidModelPath';
 
         const response = await requestSender.validate(payload);
