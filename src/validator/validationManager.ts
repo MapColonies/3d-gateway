@@ -20,6 +20,7 @@ import { extractLink } from './extractPathFromLink';
 export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
 export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
 export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not 3DPhotoRealistic!';
+export const ERROR_METADATA_PRODUCT_NAME_UNIQUE = 'product name is not unique!';
 export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
 export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
 export const ERROR_METADATA_ERRORED_TILESET = `File tileset validation failed`;
@@ -132,6 +133,13 @@ export class ValidationManager {
       };
     }
 
+    result = await this.isProductNameValid(metadata.productName!);
+    if (!result) {
+      return {
+        isValid: false,
+        message: ERROR_METADATA_PRODUCT_NAME_UNIQUE,
+      };
+    }
     return this.isClassificationValid(metadata.classification!);
   }
 
@@ -189,6 +197,14 @@ export class ValidationManager {
       }
     }
 
+    if (payload.productName != undefined) {
+      const records = await this.catalog.findRecords({ productName: payload.productName });
+      if (records.length > 0) {
+        refReason.outFailedReason = ERROR_METADATA_PRODUCT_NAME_UNIQUE!;
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -222,6 +238,27 @@ export class ValidationManager {
       logContext,
     });
     return result;
+  }
+
+  @withSpanAsyncV4
+  private async isProductNameValid(productName: string): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.isProductNameValid.name };
+    this.logger.debug({
+      msg: 'productName validation started',
+      productName,
+      logContext,
+    });
+
+    const records = await this.catalog.findRecords({ productName: productName });
+    this.logger.debug({
+      msg: `productName validation finished, records number: ${records.length}`,
+      productName,
+      logContext,
+    });
+    if (!Array.isArray(records) || records.length > 0) {
+      return false;
+    }
+    return true;
   }
 
   @withSpanAsyncV4

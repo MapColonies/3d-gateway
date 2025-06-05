@@ -13,6 +13,7 @@ import {
   ERROR_METADATA_DATE,
   ERROR_METADATA_ERRORED_TILESET,
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+  ERROR_METADATA_PRODUCT_NAME_UNIQUE,
   ERROR_METADATA_RESOLUTION,
   FailedReason,
   ValidationManager,
@@ -57,6 +58,7 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -71,6 +73,7 @@ describe('ValidationManager', () => {
       payload.metadata.maxResolutionMeter = 554;
       payload.metadata.minResolutionMeter = 555;
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -92,6 +95,7 @@ describe('ValidationManager', () => {
       payload.metadata.minResolutionMeter = testInput.minResolution;
       payload.metadata.minResolutionMeter = testInput.maxResolution;
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -106,6 +110,7 @@ describe('ValidationManager', () => {
       payload.metadata.sourceDateStart = new Date(555);
       payload.metadata.sourceDateEnd = new Date(554);
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -120,6 +125,7 @@ describe('ValidationManager', () => {
       payload.metadata.footprint = createWrongFootprintCoordinates();
       payload.metadata.footprint.coordinates = [[[]]];
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -138,6 +144,7 @@ describe('ValidationManager', () => {
 
       payload.metadata.footprint = createWrongFootprintCoordinates();
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -154,6 +161,7 @@ describe('ValidationManager', () => {
 
       payload.metadata.footprint = createWrongFootprintMixed2D3D();
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -169,6 +177,7 @@ describe('ValidationManager', () => {
       payload.modelPath = createMountedModelPath();
       payload.tilesetFilename = 'invalidTileset.json';
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -180,6 +189,8 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
       payload.metadata.footprint = createFootprint('Region');
+
+      catalogMock.findRecords.mockResolvedValue([]);
 
       const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL });
@@ -208,6 +219,7 @@ describe('ValidationManager', () => {
       payload.modelPath = createMountedModelPath();
       payload.metadata.productType = faker.animal.bear() as unknown as ProductType;
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -221,6 +233,7 @@ describe('ValidationManager', () => {
 
       payload.metadata.productId = undefined;
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(false);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -232,6 +245,7 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(false);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
@@ -246,6 +260,7 @@ describe('ValidationManager', () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
 
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
 
@@ -253,6 +268,23 @@ describe('ValidationManager', () => {
       expect(response).toStrictEqual({
         isValid: false,
         message: `classification is not a valid value.. Optional values: ${'NonValidClassification'}`,
+      });
+    });
+
+    it('returns false when product name is not a valid', async () => {
+      const payload = createIngestionPayload();
+      payload.modelPath = createMountedModelPath();
+
+      const record = createRecord();
+      const clonedRecordWithSameNameAsPayload = { ...record, productName: payload.metadata.productName };
+      catalogMock.findRecords.mockResolvedValue([clonedRecordWithSameNameAsPayload]);
+      catalogMock.isProductIdExist.mockResolvedValue(true);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
+
+      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      expect(response).toStrictEqual({
+        isValid: false,
+        message: ERROR_METADATA_PRODUCT_NAME_UNIQUE,
       });
     });
   });
@@ -316,6 +348,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
       providerMock.getFile.mockResolvedValue(getTileset());
@@ -329,6 +362,7 @@ describe('ValidationManager', () => {
     it('returns error if catalog dont contain the requested record', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(undefined);
 
       const refReason: FailedReason = { outFailedReason: '' };
@@ -341,6 +375,7 @@ describe('ValidationManager', () => {
     it('throws error when catalog services does not properly responded', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'catalog error', true));
 
       const refReason: FailedReason = { outFailedReason: '' };
@@ -353,6 +388,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
       providerMock.getFile.mockResolvedValue(getTileset());
@@ -371,6 +407,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
       providerMock.getFile.mockResolvedValue(getTileset());
@@ -393,6 +430,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+      catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
       providerMock.getFile.mockResolvedValue(getTileset());
@@ -402,6 +440,23 @@ describe('ValidationManager', () => {
 
       expect(response).toBe(false);
       expect(refReason.outFailedReason).toBe(`classification is not a valid value.. Optional values: ${'NonValidClassification'}`);
+    });
+
+    it('returns false when product name is not a valid', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+      const clonedRecordWithSameNameAsPayload = { ...record, productName: payload.productName };
+      catalogMock.findRecords.mockResolvedValue([clonedRecordWithSameNameAsPayload]);
+      catalogMock.getRecord.mockResolvedValue(record);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
+      providerMock.getFile.mockResolvedValue(getTileset());
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_UNIQUE);
     });
   });
 

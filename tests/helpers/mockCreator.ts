@@ -46,6 +46,7 @@ export const jsLoggerMock = {
 
 export const catalogMock = {
   getRecord: jest.fn(),
+  findRecords: jest.fn(),
   isProductIdExist: jest.fn(),
   patchMetadata: jest.fn(),
   changeStatus: jest.fn(),

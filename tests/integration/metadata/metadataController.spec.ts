@@ -20,6 +20,7 @@ import { S3Helper } from '../../helpers/s3Helper';
 import { S3Config } from '../../../src/common/interfaces';
 import { extractLink } from '../../../src/validator/extractPathFromLink';
 import { CatalogCall } from '../../../src/externalServices/catalog/catalogCall';
+import { ERROR_METADATA_PRODUCT_NAME_UNIQUE } from '../../../src/validator/validationManager';
 import { MetadataRequestSender } from './helpers/requestSender';
 
 describe('MetadataController', function () {
@@ -61,6 +62,7 @@ describe('MetadataController', function () {
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -80,6 +82,7 @@ describe('MetadataController', function () {
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const catalogCallPatchPayloadSpy = jest.spyOn(CatalogCall.prototype, 'patchMetadata');
@@ -205,6 +208,28 @@ describe('MetadataController', function () {
         expect(response.body).toHaveProperty('message', `Record with identifier: ${identifier} doesn't exist!`);
         expect(response).toSatisfyApiSpec();
       });
+
+      it(`Should return 400 status code if record product name already exists in catalog`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        const expected = createRecord();
+        const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+
+        const clonedRecordWithSameNameAsPayload = { ...record, productName: payload.productName };
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [clonedRecordWithSameNameAsPayload] });
+
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_UNIQUE);
+        expect(response).toSatisfyApiSpec();
+      });
     });
 
     describe('Sad Path 😥', function () {
@@ -224,7 +249,7 @@ describe('MetadataController', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it(`Should return 500 status code if catalog is not working properly`, async function () {
+      it(`Should return 500 status code if catalog is not working properly when getting record`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         mockAxios.get.mockRejectedValueOnce(new Error('catalog error'));
@@ -236,7 +261,7 @@ describe('MetadataController', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
+      it(`Should return 500 status code if during sending request, catalog didn't return as expected on patch`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
@@ -244,6 +269,25 @@ describe('MetadataController', function () {
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.BAD_REQUEST, data: [] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'Problem with catalog find');
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it(`Should return 500 status code if during sending request, catalog didn't return as expected on find`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        const record = createRecord();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
         const response = await requestSender.updateMetadata(identifier, payload);
