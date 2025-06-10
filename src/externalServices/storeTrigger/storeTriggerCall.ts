@@ -49,7 +49,7 @@ export class StoreTriggerCall {
       return response.data;
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status == StatusCodes.BAD_REQUEST) {
-        const dataMesage = (err.response?.data as { message: string })?.message;
+        const dataMesage = (err.response.data as { message: string }).message;
         const message = dataMesage ? dataMesage : err.message;
         this.logger.error({
           msg: 'Error when calling to store trigger to create the job',

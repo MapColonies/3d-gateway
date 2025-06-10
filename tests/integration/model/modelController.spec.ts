@@ -630,7 +630,7 @@ describe('ModelController', function () {
         const error = {
           status: StatusCodes.BAD_REQUEST.toString(),
           response: {
-            status: StatusCodes.BAD_REQUEST
+            status: StatusCodes.BAD_REQUEST,
           },
           message: ERROR_STORE_TRIGGER_ERROR,
           isAxiosError: true,
