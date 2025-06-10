@@ -4,6 +4,8 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
+import { StatusCodes } from 'http-status-codes';
+import { AxiosError } from 'axios';
 import { createStoreTriggerPayload } from '../../../helpers/helpers';
 import { StoreTriggerCall } from '../../../../src/externalServices/storeTrigger/storeTriggerCall';
 import { StoreTriggerResponse } from '../../../../src/externalServices/storeTrigger/interfaces';
@@ -36,11 +38,28 @@ describe('StoreTriggerCall', () => {
 
     it('rejects if service is not available', async () => {
       const request = createStoreTriggerPayload(faker.word.sample());
-      mockAxios.post.mockRejectedValue(new Error('store-trigger is not available'));
+      mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
 
       const createPromise = storeTrigger.postPayload(request);
 
       await expect(createPromise).rejects.toThrow('store-trigger is not available');
+    });
+
+    it('should return 400 status code if productName exists in existing job (from store trigger BAD_REQUEST response)', async function () {
+      const request = createStoreTriggerPayload(faker.word.sample());
+      const error = {
+        status: StatusCodes.BAD_REQUEST.toString(),
+        response: {
+          status: StatusCodes.BAD_REQUEST,
+        },
+        message: 'ERROR_STORE_TRIGGER_ERROR',
+        isAxiosError: true,
+      };
+      mockAxios.post.mockRejectedValueOnce(error as AxiosError);
+
+      const createPromise = storeTrigger.postPayload(request);
+
+      await expect(createPromise).rejects.toThrow('ERROR_STORE_TRIGGER_ERROR');
     });
   });
 });

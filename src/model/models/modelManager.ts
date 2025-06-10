@@ -159,6 +159,9 @@ export class ModelManager {
       const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
       return response;
     } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
+      }
       this.logger.error({
         msg: 'Error in creating a flow',
         logContext,

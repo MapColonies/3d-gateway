@@ -7,6 +7,7 @@ import mockAxios from 'jest-mock-axios';
 import { faker } from '@faker-js/faker';
 import { register } from 'prom-client';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { AxiosError } from 'axios';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
   createMetadata,
@@ -615,6 +616,31 @@ describe('ModelController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_UNIQUE);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 400 status code if productName exists in existing job (from store trigger)', async function () {
+        const payload = createIngestionPayload();
+        const dummyRecordWithSameName = createRecord();
+        dummyRecordWithSameName.productName = payload.metadata.productName;
+
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.metadata.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        const error = {
+          status: StatusCodes.BAD_REQUEST.toString(),
+          response: {
+            status: StatusCodes.BAD_REQUEST,
+          },
+          message: ERROR_STORE_TRIGGER_ERROR,
+          isAxiosError: true,
+        };
+        mockAxios.post.mockRejectedValueOnce(error as AxiosError);
+
+        const response = await requestSender.createModel(payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', ERROR_STORE_TRIGGER_ERROR);
         expect(response).toSatisfyApiSpec();
       });
     });
