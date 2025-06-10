@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
@@ -49,8 +49,9 @@ export class StoreTriggerCall {
       return response.data;
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status == StatusCodes.BAD_REQUEST) {
-        const dataMesage = (err.response.data as { message: string }).message;
-        const message = dataMesage ? dataMesage : err.message;
+        const error: AxiosError = err;
+        const dataMesage: { message?: string } = (error.response?.data as { message?: string });
+        const message = dataMesage?.message ?? err.message;
         this.logger.error({
           msg: 'Error when calling to store trigger to create the job',
           logContext,
