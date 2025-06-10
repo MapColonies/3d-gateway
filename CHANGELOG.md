@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.0](https://github.com/MapColonies/3d-gateway/compare/v2.5.1...v2.6.0) (2025-06-10)
+
+
+### Features
+
+* validate productName is unique ([#32](https://github.com/MapColonies/3d-gateway/issues/32)) ([e9564d8](https://github.com/MapColonies/3d-gateway/commit/e9564d8710419aaea37a7309a8afcd24dcd7afc7))
+
+
+### Bug Fixes
+
+* handle store trigger BadRequest response (MAPCO-7785) ([#33](https://github.com/MapColonies/3d-gateway/issues/33)) ([12026e5](https://github.com/MapColonies/3d-gateway/commit/12026e578f3a93cad9705f72d024a4743289b548))
+
 ### [2.5.1](https://github.com/MapColonies/3d-gateway/compare/v2.5.0...v2.5.1) (2025-04-02)
 
 
