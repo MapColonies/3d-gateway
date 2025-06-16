@@ -6,6 +6,7 @@ import { SERVICES } from '../../common/constants';
 import { LogContext, UpdatePayload, UpdateStatusPayload } from '../../common/interfaces';
 import { MetadataManager } from '../models/metadataManager';
 import { MetadataParams } from '../../externalServices/catalog/interfaces';
+import { getSimplifiedProductName } from '../../model/models/utilities';
 
 type UpdateMetadataHandler = RequestHandler<MetadataParams, unknown, UpdatePayload>;
 type UpdateStatusHandler = RequestHandler<MetadataParams, unknown, UpdateStatusPayload>;
@@ -26,6 +27,9 @@ export class MetadataController {
     const { identifier } = req.params;
     try {
       const payload = req.body;
+      if (payload.productName != undefined) {
+        payload.productName = getSimplifiedProductName(payload.productName);
+      }
       const response = await this.manager.updateMetadata(identifier, payload);
       return res.status(StatusCodes.OK).json(response);
     } catch (err) {

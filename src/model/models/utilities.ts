@@ -30,3 +30,9 @@ export const convertPolygonTo2DPolygon = (polygon: Polygon): Polygon => {
   });
   return polygon;
 };
+
+export const getSimplifiedProductName = (productName: string): string => {
+  let result = productName.replace(/\s\s+/g, ' ');
+  result = result.trim();
+  return result;
+};

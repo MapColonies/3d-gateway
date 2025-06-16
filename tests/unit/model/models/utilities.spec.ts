@@ -6,6 +6,7 @@ import {
   removePvPathFromModelPath,
   replaceBackQuotesWithQuotes,
   convertPolygonTo2DPolygon,
+  getSimplifiedProductName,
 } from '../../../../src/model/models/utilities';
 import { createFootprint } from '../../../helpers/helpers';
 
@@ -59,6 +60,22 @@ describe('utilities tests', () => {
       const result: string = replaceBackQuotesWithQuotes(path);
 
       expect(result).toBe(expected);
+    });
+  });
+
+  describe('getSimplifiedProductName tests', () => {
+    it('Should trim productName', () => {
+      const inputProductName = '   trimmed    ';
+      const expectedProductName = 'trimmed';
+      const result: string = getSimplifiedProductName(inputProductName);
+      expect(result).toBe(expectedProductName);
+    });
+
+    it('Should remove spaces inside productName', () => {
+      const inputProductName = '   tr   i m     m     e   dsadsad  dsada1!  ';
+      const expectedProductName = 'tr i m m e dsadsad dsada1!';
+      const result: string = getSimplifiedProductName(inputProductName);
+      expect(result).toBe(expectedProductName);
     });
   });
 });
