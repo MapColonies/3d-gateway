@@ -6,9 +6,14 @@ export interface StoreTriggerResponse {
   status: OperationStatus.IN_PROGRESS;
 }
 
-export interface StoreTriggerPayload {
+export interface StoreTriggerIngestionPayload {
   modelId: string;
   pathToTileset: string;
   tilesetFilename: string;
   metadata: Layer3DMetadata;
+}
+
+export interface StoreTriggerDeletePayload {
+  modelId: string;
+  modelFolderId: string;
 }

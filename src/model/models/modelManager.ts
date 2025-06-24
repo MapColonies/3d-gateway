@@ -7,12 +7,14 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer, trace } from '@opentelemetry/api';
 import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { StatusCodes } from 'http-status-codes';
+import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/storeTriggerCall';
-import { StoreTriggerPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { FILE_ENCODING, SERVICES } from '../../common/constants';
 import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IConfig, IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
+import { CatalogCall } from '../../externalServices/catalog/catalogCall';
 import {
   convertStringToGeojson,
   changeBasePathToPVPath,
@@ -32,6 +34,7 @@ export class ModelManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
+    @inject(CatalogCall) private readonly catalog: CatalogCall,
     @inject(ValidationManager) private readonly validator: ValidationManager,
     @inject(StoreTriggerCall) private readonly storeTrigger: StoreTriggerCall
   ) {
@@ -96,6 +99,62 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
+  public async deleteModel(recordId: string): StoreTriggerResponse {
+    const logContext = { ...this.logContext, function: this.deleteModel.name };
+    this.logger.info({
+      msg: `Delete model ${recordId} - validation start`,
+      logContext,
+      recordId,
+    });
+
+    const validationResult = await this.validateDelete(recordId);
+    if (!validationResult.isValid) {
+      throw new AppError('', StatusCodes.BAD_REQUEST, validationResult.message!, true);
+    }
+
+    this.logger.info({
+      msg: 'new model ingestion - start delete',
+      logContext,
+      recordId,
+    });
+
+    this.storeTrigger.startIngestion({ modelId: recordId });
+  }
+
+  @withSpanAsyncV4
+  public async validateDelete(recordId: string): Promise<ValidationResponse> {
+    const records = await this.catalog.findRecords({ id: recordId });
+    if (records.length <= 0) {
+      const validationResponse: ValidationResponse = {
+        isValid: false,
+        message: 'No record exists for that id',
+      };
+      return validationResponse;
+    }
+
+    if (records[0].productType != ProductType.PHOTO_REALISTIC_3D) {
+      const validationResponse: ValidationResponse = {
+        isValid: false,
+        message: `Can't delete record that it's productType isn't "3DPhotoRealistic"`,
+      };
+      return validationResponse;
+    }
+
+    if (records[0].productStatus != RecordStatus.UNPUBLISHED) {
+      const validationResponse: ValidationResponse = {
+        isValid: false,
+        message: `Can't delete record that it's productStatus isn't "UNPUBLISHED"`,
+      };
+      return validationResponse;
+    }
+
+    return {
+      isValid: true,
+      message: '',
+    };
+  }
+
+  @withSpanAsyncV4
   public async createModel(payload: IngestionPayload): Promise<StoreTriggerResponse> {
     const logContext = { ...this.logContext, function: this.createModel.name };
 
@@ -149,14 +208,14 @@ export class ModelManager {
     });
     const adjustedModelPath = this.getAdjustedModelPath(payload.modelPath);
     payload.metadata.footprint = convertPolygonTo2DPolygon(payload.metadata.footprint);
-    const request: StoreTriggerPayload = {
+    const request: StoreTriggerIngestionPayload = {
       modelId: modelId,
       pathToTileset: removePvPathFromModelPath(adjustedModelPath),
       tilesetFilename: payload.tilesetFilename,
       metadata: { ...payload.metadata, productSource: originalModelPath },
     };
     try {
-      const response: StoreTriggerResponse = await this.storeTrigger.postPayload(request);
+      const response: StoreTriggerResponse = await this.storeTrigger.startIngestion(request);
       return response;
     } catch (err) {
       if (err instanceof AppError) {

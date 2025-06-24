@@ -34,7 +34,7 @@ import {
   ERROR_METADATA_PRODUCT_NAME_UNIQUE,
 } from '../../../src/validator/validationManager';
 import { ERROR_STORE_TRIGGER_ERROR } from '../../../src/model/models/modelManager';
-import { StoreTriggerPayload, StoreTriggerResponse } from '../../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../../src/externalServices/storeTrigger/interfaces';
 import { StoreTriggerCall } from '../../../src/externalServices/storeTrigger/storeTriggerCall';
 import { ModelRequestSender } from './helpers/requestSender';
 
@@ -64,7 +64,7 @@ describe('ModelController', function () {
         'should return 201 status code and the added model for %p',
         async (testInput: string) => {
           const payload = createIngestionPayload(testInput);
-          const expected: StoreTriggerPayload = {
+          const expected: StoreTriggerIngestionPayload = {
             ...payload,
             metadata: createMetadata(),
             pathToTileset: getModelNameByPath(payload.modelPath),
@@ -79,7 +79,7 @@ describe('ModelController', function () {
           mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
           mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
-          const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
+          const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'startIngestion');
 
           const response = await requestSender.createModel(payload);
 
@@ -151,7 +151,7 @@ describe('ModelController', function () {
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
-        const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
+        const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'startIngestion');
 
         const response = await requestSender.createModel(payload);
 

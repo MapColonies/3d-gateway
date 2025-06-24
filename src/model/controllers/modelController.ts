@@ -6,9 +6,12 @@ import { SERVICES } from '../../common/constants';
 import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
+import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
 type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionValidatePayload>;
+type DeleteModelHandler = RequestHandler<MetadataParams, StoreTriggerResponse, undefined>;
+type CanDeleteModelHandler = RequestHandler<MetadataParams, ValidationResponse, undefined>;
 
 @injectable()
 export class ModelController {
@@ -32,6 +35,40 @@ export class ModelController {
         logContext,
         err,
         modelName: req.body.metadata.productName,
+      });
+      return next(err);
+    }
+  };
+
+  public deleteModel: DeleteModelHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.deleteModel.name };
+    const { identifier } = req.params;
+    try {
+      const response = await this.manager.deleteModel(identifier);
+      return res.status(StatusCodes.OK).json(response);
+    } catch (err) {
+      this.logger.error({
+        msg: `Failed in deleting model!`,
+        logContext,
+        err,
+        identifier,
+      });
+      return next(err);
+    }
+  };
+
+  public validateDelete: CanDeleteModelHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.validateDelete.name };
+    const { identifier } = req.params;
+    try {
+      const response = await this.manager.validateDelete(identifier);
+      return res.status(StatusCodes.OK).json(response);
+    } catch (err) {
+      this.logger.error({
+        msg: `Failed in delete validate`,
+        logContext,
+        err,
+        identifier,
       });
       return next(err);
     }

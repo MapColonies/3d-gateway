@@ -14,7 +14,7 @@ export const fakeS3Config = (bucket: string): S3Config => {
 };
 
 export const storeTriggerMock = {
-  postPayload: jest.fn(),
+  startIngestion: jest.fn(),
 };
 
 export const validationManagerMock = {

@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes';
 import { SERVICES } from '../../common/constants';
 import { IConfig, LogContext } from '../../common/interfaces';
 import { AppError } from '../../common/appError';
-import { StoreTriggerResponse, StoreTriggerPayload } from './interfaces';
+import { StoreTriggerResponse, StoreTriggerIngestionPayload, StoreTriggerDeletePayload } from './interfaces';
 
 @injectable()
 export class StoreTriggerCall {
@@ -27,10 +27,47 @@ export class StoreTriggerCall {
   }
 
   @withSpanAsyncV4
-  public async postPayload(payload: StoreTriggerPayload): Promise<StoreTriggerResponse> {
-    const logContext = { ...this.logContext, function: this.postPayload.name };
+  public async startDelete(payload: StoreTriggerDeletePayload): Promise<StoreTriggerResponse> {
+    const logContext = { ...this.logContext, function: this.startDelete.name };
     this.logger.debug({
-      msg: 'got a request for a new flow',
+      msg: 'got a request for a new delete flow',
+      logContext,
+      modelId: payload.modelId,
+      modelFolderId: payload.modelFolderId,
+    });
+    try {
+      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/delete`, payload);
+      this.logger.info({
+        msg: 'sent delete to store-trigger successfully',
+        logContext,
+        jobId: response.data.jobId,
+        modelId: payload.modelId,
+        modelFolderId: payload.modelFolderId,
+      });
+      return response.data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status == StatusCodes.BAD_REQUEST) {
+        const error: AxiosError = err;
+        const dataMesage: { message?: string } | undefined = error.response?.data as { message?: string } | undefined;
+        const message = dataMesage?.message ?? err.message;
+        this.logger.error({
+          msg: 'Error when calling to store trigger to create a delete job',
+          logContext,
+          modelId: payload.modelId,
+          modelFolderId: payload.modelFolderId,
+          err,
+        });
+        throw new AppError('error', StatusCodes.BAD_REQUEST, message, true);
+      }
+      throw err;
+    }
+  }
+
+  @withSpanAsyncV4
+  public async startIngestion(payload: StoreTriggerIngestionPayload): Promise<StoreTriggerResponse> {
+    const logContext = { ...this.logContext, function: this.startIngestion.name };
+    this.logger.debug({
+      msg: 'got a request for a new Ingestion flow',
       logContext,
       modelId: payload.modelId,
       modelName: payload.metadata.productName,
@@ -39,7 +76,7 @@ export class StoreTriggerCall {
     try {
       const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/ingestion`, payload);
       this.logger.info({
-        msg: 'sent to store-trigger successfully',
+        msg: 'sent Ingestion to store-trigger successfully',
         logContext,
         jobId: response.data.jobId,
         modelId: payload.modelId,
@@ -53,7 +90,7 @@ export class StoreTriggerCall {
         const dataMesage: { message?: string } | undefined = error.response?.data as { message?: string } | undefined;
         const message = dataMesage?.message ?? err.message;
         this.logger.error({
-          msg: 'Error when calling to store trigger to create the job',
+          msg: 'Error when calling to store trigger to create an Ingestion job',
           logContext,
           modelId: payload.modelId,
           modelName: payload.metadata.productName,

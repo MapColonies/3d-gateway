@@ -20,7 +20,7 @@ describe('StoreTriggerCall', () => {
     jest.clearAllMocks();
   });
 
-  describe('postPayload Function', () => {
+  describe('startIngestion Function', () => {
     it('resolves without errors', async () => {
       const storeTriggerUrl = config.get<string>('externalServices.storeTrigger');
       const request = createStoreTriggerPayload(faker.word.sample());
@@ -30,7 +30,7 @@ describe('StoreTriggerCall', () => {
       };
       mockAxios.post.mockResolvedValue({ data: expected });
 
-      const created = await storeTrigger.postPayload(request);
+      const created = await storeTrigger.startIngestion(request);
 
       expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/ingestion`, request);
       expect(created).toMatchObject(expected);
@@ -40,7 +40,7 @@ describe('StoreTriggerCall', () => {
       const request = createStoreTriggerPayload(faker.word.sample());
       mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
 
-      const createPromise = storeTrigger.postPayload(request);
+      const createPromise = storeTrigger.startIngestion(request);
 
       await expect(createPromise).rejects.toThrow('store-trigger is not available');
     });
@@ -57,7 +57,7 @@ describe('StoreTriggerCall', () => {
       };
       mockAxios.post.mockRejectedValueOnce(error as AxiosError);
 
-      const createPromise = storeTrigger.postPayload(request);
+      const createPromise = storeTrigger.startIngestion(request);
 
       await expect(createPromise).rejects.toThrow('ERROR_STORE_TRIGGER_ERROR');
     });
