@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.1](https://github.com/MapColonies/3d-gateway/compare/v2.6.0...v2.6.1) (2025-06-16)
+
+
+### Bug Fixes
+
+* fix trim and spaces in product name ([#34](https://github.com/MapColonies/3d-gateway/issues/34)) ([3750a4c](https://github.com/MapColonies/3d-gateway/commit/3750a4c6d5c6de58a9bcf907a03d5a10c7a4484f))
+
 ## [2.6.0](https://github.com/MapColonies/3d-gateway/compare/v2.5.1...v2.6.0) (2025-06-10)
 
 

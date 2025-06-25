@@ -6,6 +6,7 @@ import { SERVICES } from '../../common/constants';
 import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
+import { getSimplifiedProductName } from '../models/utilities';
 import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
@@ -27,6 +28,9 @@ export class ModelController {
     const logContext = { ...this.logContext, function: this.createModel.name };
     try {
       const payload = req.body;
+      if (payload.metadata.productName != undefined) {
+        payload.metadata.productName = getSimplifiedProductName(payload.metadata.productName);
+      }
       const response = await this.manager.createModel(payload);
       return res.status(StatusCodes.CREATED).json(response);
     } catch (err) {
@@ -83,6 +87,11 @@ export class ModelController {
         logContext,
         payload,
       });
+
+      if (payload.metadata?.productName != undefined) {
+        payload.metadata.productName = getSimplifiedProductName(payload.metadata.productName);
+      }
+
       const response = await this.manager.validateModel(payload);
       this.logger.info({
         msg: 'model validate ended',
