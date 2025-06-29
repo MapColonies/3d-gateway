@@ -15,5 +15,4 @@ export interface StoreTriggerIngestionPayload {
 
 export interface StoreTriggerDeletePayload {
   modelId: string;
-  modelFolderId: string;
 }

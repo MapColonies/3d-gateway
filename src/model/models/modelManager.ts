@@ -99,7 +99,7 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
-  public async deleteModel(recordId: string): StoreTriggerResponse {
+  public async deleteModel(recordId: string): Promise<StoreTriggerResponse> {
     const logContext = { ...this.logContext, function: this.deleteModel.name };
     this.logger.info({
       msg: `Delete model ${recordId} - validation start`,
@@ -118,7 +118,12 @@ export class ModelManager {
       recordId,
     });
 
-    this.storeTrigger.startIngestion({ modelId: recordId });
+    const results = await this.catalog.findRecords({ id: recordId });
+    if (results.length != 1) {
+      throw new AppError('', StatusCodes.BAD_REQUEST, `RecordId matches more than 1 record`, true);
+    }
+    const result = await this.storeTrigger.startDelete({ modelId: results[0].id });
+    return result;
   }
 
   @withSpanAsyncV4
@@ -150,7 +155,6 @@ export class ModelManager {
 
     return {
       isValid: true,
-      message: '',
     };
   }
 

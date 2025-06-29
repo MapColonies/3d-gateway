@@ -60,7 +60,7 @@ export class CatalogCall {
     });
     try {
       const response = await axios.post<Record3D[]>(`${this.catalog}/metadata/find`, payload);
-      if (response.status === StatusCodes.OK.valueOf()) {
+      if (response.status === StatusCodes.OK.valueOf() && Array.isArray(response.data)) {
         this.logger.debug({
           msg: `Find ${response.data.length} Records in catalog service`,
           logContext,

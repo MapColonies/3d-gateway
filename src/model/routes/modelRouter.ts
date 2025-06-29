@@ -8,7 +8,7 @@ const modelRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
 
   router.post('/', controller.createModel);
   router.delete('/:identifier', controller.deleteModel);
-  router.get('/canDelete/:identifier', controller.validateDelete);
+  router.get('/canDelete/:identifier', controller.validateDeleteById);
   router.post('/validate', controller.validate.bind(controller));
 
   return router;

@@ -33,7 +33,6 @@ export class StoreTriggerCall {
       msg: 'got a request for a new delete flow',
       logContext,
       modelId: payload.modelId,
-      modelFolderId: payload.modelFolderId,
     });
     try {
       const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/delete`, payload);
@@ -42,7 +41,6 @@ export class StoreTriggerCall {
         logContext,
         jobId: response.data.jobId,
         modelId: payload.modelId,
-        modelFolderId: payload.modelFolderId,
       });
       return response.data;
     } catch (err) {
@@ -54,7 +52,6 @@ export class StoreTriggerCall {
           msg: 'Error when calling to store trigger to create a delete job',
           logContext,
           modelId: payload.modelId,
-          modelFolderId: payload.modelFolderId,
           err,
         });
         throw new AppError('error', StatusCodes.BAD_REQUEST, message, true);

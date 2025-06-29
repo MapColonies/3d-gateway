@@ -61,15 +61,15 @@ export class ModelController {
     }
   };
 
-  public validateDelete: CanDeleteModelHandler = async (req, res, next) => {
-    const logContext = { ...this.logContext, function: this.validateDelete.name };
+  public validateDeleteById: CanDeleteModelHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.validateDeleteById.name };
     const { identifier } = req.params;
     try {
       const response = await this.manager.validateDelete(identifier);
       return res.status(StatusCodes.OK).json(response);
     } catch (err) {
       this.logger.error({
-        msg: `Failed in delete validate`,
+        msg: `Failed to validate delete`,
         logContext,
         err,
         identifier,

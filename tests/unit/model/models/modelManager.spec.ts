@@ -1,10 +1,12 @@
 import config from 'config';
 import { trace } from '@opentelemetry/api';
 import jsLogger from '@map-colonies/js-logger';
+import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
+import { faker } from '@faker-js/faker';
 import { IngestionPayload, IngestionValidatePayload } from '../../../../src/common/interfaces';
 import { ERROR_STORE_TRIGGER_ERROR, ModelManager } from '../../../../src/model/models/modelManager';
-import { createFootprint, createIngestionPayload, createStoreTriggerPayload } from '../../../helpers/helpers';
-import { storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
+import { createFootprint, createIngestionPayload, createRecord, createStoreTriggerPayload } from '../../../helpers/helpers';
+import { catalogMock, storeTriggerMock, validationManagerMock } from '../../../helpers/mockCreator';
 import { StoreTriggerIngestionPayload } from '../../../../src/externalServices/storeTrigger/interfaces';
 
 let modelManager: ModelManager;
@@ -15,6 +17,7 @@ describe('ModelManager', () => {
       config,
       jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
+      catalogMock as never,
       validationManagerMock as never,
       storeTriggerMock as never
     );
@@ -149,6 +152,7 @@ describe('ModelManager', () => {
         config,
         jsLogger({ enabled: false }),
         trace.getTracer('testTracer'),
+        catalogMock as never,
         validationManagerMock as never,
         storeTriggerMock as never
       );
@@ -176,6 +180,7 @@ describe('ModelManager', () => {
         config,
         jsLogger({ enabled: false }),
         trace.getTracer('testTracer'),
+        catalogMock as never,
         validationManagerMock as never,
         storeTriggerMock as never
       );
@@ -203,6 +208,7 @@ describe('ModelManager', () => {
         config,
         jsLogger({ enabled: false }),
         trace.getTracer('testTracer'),
+        catalogMock as never,
         validationManagerMock as never,
         storeTriggerMock as never
       );
@@ -223,6 +229,138 @@ describe('ModelManager', () => {
         isValid: false,
         message: '',
       });
+    });
+  });
+
+  describe('deleteModel tests', () => {
+    it('resolves without errors', async () => {
+      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
+      storeTriggerMock.startDelete.mockResolvedValue(expectedResponse);
+      const deletedResponse = await modelManager.deleteModel(faker.string.uuid());
+
+      expect(deletedResponse).toMatchObject(expectedResponse);
+    });
+
+    it('false when record doesnt exist in catalog - in validation', async () => {
+      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValue([]);
+      storeTriggerMock.startDelete.mockResolvedValue(expectedResponse);
+
+      const responsePromise = modelManager.deleteModel(faker.string.uuid());
+      await expect(responsePromise).rejects.toThrow('No record exists for that id');
+    });
+
+    it('false when record doesnt exist in catalog - after validation', async () => {
+      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      catalogMock.findRecords.mockResolvedValueOnce([]);
+      storeTriggerMock.startDelete.mockResolvedValue(expectedResponse);
+
+      const responsePromise = modelManager.deleteModel(faker.string.uuid());
+      await expect(responsePromise).rejects.toThrow('RecordId matches more than 1 record');
+    });
+
+    it('throw if catalog.findRecords rejects with error', async () => {
+      catalogMock.findRecords.mockRejectedValue(new Error('catalog error'));
+      const responsePromise = modelManager.deleteModel(faker.string.uuid());
+
+      await expect(responsePromise).rejects.toThrow('catalog error');
+    });
+
+    it('throw if storeTrigger.startDelete rejects with error', async () => {
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
+      storeTriggerMock.startDelete.mockRejectedValue(new Error('storeTrigger error'));
+      const responsePromise = modelManager.deleteModel(faker.string.uuid());
+
+      await expect(responsePromise).rejects.toThrow('storeTrigger error');
+    });
+  });
+
+  describe('validateDeleteById tests', () => {
+    it('resolves without errors', async () => {
+      const expectedValidateResponse = {
+        isValid: true,
+      };
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
+      const created = await modelManager.validateDelete(faker.string.uuid());
+
+      expect(created).toMatchObject(expectedValidateResponse);
+    });
+
+    it('false when record doesnt exist in catalog', async () => {
+      const expectedValidateResponse = {
+        isValid: false,
+        message: 'No record exists for that id',
+      };
+
+      catalogMock.findRecords.mockResolvedValue([]);
+      const created = await modelManager.validateDelete(faker.string.uuid());
+
+      expect(created).toMatchObject(expectedValidateResponse);
+    });
+
+    it('throw if catalog.findRecords rejects with error', async () => {
+      catalogMock.findRecords.mockRejectedValue(new Error('catalog error'));
+      const responsePromise = modelManager.validateDelete(faker.string.uuid());
+
+      await expect(responsePromise).rejects.toThrow('catalog error');
+    });
+
+    it('false when record productType is not "3DPhotoRealistic"', async () => {
+      const expectedValidateResponse = {
+        isValid: false,
+        message: `Can't delete record that it's productType isn't "3DPhotoRealistic"`,
+      };
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.QUANTIZED_MESH_DSM_BEST;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
+      const created = await modelManager.validateDelete(faker.string.uuid());
+
+      expect(created).toMatchObject(expectedValidateResponse);
+    });
+
+    it('false when record productStatus is not "UNPUBLISHED"', async () => {
+      const expectedValidateResponse = {
+        isValid: false,
+        message: `Can't delete record that it's productStatus isn't "UNPUBLISHED"`,
+      };
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.PUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
+      const created = await modelManager.validateDelete(faker.string.uuid());
+
+      expect(created).toMatchObject(expectedValidateResponse);
     });
   });
 });
