@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.6.0
+  version: 2.6.1
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
