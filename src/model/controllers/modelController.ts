@@ -92,7 +92,7 @@ export class ModelController {
         payload.metadata.productName = getSimplifiedProductName(payload.metadata.productName);
       }
 
-      const response = await this.manager.validateModel(payload);
+      const response = await this.manager.validateModelForIngestion(payload);
       this.logger.info({
         msg: 'model validate ended',
         logContext,

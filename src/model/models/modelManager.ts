@@ -47,7 +47,7 @@ export class ModelManager {
   }
 
   @withSpanAsyncV4
-  public async validateModel(payload: IngestionValidatePayload): Promise<ValidationResponse> {
+  public async validateModelForIngestion(payload: IngestionValidatePayload): Promise<ValidationResponse> {
     const isValid = this.validator.isModelPathValid(payload.modelPath, this.basePath);
     if (!isValid) {
       return {
@@ -95,7 +95,7 @@ export class ModelManager {
       };
     }
     // else {
-    const isMetadataValidResponse = await this.validator.isMetadataValid(payload.metadata, polygonResponse);
+    const isMetadataValidResponse = await this.validator.isMetadataValidForIngestion(payload.metadata, polygonResponse);
     return isMetadataValidResponse;
   }
 
@@ -194,7 +194,7 @@ export class ModelManager {
 
     try {
       payload.metadata.footprint = convertStringToGeojson(JSON.stringify(payload.metadata.footprint));
-      const isValidResponse = await this.validateModel(payload);
+      const isValidResponse = await this.validateModelForIngestion(payload);
       if (!isValidResponse.isValid) {
         const validationMessage = isValidResponse.message!;
         this.logger.warn({

@@ -35,7 +35,7 @@ describe('ModelManager', () => {
       storeTriggerMock.startIngestion.mockResolvedValue(expected);
       validationManagerMock.isModelPathValid.mockReturnValue(true);
       validationManagerMock.isPathExist.mockResolvedValue(true);
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.isPolygonValid.mockReturnValue({
@@ -48,13 +48,13 @@ describe('ModelManager', () => {
       expect(created).toMatchObject(expected);
     });
 
-    it('throw if validateModel rejects with error', async () => {
+    it('throw if validateModelForIngestion rejects with error', async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
       storeTriggerMock.startIngestion.mockResolvedValueOnce(expected);
       validationManagerMock.isModelPathValid.mockReturnValueOnce(false);
       validationManagerMock.isPathExist.mockResolvedValueOnce(true);
-      validationManagerMock.isMetadataValid.mockResolvedValueOnce({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValueOnce({
         isValid: true,
       });
       validationManagerMock.isPolygonValid.mockReturnValueOnce({
@@ -75,7 +75,7 @@ describe('ModelManager', () => {
 
       validationManagerMock.isModelPathValid.mockReturnValue(true);
       validationManagerMock.isPathExist.mockResolvedValue(true);
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.isPolygonValid.mockReturnValue({
@@ -88,7 +88,7 @@ describe('ModelManager', () => {
     });
   });
 
-  describe('validateModel tests', () => {
+  describe('validateModelForIngestion tests', () => {
     it('resolves without errors if all properties exists (modelPath, tilesetFilename and metadata)', async () => {
       const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
@@ -98,12 +98,12 @@ describe('ModelManager', () => {
       validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
 
-      const response = await modelManager.validateModel(payload);
+      const response = await modelManager.validateModelForIngestion(payload);
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -118,12 +118,12 @@ describe('ModelManager', () => {
       validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
 
-      const response = await modelManager.validateModel(payload);
+      const response = await modelManager.validateModelForIngestion(payload);
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -136,7 +136,7 @@ describe('ModelManager', () => {
       });
       validationManagerMock.isModelPathValid.mockReturnValueOnce(false);
 
-      const response = await modelManager.validateModel(payload);
+      const response = await modelManager.validateModelForIngestion(payload);
       expect(response).toStrictEqual({
         isValid: false,
         message:
@@ -164,10 +164,10 @@ describe('ModelManager', () => {
       validationManagerMock.isPolygonValid.mockReturnValueOnce({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValueOnce({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValueOnce({
         isValid: true,
       });
-      const response = await modelManager.validateModel(payload);
+      const response = await modelManager.validateModelForIngestion(payload);
       expect(response.isValid).toBe(false);
       expect(response.message).toContain('Unknown model name!');
     });
@@ -192,10 +192,10 @@ describe('ModelManager', () => {
       validationManagerMock.isPolygonValid.mockReturnValueOnce({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValueOnce({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValueOnce({
         isValid: true,
       });
-      const response = await modelManager.validateModel(payload);
+      const response = await modelManager.validateModelForIngestion(payload);
       expect(response.isValid).toBe(false);
       expect(response.message).toContain('Unknown tileset name!');
     });
@@ -219,12 +219,12 @@ describe('ModelManager', () => {
       validationManagerMock.isPolygonValid.mockReturnValue({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValidForIngestion.mockResolvedValue({
         isValid: true,
       });
       validationManagerMock.getTilesetModelPolygon.mockReturnValue(undefined);
 
-      const response = await modelManager.validateModel(payload);
+      const response = await modelManager.validateModelForIngestion(payload);
       expect(response).toStrictEqual({
         isValid: false,
         message: '',

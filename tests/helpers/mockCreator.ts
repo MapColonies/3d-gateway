@@ -19,7 +19,7 @@ export const storeTriggerMock = {
 };
 
 export const validationManagerMock = {
-  isMetadataValid: jest.fn(),
+  isMetadataValidForIngestion: jest.fn(),
   isModelPathValid: jest.fn(),
   isPathExist: jest.fn(),
   validateUpdate: jest.fn(),

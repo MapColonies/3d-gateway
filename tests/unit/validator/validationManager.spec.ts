@@ -6,7 +6,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
-import { ProductType } from '@map-colonies/mc-model-types';
+import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
 import {
   ERROR_METADATA_BAD_FORMAT_TILESET,
   ERROR_METADATA_BOX_TILESET,
@@ -53,7 +53,7 @@ describe('ValidationManager', () => {
     jest.clearAllMocks();
   });
 
-  describe('isMetadataValid tests', () => {
+  describe('isMetadataValidForIngestion tests', () => {
     it('returns true when got all functions valid', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
@@ -62,7 +62,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -77,7 +77,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: ERROR_METADATA_RESOLUTION,
@@ -99,7 +99,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -114,7 +114,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_DATE });
     });
 
@@ -129,7 +129,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
@@ -148,7 +148,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`,
@@ -165,7 +165,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Wrong footprint! footprint's coordinates should be all in the same dimension 2D or 3D`,
@@ -181,7 +181,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, {} as unknown as Polygon);
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, {} as unknown as Polygon);
       expect(response).toStrictEqual({ isValid: false, message: `An error caused during the validation of the intersection` });
     });
 
@@ -192,7 +192,7 @@ describe('ValidationManager', () => {
 
       catalogMock.findRecords.mockResolvedValue([]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL });
     });
 
@@ -209,7 +209,7 @@ describe('ValidationManager', () => {
         catalogMock as never,
         providerMock
       );
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint('WrongVolume'));
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint('WrongVolume'));
       expect(response.isValid).toBe(false);
       expect(response.message).toContain('The footprint intersectection with the model');
     });
@@ -223,7 +223,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true }); // For now, the validation will be only warning. so it's true
     });
 
@@ -237,7 +237,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(false);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -249,7 +249,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(false);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `Record with productId: ${payload.metadata.productId} doesn't exist!`,
@@ -264,7 +264,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: `classification is not a valid value.. Optional values: ${'NonValidClassification'}`,
@@ -281,7 +281,7 @@ describe('ValidationManager', () => {
       catalogMock.isProductIdExist.mockResolvedValue(true);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
-      const response = await validationManager.isMetadataValid(payload.metadata, createFootprint());
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
       expect(response).toStrictEqual({
         isValid: false,
         message: ERROR_METADATA_PRODUCT_NAME_UNIQUE,
@@ -370,6 +370,21 @@ describe('ValidationManager', () => {
 
       expect(response).toBe(false);
       expect(refReason.outFailedReason).toBe(`Record with identifier: ${identifier} doesn't exist!`);
+    });
+
+    it('returns error if catalog return record with "Being-Deleted" record status', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+      record.productStatus = RecordStatus.BEING_DELETED;
+      catalogMock.findRecords.mockResolvedValue([]);
+      catalogMock.getRecord.mockResolvedValue(record);
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(`Can't update record that is being deleted`);
     });
 
     it('throws error when catalog services does not properly responded', async () => {

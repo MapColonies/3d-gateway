@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
 import { faker } from '@faker-js/faker';
 import config from 'config';
+import { RecordStatus } from '@map-colonies/types';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
   createUpdatePayload,
@@ -228,6 +229,26 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_UNIQUE);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it(`Should return 400 status code if record product status is 'Being-Deleted'`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        const expected = createRecord();
+        const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        record.productStatus = RecordStatus.BEING_DELETED;
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `Can't update record that is being deleted`);
         expect(response).toSatisfyApiSpec();
       });
     });
