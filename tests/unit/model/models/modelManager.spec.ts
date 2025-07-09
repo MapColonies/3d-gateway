@@ -51,16 +51,16 @@ describe('ModelManager', () => {
     it('throw if validateModel rejects with error', async () => {
       const payload: IngestionPayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
-      storeTriggerMock.startIngestion.mockResolvedValue(expected);
-      validationManagerMock.isModelPathValid.mockReturnValue(false);
-      validationManagerMock.isPathExist.mockResolvedValue(true);
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      storeTriggerMock.startIngestion.mockResolvedValueOnce(expected);
+      validationManagerMock.isModelPathValid.mockReturnValueOnce(false);
+      validationManagerMock.isPathExist.mockResolvedValueOnce(true);
+      validationManagerMock.isMetadataValid.mockResolvedValueOnce({
         isValid: true,
       });
-      validationManagerMock.isPolygonValid.mockReturnValue({
+      validationManagerMock.isPolygonValid.mockReturnValueOnce({
         isValid: true,
       });
-      validationManagerMock.getTilesetModelPolygon.mockReturnValue(createFootprint());
+      validationManagerMock.getTilesetModelPolygon.mockReturnValueOnce(createFootprint());
 
       const createdResponse = modelManager.createModel(payload);
       await expect(createdResponse).rejects.toThrow(
@@ -130,11 +130,11 @@ describe('ModelManager', () => {
     it(`rejects if modelPath's validation failed`, async () => {
       const payload: IngestionValidatePayload = createIngestionPayload('Sphere');
       const expected: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
-      storeTriggerMock.startIngestion.mockResolvedValue(expected);
-      validationManagerMock.isPolygonValid.mockReturnValue({
+      storeTriggerMock.startIngestion.mockResolvedValueOnce(expected);
+      validationManagerMock.isPolygonValid.mockReturnValueOnce({
         isValid: true,
       });
-      validationManagerMock.isModelPathValid.mockReturnValue(false);
+      validationManagerMock.isModelPathValid.mockReturnValueOnce(false);
 
       const response = await modelManager.validateModel(payload);
       expect(response).toStrictEqual({
@@ -157,14 +157,14 @@ describe('ModelManager', () => {
         storeTriggerMock as never
       );
 
-      storeTriggerMock.startIngestion.mockResolvedValue(expected);
-      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      storeTriggerMock.startIngestion.mockResolvedValueOnce(expected);
+      validationManagerMock.isModelPathValid.mockReturnValueOnce(true);
       validationManagerMock.isPathExist.mockResolvedValueOnce(false);
       validationManagerMock.isPathExist.mockResolvedValueOnce(true);
-      validationManagerMock.isPolygonValid.mockReturnValue({
+      validationManagerMock.isPolygonValid.mockReturnValueOnce({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValid.mockResolvedValueOnce({
         isValid: true,
       });
       const response = await modelManager.validateModel(payload);
@@ -185,14 +185,14 @@ describe('ModelManager', () => {
         storeTriggerMock as never
       );
 
-      storeTriggerMock.startIngestion.mockResolvedValue(expected);
-      validationManagerMock.isModelPathValid.mockReturnValue(true);
+      storeTriggerMock.startIngestion.mockResolvedValueOnce(expected);
+      validationManagerMock.isModelPathValid.mockReturnValueOnce(true);
       validationManagerMock.isPathExist.mockResolvedValueOnce(true);
       validationManagerMock.isPathExist.mockResolvedValueOnce(false);
-      validationManagerMock.isPolygonValid.mockReturnValue({
+      validationManagerMock.isPolygonValid.mockReturnValueOnce({
         isValid: true,
       });
-      validationManagerMock.isMetadataValid.mockResolvedValue({
+      validationManagerMock.isMetadataValid.mockResolvedValueOnce({
         isValid: true,
       });
       const response = await modelManager.validateModel(payload);
@@ -240,28 +240,18 @@ describe('ModelManager', () => {
       expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
-      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
-      storeTriggerMock.startDelete.mockResolvedValue(expectedResponse);
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      storeTriggerMock.startDeleteJob.mockResolvedValueOnce(expectedResponse);
+
+      const expectedRecordAfterDelete = { ...expectedRecord };
+      expectedRecordAfterDelete.productStatus = RecordStatus.BEING_DELETED;
+      catalogMock.changeStatus.mockResolvedValueOnce(expectedRecordAfterDelete);
       const deletedResponse = await modelManager.deleteModel(faker.string.uuid());
 
       expect(deletedResponse).toMatchObject(expectedResponse);
     });
 
-    it('false when record doesnt exist in catalog - in validation', async () => {
-      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
-
-      const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
-      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
-
-      catalogMock.findRecords.mockResolvedValue([]);
-      storeTriggerMock.startDelete.mockResolvedValue(expectedResponse);
-
-      const responsePromise = modelManager.deleteModel(faker.string.uuid());
-      await expect(responsePromise).rejects.toThrow('No record exists for that id');
-    });
-
-    it('false when record doesnt exist in catalog - after validation', async () => {
+    it('throw INTERNAL_SERVER_ERROR when Delete Job Created, But failed to change the record status to BEING_DELETED', async () => {
       const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
 
       const expectedRecord = createRecord();
@@ -269,15 +259,30 @@ describe('ModelManager', () => {
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      storeTriggerMock.startDeleteJob.mockResolvedValueOnce(expectedResponse);
+
+      catalogMock.changeStatus.mockResolvedValueOnce(expectedResponse);
+      const deletedResponsePromise = modelManager.deleteModel(faker.string.uuid());
+
+      await expect(deletedResponsePromise).rejects.toThrow(`Delete Job Created, But failed to change the record status to BEING_DELETED`);
+    });
+
+    it('false when record doesnt exist in catalog', async () => {
+      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
       catalogMock.findRecords.mockResolvedValueOnce([]);
-      storeTriggerMock.startDelete.mockResolvedValue(expectedResponse);
+      storeTriggerMock.startDeleteJob.mockResolvedValueOnce(expectedResponse);
 
       const responsePromise = modelManager.deleteModel(faker.string.uuid());
-      await expect(responsePromise).rejects.toThrow('RecordId matches more than 1 record');
+      await expect(responsePromise).rejects.toThrow(`RecordId doesn't match 1 existing record`);
     });
 
     it('throw if catalog.findRecords rejects with error', async () => {
-      catalogMock.findRecords.mockRejectedValue(new Error('catalog error'));
+      catalogMock.findRecords.mockRejectedValueOnce(new Error('catalog error'));
       const responsePromise = modelManager.deleteModel(faker.string.uuid());
 
       await expect(responsePromise).rejects.toThrow('catalog error');
@@ -288,11 +293,39 @@ describe('ModelManager', () => {
       expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
-      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
-      storeTriggerMock.startDelete.mockRejectedValue(new Error('storeTrigger error'));
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      storeTriggerMock.startDeleteJob.mockRejectedValueOnce(new Error('storeTrigger error'));
       const responsePromise = modelManager.deleteModel(faker.string.uuid());
 
       await expect(responsePromise).rejects.toThrow('storeTrigger error');
+    });
+
+    it('throw Bad request if record is not valid for delete (BEING_DELETED)', async () => {
+      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.BEING_DELETED;
+
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      storeTriggerMock.startDeleteJob.mockResolvedValueOnce(expectedResponse);
+
+      const deletedResponse = modelManager.deleteModel(faker.string.uuid());
+      await expect(deletedResponse).rejects.toThrow(`Can't delete record that it's productStatus isn't "UNPUBLISHED`);
+    });
+
+    it('throw Bad request if record is not valid for delete (more than one result exists for same id)', async () => {
+      const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
+
+      const expectedRecord = createRecord();
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord, expectedRecord]);
+      storeTriggerMock.startDeleteJob.mockResolvedValueOnce(expectedResponse);
+
+      const deletedResponse = modelManager.deleteModel(faker.string.uuid());
+      await expect(deletedResponse).rejects.toThrow(`RecordId doesn't match 1 existing record`);
     });
   });
 
@@ -306,8 +339,8 @@ describe('ModelManager', () => {
       expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
-      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
-      const created = await modelManager.validateDelete(faker.string.uuid());
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      const created = await modelManager.validateDeleteByRecordId(faker.string.uuid());
 
       expect(created).toMatchObject(expectedValidateResponse);
     });
@@ -318,15 +351,28 @@ describe('ModelManager', () => {
         message: 'No record exists for that id',
       };
 
-      catalogMock.findRecords.mockResolvedValue([]);
-      const created = await modelManager.validateDelete(faker.string.uuid());
+      catalogMock.findRecords.mockResolvedValueOnce([]);
+      const created = await modelManager.validateDeleteByRecordId(faker.string.uuid());
+
+      expect(created).toMatchObject(expectedValidateResponse);
+    });
+
+    it('false when more than 1 record exist in catalog for specific Id', async () => {
+      const expectedValidateResponse = {
+        isValid: false,
+        message: 'More than one record exists for that id',
+      };
+
+      const expectedRecord = createRecord();
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord, expectedRecord]);
+      const created = await modelManager.validateDeleteByRecordId(faker.string.uuid());
 
       expect(created).toMatchObject(expectedValidateResponse);
     });
 
     it('throw if catalog.findRecords rejects with error', async () => {
-      catalogMock.findRecords.mockRejectedValue(new Error('catalog error'));
-      const responsePromise = modelManager.validateDelete(faker.string.uuid());
+      catalogMock.findRecords.mockRejectedValueOnce(new Error('catalog error'));
+      const responsePromise = modelManager.validateDeleteByRecordId(faker.string.uuid());
 
       await expect(responsePromise).rejects.toThrow('catalog error');
     });
@@ -341,8 +387,8 @@ describe('ModelManager', () => {
       expectedRecord.productType = ProductType.QUANTIZED_MESH_DSM_BEST;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
-      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
-      const created = await modelManager.validateDelete(faker.string.uuid());
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      const created = await modelManager.validateDeleteByRecordId(faker.string.uuid());
 
       expect(created).toMatchObject(expectedValidateResponse);
     });
@@ -357,8 +403,8 @@ describe('ModelManager', () => {
       expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
       expectedRecord.productStatus = RecordStatus.PUBLISHED;
 
-      catalogMock.findRecords.mockResolvedValue([expectedRecord]);
-      const created = await modelManager.validateDelete(faker.string.uuid());
+      catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
+      const created = await modelManager.validateDeleteByRecordId(faker.string.uuid());
 
       expect(created).toMatchObject(expectedValidateResponse);
     });

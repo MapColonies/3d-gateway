@@ -27,8 +27,8 @@ export class StoreTriggerCall {
   }
 
   @withSpanAsyncV4
-  public async startDelete(payload: StoreTriggerDeletePayload): Promise<StoreTriggerResponse> {
-    const logContext = { ...this.logContext, function: this.startDelete.name };
+  public async startDeleteJob(payload: StoreTriggerDeletePayload): Promise<StoreTriggerResponse> {
+    const logContext = { ...this.logContext, function: this.startDeleteJob.name };
     this.logger.debug({
       msg: 'got a request for a new delete flow',
       logContext,

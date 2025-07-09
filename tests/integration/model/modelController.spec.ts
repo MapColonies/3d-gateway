@@ -658,8 +658,11 @@ describe('ModelController', function () {
         expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedResponse });
+
+        const expectedRecordAfterDelete = { ...expectedRecord };
+        expectedRecordAfterDelete.productStatus = RecordStatus.BEING_DELETED;
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedRecordAfterDelete });
 
         const response = await requestSender.deleteModel(expectedRecord.id);
 
@@ -675,7 +678,6 @@ describe('ModelController', function () {
         const expectedRecord = createRecord();
         expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
 
         class MyAxiosError implements AxiosError, Error {
@@ -727,13 +729,35 @@ describe('ModelController', function () {
         expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
         mockAxios.post.mockRejectedValueOnce(new Error('failed with 500'));
 
         const response = await requestSender.deleteModel(expectedRecord.id);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'failed with 500');
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 500 status if change status to BEING_DELETED returns Published', async function () {
+        const expectedResponse: StoreTriggerResponse = {
+          jobId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+          status: OperationStatus.IN_PROGRESS,
+        };
+
+        const expectedRecord = createRecord();
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedResponse });
+
+        const expectedRecordAfterDelete = { ...expectedRecord };
+        expectedRecordAfterDelete.productStatus = RecordStatus.PUBLISHED;
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedRecordAfterDelete });
+
+        const response = await requestSender.deleteModel(expectedRecord.id);
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'Delete Job Created, But failed to change the record status to BEING_DELETED');
         expect(response).toSatisfyApiSpec();
       });
     });

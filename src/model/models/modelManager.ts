@@ -14,6 +14,7 @@ import { FILE_ENCODING, SERVICES } from '../../common/constants';
 import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
 import { IConfig, IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
+import { Record3D } from '../../externalServices/catalog/interfaces';
 import { CatalogCall } from '../../externalServices/catalog/catalogCall';
 import {
   convertStringToGeojson,
@@ -107,7 +108,12 @@ export class ModelManager {
       recordId,
     });
 
-    const validationResult = await this.validateDelete(recordId);
+    const results = await this.catalog.findRecords({ id: recordId });
+    if (results.length != 1) {
+      throw new AppError('', StatusCodes.BAD_REQUEST, `RecordId doesn't match 1 existing record`, true);
+    }
+
+    const validationResult = this.validateDelete(results[0]);
     if (!validationResult.isValid) {
       throw new AppError('', StatusCodes.BAD_REQUEST, validationResult.message!, true);
     }
@@ -118,16 +124,42 @@ export class ModelManager {
       recordId,
     });
 
-    const results = await this.catalog.findRecords({ id: recordId });
-    if (results.length != 1) {
-      throw new AppError('', StatusCodes.BAD_REQUEST, `RecordId matches more than 1 record`, true);
+    const result = await this.storeTrigger.startDeleteJob({ modelId: results[0].id });
+    // change catalog delete status
+    this.logger.info({
+      msg: `Delete Job for ${recordId} created successfuly, Set Record status to 'BEING_DELETED'`,
+      logContext,
+      recordId,
+    });
+    try {
+      const newRecordStatus = await this.catalog.changeStatus(recordId, { productStatus: RecordStatus.BEING_DELETED });
+      if (newRecordStatus.productStatus != RecordStatus.BEING_DELETED) {
+        throw new AppError(
+          'catalog',
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          `Delete Job Created, But failed to change the record status to BEING_DELETED`,
+          true
+        );
+      }
+    } catch (err) {
+      this.logger.error({
+        msg: 'Failed to change the record status to BEING_DELETED in catalog service',
+        logContext,
+        recordId,
+        err,
+      });
+      throw new AppError(
+        'catalog',
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Delete Job Created, But failed to change the record status to BEING_DELETED`,
+        true
+      );
     }
-    const result = await this.storeTrigger.startDelete({ modelId: results[0].id });
     return result;
   }
 
   @withSpanAsyncV4
-  public async validateDelete(recordId: string): Promise<ValidationResponse> {
+  public async validateDeleteByRecordId(recordId: string): Promise<ValidationResponse> {
     const records = await this.catalog.findRecords({ id: recordId });
     if (records.length <= 0) {
       const validationResponse: ValidationResponse = {
@@ -135,27 +167,15 @@ export class ModelManager {
         message: 'No record exists for that id',
       };
       return validationResponse;
-    }
-
-    if (records[0].productType != ProductType.PHOTO_REALISTIC_3D) {
+    } else if (records.length > 1) {
       const validationResponse: ValidationResponse = {
         isValid: false,
-        message: `Can't delete record that it's productType isn't "3DPhotoRealistic"`,
+        message: 'More than one record exists for that id',
       };
       return validationResponse;
     }
-
-    if (records[0].productStatus != RecordStatus.UNPUBLISHED) {
-      const validationResponse: ValidationResponse = {
-        isValid: false,
-        message: `Can't delete record that it's productStatus isn't "UNPUBLISHED"`,
-      };
-      return validationResponse;
-    }
-
-    return {
-      isValid: true,
-    };
+    // else
+    return this.validateDelete(records[0]);
   }
 
   @withSpanAsyncV4
@@ -235,6 +255,28 @@ export class ModelManager {
       });
       throw new AppError('', StatusCodes.INTERNAL_SERVER_ERROR, ERROR_STORE_TRIGGER_ERROR, true);
     }
+  }
+
+  private validateDelete(record: Record3D): ValidationResponse {
+    if (record.productType != ProductType.PHOTO_REALISTIC_3D) {
+      const validationResponse: ValidationResponse = {
+        isValid: false,
+        message: `Can't delete record that it's productType isn't "3DPhotoRealistic"`,
+      };
+      return validationResponse;
+    }
+
+    if (record.productStatus != RecordStatus.UNPUBLISHED) {
+      const validationResponse: ValidationResponse = {
+        isValid: false,
+        message: `Can't delete record that it's productStatus isn't "UNPUBLISHED"`,
+      };
+      return validationResponse;
+    }
+
+    return {
+      isValid: true,
+    };
   }
 
   private getAdjustedModelPath(modelPath: string): string {

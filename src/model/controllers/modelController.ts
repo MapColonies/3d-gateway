@@ -65,7 +65,7 @@ export class ModelController {
     const logContext = { ...this.logContext, function: this.validateDeleteById.name };
     const { identifier } = req.params;
     try {
-      const response = await this.manager.validateDelete(identifier);
+      const response = await this.manager.validateDeleteByRecordId(identifier);
       return res.status(StatusCodes.OK).json(response);
     } catch (err) {
       this.logger.error({
