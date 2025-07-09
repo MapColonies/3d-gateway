@@ -377,14 +377,14 @@ describe('ModelManager', () => {
       await expect(responsePromise).rejects.toThrow('catalog error');
     });
 
-    it('false when record productType is not "3DPhotoRealistic"', async () => {
+    it('false when record productType is "QuantizedMeshDTMBest"', async () => {
       const expectedValidateResponse = {
         isValid: false,
-        message: `Can't delete record that it's productType isn't "3DPhotoRealistic"`,
+        message: `Can't delete record that its productType is "QuantizedMeshDTMBest"`,
       };
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.QUANTIZED_MESH_DSM_BEST;
+      expectedRecord.productType = ProductType.QUANTIZED_MESH_DTM_BEST;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);

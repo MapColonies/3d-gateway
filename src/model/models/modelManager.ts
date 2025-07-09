@@ -258,10 +258,10 @@ export class ModelManager {
   }
 
   private validateDelete(record: Record3D): ValidationResponse {
-    if (record.productType != ProductType.PHOTO_REALISTIC_3D) {
+    if (record.productType == ProductType.QUANTIZED_MESH_DTM_BEST) {
       const validationResponse: ValidationResponse = {
         isValid: false,
-        message: `Can't delete record that it's productType isn't "3DPhotoRealistic"`,
+        message: `Can't delete record that its productType is "QuantizedMeshDTMBest"`,
       };
       return validationResponse;
     }
