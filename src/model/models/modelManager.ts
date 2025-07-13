@@ -9,7 +9,7 @@ import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
 import { StatusCodes } from 'http-status-codes';
 import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
 import { StoreTriggerCall } from '../../externalServices/storeTrigger/storeTriggerCall';
-import { StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
+import { StoreTriggerDeletePayload, StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { FILE_ENCODING, SERVICES } from '../../common/constants';
 import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
@@ -124,7 +124,16 @@ export class ModelManager {
       recordId,
     });
 
-    const result = await this.storeTrigger.startDeleteJob({ modelId: results[0].id });
+    const deletePayload: StoreTriggerDeletePayload = {
+      modelId: results[0].id!,
+      productId: results[0].productId!,
+      productVersion: results[0].productVersion!,
+      productName: results[0].productName!,
+      productType: results[0].productType!,
+      producerName: results[0].producerName!,
+    }
+
+    const result = await this.storeTrigger.startDeleteJob(deletePayload);
     // change catalog delete status
     this.logger.info({
       msg: `Delete Job for ${recordId} created successfuly, Set Record status to 'BEING_DELETED'`,

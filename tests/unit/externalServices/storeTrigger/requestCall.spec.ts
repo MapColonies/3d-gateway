@@ -66,7 +66,7 @@ describe('StoreTriggerCall', () => {
   describe('startDelete Function', () => {
     it('resolves without errors', async () => {
       const storeTriggerUrl = config.get<string>('externalServices.storeTrigger');
-      const request = createStoreTriggerPayload(faker.word.sample());
+      const request = createStoreTriggerDeletePayload(faker.word.sample());
       const expected: StoreTriggerResponse = {
         jobId: faker.string.uuid(),
         status: OperationStatus.IN_PROGRESS,
@@ -81,7 +81,7 @@ describe('StoreTriggerCall', () => {
 
     it('rejects if service is not available', async () => {
       const storeTriggerUrl = config.get<string>('externalServices.storeTrigger');
-      const request = createStoreTriggerPayload(faker.word.sample());
+      const request = createStoreTriggerDeletePayload(faker.word.sample());
       mockAxios.post.mockRejectedValueOnce(new Error('store-trigger is not available'));
 
       const deletePromise = storeTrigger.startDeleteJob(request);

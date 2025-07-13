@@ -15,4 +15,9 @@ export interface StoreTriggerIngestionPayload {
 
 export interface StoreTriggerDeletePayload {
   modelId: string;
+  productId: string; // resourceId in job
+  productVersion: number;
+  productName: string;
+  productType: string; 
+  producerName: string;
 }

@@ -181,6 +181,11 @@ export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerIn
 export const createStoreTriggerDeletePayload = (modelId: string = faker.string.uuid()): StoreTriggerDeletePayload => {
   return {
     modelId: modelId,
+    productId: modelId,
+    productType: ProductType.PHOTO_REALISTIC_3D,
+    productName: faker.word.sample(),
+    producerName: faker.word.sample(),
+    productVersion: faker.number.int(),
   };
 };
 
