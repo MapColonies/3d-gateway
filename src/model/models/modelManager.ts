@@ -125,13 +125,13 @@ export class ModelManager {
     });
 
     const deletePayload: StoreTriggerDeletePayload = {
-      modelId: results[0].id!,
+      modelId: results[0].id,
       productId: results[0].productId!,
       productVersion: results[0].productVersion!,
       productName: results[0].productName!,
       productType: results[0].productType!,
       producerName: results[0].producerName!,
-    }
+    };
 
     const result = await this.storeTrigger.startDeleteJob(deletePayload);
     // change catalog delete status

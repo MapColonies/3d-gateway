@@ -18,6 +18,6 @@ export interface StoreTriggerDeletePayload {
   productId: string; // resourceId in job
   productVersion: number;
   productName: string;
-  productType: string; 
+  productType: string;
   producerName: string;
 }
