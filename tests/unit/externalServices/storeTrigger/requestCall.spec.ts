@@ -32,7 +32,7 @@ describe('StoreTriggerCall', () => {
 
       const created = await storeTrigger.startIngestion(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/ingestion`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/jobOperations/ingestion`, request);
       expect(created).toMatchObject(expected);
     });
 
@@ -75,7 +75,7 @@ describe('StoreTriggerCall', () => {
 
       const deleteResponse = await storeTrigger.startDeleteJob(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/delete`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/jobOperations/delete`, request);
       expect(deleteResponse).toMatchObject(expected);
     });
 
@@ -86,7 +86,7 @@ describe('StoreTriggerCall', () => {
 
       const deletePromise = storeTrigger.startDeleteJob(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/delete`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/jobOperations/delete`, request);
       await expect(deletePromise).rejects.toThrow('store-trigger is not available');
     });
 
@@ -105,7 +105,7 @@ describe('StoreTriggerCall', () => {
 
       const deletePromise = storeTrigger.startDeleteJob(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/delete`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/jobOperations/delete`, request);
       await expect(deletePromise).rejects.toThrow('ERROR_STORE_TRIGGER_ERROR');
     });
   });
