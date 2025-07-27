@@ -7,7 +7,7 @@ global:
   tracing: {}
   metrics: {}
   environment: development
-  
+
   providers:
     source: NFS
     destination: S3
