@@ -35,7 +35,7 @@ export class StoreTriggerCall {
       modelId: payload.modelId,
     });
     try {
-      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/delete`, payload);
+      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/jobOperations/delete`, payload);
       this.logger.info({
         msg: 'sent delete to store-trigger successfully',
         logContext,
@@ -71,7 +71,7 @@ export class StoreTriggerCall {
       flowPayload: payload,
     });
     try {
-      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/ingestion`, payload);
+      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/jobOperations/ingestion`, payload);
       this.logger.info({
         msg: 'sent Ingestion to store-trigger successfully',
         logContext,
