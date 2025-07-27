@@ -3,7 +3,7 @@ security: []
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.6.1
+  version: 2.7.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
