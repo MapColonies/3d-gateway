@@ -14,11 +14,12 @@ export const fakeS3Config = (bucket: string): S3Config => {
 };
 
 export const storeTriggerMock = {
-  postPayload: jest.fn(),
+  startIngestion: jest.fn(),
+  startDeleteJob: jest.fn(),
 };
 
 export const validationManagerMock = {
-  isMetadataValid: jest.fn(),
+  isMetadataValidForIngestion: jest.fn(),
   isModelPathValid: jest.fn(),
   isPathExist: jest.fn(),
   validateUpdate: jest.fn(),

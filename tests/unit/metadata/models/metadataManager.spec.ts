@@ -1,6 +1,7 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
+import { RecordStatus } from '@map-colonies/types';
 import { AppError } from '../../../../src/common/appError';
 import { UpdatePayload } from '../../../../src/common/interfaces';
 import { createRecord, createUpdatePayload, createUpdateStatusPayload } from '../../../helpers/helpers';
@@ -78,10 +79,22 @@ describe('MetadataManager', () => {
       expect(response).toMatchObject(payload);
     });
 
-    it(`rejects if update's validation failed`, async () => {
+    it(`rejects if update's validation failed with non-existing record`, async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(undefined);
+
+      const response = metadataManager.updateStatus(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+    });
+
+    it(`rejects if update's validation failed when recieving record that is in Being-Deleted state`, async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdateStatusPayload();
+      const record = createRecord();
+      record.productStatus = RecordStatus.BEING_DELETED;
+      catalogMock.getRecord.mockResolvedValue(record);
 
       const response = metadataManager.updateStatus(identifier, payload);
 

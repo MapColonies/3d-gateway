@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
 import { faker } from '@faker-js/faker';
 import config from 'config';
+import { RecordStatus } from '@map-colonies/types';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
   createUpdatePayload,
@@ -149,7 +150,7 @@ describe('MetadataController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `request/body/footprint/coordinates must NOT have fewer than 2 items, request/body/footprint/coordinates/0 must be number, request/body/footprint/type must be equal to one of the allowed values: LineString, request/body/footprint/coordinates must NOT have fewer than 2 items, request/body/footprint/coordinates/0 must NOT have more than 3 items, request/body/footprint/coordinates/0/0 must be number, request/body/footprint/coordinates/0/1 must be number, request/body/footprint/coordinates/0/2 must be number, request/body/footprint/coordinates/0/3 must be number, request/body/footprint/type must be equal to one of the allowed values: Polygon, request/body/footprint/type must be equal to one of the allowed values: MultiPoint, request/body/footprint/coordinates/0 must NOT have more than 3 items, request/body/footprint/coordinates/0/0 must be number, request/body/footprint/coordinates/0/1 must be number, request/body/footprint/coordinates/0/2 must be number, request/body/footprint/coordinates/0/3 must be number, request/body/footprint/type must be equal to one of the allowed values: MultiLineString, request/body/footprint/type must be equal to one of the allowed values: MultiPolygon, request/body/footprint/coordinates/0/0 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/0/0 must be array, request/body/footprint/coordinates/0/0/1 must be array, request/body/footprint/coordinates/0/1 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/1/0 must be array, request/body/footprint/coordinates/0/1/1 must be array, request/body/footprint/coordinates/0/2 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/2/0 must be array, request/body/footprint/coordinates/0/2/1 must be array, request/body/footprint/coordinates/0/3 must NOT have fewer than 4 items, request/body/footprint/coordinates/0/3/0 must be array, request/body/footprint/coordinates/0/3/1 must be array, request/body/footprint must match a schema in anyOf`
+          `request/body/footprint/coordinates must NOT have fewer than 2 items, request/body/footprint/type must be equal to one of the allowed values: LineString, request/body/footprint/type must be equal to one of the allowed values: Polygon, request/body/footprint/type must be equal to one of the allowed values: MultiPoint, request/body/footprint/type must be equal to one of the allowed values: MultiLineString, request/body/footprint/type must be equal to one of the allowed values: MultiPolygon, request/body/footprint must match a schema in anyOf`
         );
         expect(response).toSatisfyApiSpec();
       });
@@ -228,6 +229,26 @@ describe('MetadataController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_UNIQUE);
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it(`Should return 400 status code if record product status is 'Being-Deleted'`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        const expected = createRecord();
+        const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        record.productStatus = RecordStatus.BEING_DELETED;
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', `Can't update record that is being deleted`);
         expect(response).toSatisfyApiSpec();
       });
     });

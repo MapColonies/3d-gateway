@@ -11,4 +11,12 @@ export class ModelRequestSender {
   public async validate(payload: IngestionValidatePayload): Promise<supertest.Response> {
     return supertest.agent(this.app).post('/models/validate').set('Content-Type', 'application/json').send(payload);
   }
+
+  public async validateDeleteById(id: string): Promise<supertest.Response> {
+    return supertest.agent(this.app).get(`/models/canDelete/${id}`).set('Content-Type', 'application/json');
+  }
+
+  public async deleteModel(id: string): Promise<supertest.Response> {
+    return supertest.agent(this.app).delete(`/models/${id}`).set('Content-Type', 'application/json');
+  }
 }

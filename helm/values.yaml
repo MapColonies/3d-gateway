@@ -1,41 +1,41 @@
 global:
   cloudProvider:
-    dockerRegistryUrl: 
+    dockerRegistryUrl: registry
     flavor: openshift
-    imagePullSecretName: 
+    imagePullSecretName:
   imagePullPolicy: IfNotPresent
   tracing: {}
   metrics: {}
   environment: development
-  
+
   providers:
     source: NFS
-    destination: S3 
+    destination: S3
 
   S3:
     accessKey: ''
     secretAccessKey: ''
     server: ''
-    serverPort: 
+    serverPort:
     serverProto: ''
     bucket: ''
     region: ''
     style: ''
     sslEnabled: false
-    maxAttempts: 
-    sigVersion: 
+    maxAttempts:
+    sigVersion:
 
-  NFS:  
+  NFS:
     name: ''
     pv_path: ''
     sub_path: ''
 
 cloudProvider:
-    dockerRegistryUrl: 
-    flavor: 
-    imagePullSecretName: 
-imagePullPolicy: 
-environment: 
+  dockerRegistryUrl:
+  flavor:
+  imagePullSecretName:
+imagePullPolicy:
+environment:
 
 image:
   repository: 3d-gateway
@@ -43,7 +43,7 @@ image:
 
 nodePort: 30030
 replicaCount: 1
-revisionHistoryLimit: 5 # Amount of revisions we keep
+revisionHistoryLimit: 5    # Amount of revisions we keep
 
 livenessProbe:
   enabled: true
@@ -62,9 +62,9 @@ readinessProbe:
 ca:
   enabled: false
   useExternal: false
-  secretName: 
-  path: 
-  key: 
+  secretName:
+  path:
+  key:
 
 extraVolumes: {}
 
@@ -75,23 +75,23 @@ sidecars: {}
 podAnnotations: {}
 
 providers:
-  source: 
-  destination: 
+  source:
+  destination:
 
 S3:
   accessKey: ''
   secretAccessKey: ''
   server: ''
-  serverPort: 
+  serverPort:
   serverProto: ''
   bucket: ''
   region: ''
   style: ''
   sslEnabled: false
-  maxAttempts: 
-  sigVersion: 
+  maxAttempts:
+  sigVersion:
 
-NFS:  
+NFS:
   name: ''
   pv_path: ''
   sub_path: ''
@@ -135,10 +135,10 @@ resources:
 route:
   enabled: false
   path: /
-  host: 
+  host:
   timeout:
-    enabled: false # defaults to 30s by openshift
-    duration: 60s # supported units (us, ms, s, m, h, d)
+    enabled: false    # defaults to 30s by openshift
+    duration: 60s    # supported units (us, ms, s, m, h, d)
   rewriteTarget: ''
   tls:
     enabled: true

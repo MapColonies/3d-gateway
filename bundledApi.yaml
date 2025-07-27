@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: 3d-gateway
   description: Validating and routing requests
-  version: 2.5.1
+  version: 2.6.1
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -49,6 +49,78 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/payloadForValidation'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validateResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /models/{recordId}:
+    delete:
+      tags:
+        - models
+      summary: Delete model by record Id
+      description: Model removal can only be done by manager.
+      operationId: deleteModel
+      parameters:
+        - name: recordId
+          in: path
+          description: The model Id that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Delete Job Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/job'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '500':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /models/canDelete/{recordId}:
+    get:
+      tags:
+        - models
+      summary: Validate if record can be removed
+      description: ''
+      operationId: validateDeleteById
+      parameters:
+        - name: recordId
+          in: path
+          description: 'The name that needs to be fetched. Use user1 for testing. '
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -618,7 +690,7 @@ components:
           description: Area inside the region
         productStatus:
           type: string
-          pattern: ^(UNPUBLISHED|PUBLISHED)$
+          pattern: ^(UNPUBLISHED|PUBLISHED|BEING_DELETED)$
           default: UNPUBLISHED
           description: The status of the model
         keywords:
@@ -943,7 +1015,7 @@ components:
           description: Area inside the region
         productStatus:
           type: string
-          pattern: ^(UNPUBLISHED|PUBLISHED)$
+          pattern: ^(UNPUBLISHED|PUBLISHED|BEING_DELETED)$
           default: UNPUBLISHED
           description: The status of the model
         productSource:
@@ -998,6 +1070,6 @@ components:
         productStatus:
           type: string
           nullable: false
-          pattern: ^(UNPUBLISHED|PUBLISHED)$
+          pattern: ^(UNPUBLISHED|PUBLISHED|BEING_DELETED)$
           description: The status of the model
       additionalProperties: false

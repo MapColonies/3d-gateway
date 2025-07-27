@@ -4,7 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { union, intersect, area, featureCollection, polygon } from '@turf/turf';
 import { Feature, MultiPolygon, Polygon, Position } from 'geojson';
-import { ProductType } from '@map-colonies/mc-model-types';
+import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
 import Ajv from 'ajv';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
@@ -81,8 +81,8 @@ export class ValidationManager {
   }
 
   @withSpanAsyncV4
-  public async isMetadataValid(metadata: MetaDataType, modelPolygon: Polygon): Promise<ValidationResponse> {
-    const logContext = { ...this.logContext, function: this.isMetadataValid.name };
+  public async isMetadataValidForIngestion(metadata: MetaDataType, modelPolygon: Polygon): Promise<ValidationResponse> {
+    const logContext = { ...this.logContext, function: this.isMetadataValidForIngestion.name };
     this.logger.debug({
       msg: 'metadataValid started',
       metadata,
@@ -149,6 +149,11 @@ export class ValidationManager {
 
     if (record === undefined) {
       refReason.outFailedReason = `Record with identifier: ${identifier} doesn't exist!`;
+      return false;
+    }
+
+    if (record.productStatus == RecordStatus.BEING_DELETED) {
+      refReason.outFailedReason = `Can't update record that is being deleted`;
       return false;
     }
 

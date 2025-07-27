@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { Tracer, trace } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { THREE_D_CONVENTIONS } from '@map-colonies/telemetry/conventions';
+import { RecordStatus } from '@map-colonies/types';
 import { SERVICES } from '../../common/constants';
 import { FailedReason, ValidationManager } from '../../validator/validationManager';
 import { AppError } from '../../common/appError';
@@ -105,8 +106,11 @@ export class MetadataManager {
     });
 
     try {
-      if ((await this.catalog.getRecord(identifier)) === undefined) {
+      const record3D = await this.catalog.getRecord(identifier);
+      if (record3D === undefined) {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, `Record with identifier: ${identifier} doesn't exist!`, true);
+      } else if (record3D.productStatus == RecordStatus.BEING_DELETED) {
+        throw new AppError('badRequest', StatusCodes.BAD_REQUEST, `Can't change status of record that is being deleted`, true);
       }
       this.logger.info({
         msg: 'model validated successfully',

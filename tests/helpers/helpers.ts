@@ -5,7 +5,7 @@ import { Polygon } from 'geojson';
 import { faker } from '@faker-js/faker';
 import { Layer3DMetadata, ProductType, RecordStatus, RecordType } from '@map-colonies/mc-model-types';
 import { IngestionPayload, UpdatePayload, UpdateStatusPayload } from '../../src/common/interfaces';
-import { StoreTriggerPayload } from '../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerDeletePayload, StoreTriggerIngestionPayload } from '../../src/externalServices/storeTrigger/interfaces';
 import { ILookupOption } from '../../src/externalServices/lookupTables/interfaces';
 import { Record3D } from '../../src/externalServices/catalog/interfaces';
 
@@ -169,12 +169,23 @@ export const createIngestionPayload = (modelName = 'Sphere'): IngestionPayload =
   };
 };
 
-export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerPayload => {
+export const createStoreTriggerPayload = (pathToTileset: string): StoreTriggerIngestionPayload => {
   return {
     modelId: faker.string.uuid(),
     pathToTileset,
     tilesetFilename: createTilesetFileName(),
     metadata: createMetadata(),
+  };
+};
+
+export const createStoreTriggerDeletePayload = (modelId: string = faker.string.uuid()): StoreTriggerDeletePayload => {
+  return {
+    modelId: modelId,
+    productId: modelId,
+    productType: ProductType.PHOTO_REALISTIC_3D,
+    productName: faker.word.sample(),
+    producerName: faker.word.sample(),
+    productVersion: faker.number.int(),
   };
 };
 

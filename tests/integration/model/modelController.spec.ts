@@ -2,12 +2,12 @@ import { sep } from 'node:path';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { StatusCodes } from 'http-status-codes';
-import { ProductType } from '@map-colonies/mc-model-types';
+import { ProductType, RecordStatus } from '@map-colonies/mc-model-types';
 import mockAxios from 'jest-mock-axios';
 import { faker } from '@faker-js/faker';
 import { register } from 'prom-client';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
   createMetadata,
@@ -34,7 +34,7 @@ import {
   ERROR_METADATA_PRODUCT_NAME_UNIQUE,
 } from '../../../src/validator/validationManager';
 import { ERROR_STORE_TRIGGER_ERROR } from '../../../src/model/models/modelManager';
-import { StoreTriggerPayload, StoreTriggerResponse } from '../../../src/externalServices/storeTrigger/interfaces';
+import { StoreTriggerIngestionPayload, StoreTriggerResponse } from '../../../src/externalServices/storeTrigger/interfaces';
 import { StoreTriggerCall } from '../../../src/externalServices/storeTrigger/storeTriggerCall';
 import { ModelRequestSender } from './helpers/requestSender';
 
@@ -64,7 +64,7 @@ describe('ModelController', function () {
         'should return 201 status code and the added model for %p',
         async (testInput: string) => {
           const payload = createIngestionPayload(testInput);
-          const expected: StoreTriggerPayload = {
+          const expected: StoreTriggerIngestionPayload = {
             ...payload,
             metadata: createMetadata(),
             pathToTileset: getModelNameByPath(payload.modelPath),
@@ -79,7 +79,7 @@ describe('ModelController', function () {
           mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
           mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
-          const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
+          const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'startIngestion');
 
           const response = await requestSender.createModel(payload);
 
@@ -151,7 +151,7 @@ describe('ModelController', function () {
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.post.mockResolvedValueOnce({ data: storeTriggerResult });
 
-        const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'postPayload');
+        const storeTriggerCallPostPayloadSpy = jest.spyOn(StoreTriggerCall.prototype, 'startIngestion');
 
         const response = await requestSender.createModel(payload);
 
@@ -516,7 +516,7 @@ describe('ModelController', function () {
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty(
           'message',
-          `request/body/metadata/footprint/coordinates must NOT have fewer than 2 items, request/body/metadata/footprint/coordinates/0 must be number, request/body/metadata/footprint/type must be equal to one of the allowed values: LineString, request/body/metadata/footprint/coordinates must NOT have fewer than 2 items, request/body/metadata/footprint/coordinates/0 must NOT have more than 3 items, request/body/metadata/footprint/coordinates/0/0 must be number, request/body/metadata/footprint/coordinates/0/1 must be number, request/body/metadata/footprint/coordinates/0/2 must be number, request/body/metadata/footprint/coordinates/0/3 must be number, request/body/metadata/footprint/type must be equal to one of the allowed values: Polygon, request/body/metadata/footprint/type must be equal to one of the allowed values: MultiPoint, request/body/metadata/footprint/coordinates/0 must NOT have more than 3 items, request/body/metadata/footprint/coordinates/0/0 must be number, request/body/metadata/footprint/coordinates/0/1 must be number, request/body/metadata/footprint/coordinates/0/2 must be number, request/body/metadata/footprint/coordinates/0/3 must be number, request/body/metadata/footprint/type must be equal to one of the allowed values: MultiLineString, request/body/metadata/footprint/type must be equal to one of the allowed values: MultiPolygon, request/body/metadata/footprint/coordinates/0/0 must NOT have fewer than 4 items, request/body/metadata/footprint/coordinates/0/0/0 must be array, request/body/metadata/footprint/coordinates/0/0/1 must be array, request/body/metadata/footprint/coordinates/0/1 must NOT have fewer than 4 items, request/body/metadata/footprint/coordinates/0/1/0 must be array, request/body/metadata/footprint/coordinates/0/1/1 must be array, request/body/metadata/footprint/coordinates/0/2 must NOT have fewer than 4 items, request/body/metadata/footprint/coordinates/0/2/0 must be array, request/body/metadata/footprint/coordinates/0/2/1 must be array, request/body/metadata/footprint/coordinates/0/3 must NOT have fewer than 4 items, request/body/metadata/footprint/coordinates/0/3/0 must be array, request/body/metadata/footprint/coordinates/0/3/1 must be array, request/body/metadata/footprint must match a schema in anyOf`
+          `request/body/metadata/footprint/coordinates must NOT have fewer than 2 items, request/body/metadata/footprint/type must be equal to one of the allowed values: LineString, request/body/metadata/footprint/type must be equal to one of the allowed values: Polygon, request/body/metadata/footprint/type must be equal to one of the allowed values: MultiPoint, request/body/metadata/footprint/type must be equal to one of the allowed values: MultiLineString, request/body/metadata/footprint/type must be equal to one of the allowed values: MultiPolygon, request/body/metadata/footprint must match a schema in anyOf`
         );
         expect(response).toSatisfyApiSpec();
       });
@@ -641,6 +641,158 @@ describe('ModelController', function () {
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('message', ERROR_STORE_TRIGGER_ERROR);
+        expect(response).toSatisfyApiSpec();
+      });
+    });
+  });
+
+  describe('DELETE /models/{recordId}', () => {
+    describe('Happy Path 🙂', () => {
+      it('should return 200 status with store trigger response', async function () {
+        const expectedResponse: StoreTriggerResponse = {
+          jobId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+          status: OperationStatus.IN_PROGRESS,
+        };
+
+        const expectedRecord = createRecord();
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedResponse });
+
+        const expectedRecordAfterDelete = { ...expectedRecord };
+        expectedRecordAfterDelete.productStatus = RecordStatus.BEING_DELETED;
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedRecordAfterDelete });
+
+        const response = await requestSender.deleteModel(expectedRecord.id);
+
+        expect(response.status).toBe(StatusCodes.OK);
+
+        expect(response.body).toStrictEqual(expectedResponse);
+        expect(response).toSatisfyApiSpec();
+      });
+    });
+
+    describe('Bad Path 😡', () => {
+      it('should return 400 status when store trigger response is 400', async function () {
+        const expectedRecord = createRecord();
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
+
+        class MyAxiosError implements AxiosError, Error {
+          public readonly name: string;
+          public readonly message: string;
+          public readonly code: string;
+          public readonly status: string;
+          public readonly isAxiosError: boolean;
+          public readonly config: AxiosRequestConfig;
+          public readonly response?: AxiosResponse;
+
+          public constructor() {
+            this.name = 'MyAxiosError';
+            this.isAxiosError = true;
+            this.config = {} as unknown as AxiosRequestConfig;
+            this.message = 'failed with 400';
+            this.code = '400';
+            this.status = 'ERR_BAD_REQUEST';
+            this.response = {
+              data: {},
+              status: 400,
+              statusText: 'BAD_REQUEST',
+              headers: {},
+              config: {},
+            };
+          }
+
+          public toJSON(): object {
+            return {
+              message: this.message,
+              code: this.code,
+            };
+          }
+        }
+
+        mockAxios.post.mockRejectedValueOnce(new MyAxiosError());
+
+        const response = await requestSender.deleteModel(expectedRecord.id);
+
+        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('message', 'failed with 400');
+        expect(response).toSatisfyApiSpec();
+      });
+    });
+
+    describe('Sad Path 😥, validate', () => {
+      it('should return 500 status when store trigger response is 500', async function () {
+        const expectedRecord = createRecord();
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
+        mockAxios.post.mockRejectedValueOnce(new Error('failed with 500'));
+
+        const response = await requestSender.deleteModel(expectedRecord.id);
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'failed with 500');
+        expect(response).toSatisfyApiSpec();
+      });
+
+      it('should return 500 status if change status to BEING_DELETED returns Published', async function () {
+        const expectedResponse: StoreTriggerResponse = {
+          jobId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+          status: OperationStatus.IN_PROGRESS,
+        };
+
+        const expectedRecord = createRecord();
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedResponse });
+
+        const expectedRecordAfterDelete = { ...expectedRecord };
+        expectedRecordAfterDelete.productStatus = RecordStatus.PUBLISHED;
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedRecordAfterDelete });
+
+        const response = await requestSender.deleteModel(expectedRecord.id);
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'Delete Job Created, But failed to change the record status to BEING_DELETED');
+        expect(response).toSatisfyApiSpec();
+      });
+    });
+  });
+
+  describe('GET /models/canDelete/{recordId}', () => {
+    describe('Happy Path 🙂', () => {
+      it('should return 200 status with validated response', async function () {
+        const expectedResponse: ValidationResponse = {
+          isValid: true,
+        };
+
+        const expectedRecord = createRecord();
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
+
+        const response = await requestSender.validateDeleteById(expectedRecord.id);
+
+        expect(response.status).toBe(StatusCodes.OK);
+        expect(response.body).toStrictEqual(expectedResponse);
+        expect(response).toSatisfyApiSpec();
+      });
+    });
+
+    describe('Bad Path 😡', function () {});
+
+    describe('Sad Path 😥, validate', () => {
+      it('should return 500 status when find fails', async function () {
+        mockAxios.post.mockRejectedValueOnce(new Error('failed with 500'));
+
+        const response = await requestSender.validateDeleteById('id');
+
+        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+        expect(response.body).toHaveProperty('message', 'Problem with catalog find');
         expect(response).toSatisfyApiSpec();
       });
     });

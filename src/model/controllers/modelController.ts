@@ -7,9 +7,12 @@ import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationRespo
 import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { getSimplifiedProductName } from '../models/utilities';
+import { MetadataParams } from '../../externalServices/catalog/interfaces';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
 type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionValidatePayload>;
+type DeleteModelHandler = RequestHandler<MetadataParams, StoreTriggerResponse, undefined>;
+type CanDeleteModelHandler = RequestHandler<MetadataParams, ValidationResponse, undefined>;
 
 @injectable()
 export class ModelController {
@@ -41,6 +44,40 @@ export class ModelController {
     }
   };
 
+  public deleteModel: DeleteModelHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.deleteModel.name };
+    const { identifier } = req.params;
+    try {
+      const response = await this.manager.deleteModel(identifier);
+      return res.status(StatusCodes.OK).json(response);
+    } catch (err) {
+      this.logger.error({
+        msg: `Failed in deleting model!`,
+        logContext,
+        err,
+        identifier,
+      });
+      return next(err);
+    }
+  };
+
+  public validateDeleteById: CanDeleteModelHandler = async (req, res, next) => {
+    const logContext = { ...this.logContext, function: this.validateDeleteById.name };
+    const { identifier } = req.params;
+    try {
+      const response = await this.manager.validateDeleteByRecordId(identifier);
+      return res.status(StatusCodes.OK).json(response);
+    } catch (err) {
+      this.logger.error({
+        msg: `Failed to validate delete`,
+        logContext,
+        err,
+        identifier,
+      });
+      return next(err);
+    }
+  };
+
   public validate: ValidateModelHandler = async (req, res, next) => {
     const logContext = { ...this.logContext, function: this.validate.name };
     const payload = req.body;
@@ -55,7 +92,7 @@ export class ModelController {
         payload.metadata.productName = getSimplifiedProductName(payload.metadata.productName);
       }
 
-      const response = await this.manager.validateModel(payload);
+      const response = await this.manager.validateModelForIngestion(payload);
       this.logger.info({
         msg: 'model validate ended',
         logContext,
