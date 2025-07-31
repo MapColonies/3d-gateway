@@ -2,6 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { RequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
+import { RecordStatus } from '@map-colonies/types';
 import { SERVICES } from '../../common/constants';
 import { IngestionPayload, IngestionValidatePayload, LogContext, ValidationResponse } from '../../common/interfaces';
 import { ModelManager } from '../models/modelManager';
@@ -31,6 +32,8 @@ export class ModelController {
       if (payload.metadata.productName != undefined) {
         payload.metadata.productName = getSimplifiedProductName(payload.metadata.productName);
       }
+      payload.metadata.productStatus = RecordStatus.UNPUBLISHED;
+
       const response = await this.manager.createModel(payload);
       return res.status(StatusCodes.CREATED).json(response);
     } catch (err) {
