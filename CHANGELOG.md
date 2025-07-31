@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.2](https://github.com/MapColonies/3d-gateway/compare/v2.7.1...v2.7.2) (2025-07-31)
+
+
+### Bug Fixes
+
+* fix Ingestion Is Published Bug (MAPCO-8412) ([#37](https://github.com/MapColonies/3d-gateway/issues/37)) ([d2dac26](https://github.com/MapColonies/3d-gateway/commit/d2dac26528dd6c993976c3f743cb74345d70e4c8))
+
 ### [2.7.1](https://github.com/MapColonies/3d-gateway/compare/v2.7.0...v2.7.1) (2025-07-27)
 
 
