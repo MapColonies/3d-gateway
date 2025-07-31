@@ -8,6 +8,7 @@ import { ModelManager } from '../models/modelManager';
 import { StoreTriggerResponse } from '../../externalServices/storeTrigger/interfaces';
 import { getSimplifiedProductName } from '../models/utilities';
 import { MetadataParams } from '../../externalServices/catalog/interfaces';
+import { RecordStatus } from '@map-colonies/types';
 
 type CreateModelHandler = RequestHandler<undefined, StoreTriggerResponse, IngestionPayload>;
 type ValidateModelHandler = RequestHandler<undefined, ValidationResponse, IngestionValidatePayload>;
@@ -31,6 +32,8 @@ export class ModelController {
       if (payload.metadata.productName != undefined) {
         payload.metadata.productName = getSimplifiedProductName(payload.metadata.productName);
       }
+      payload.metadata.productStatus = RecordStatus.UNPUBLISHED;
+      
       const response = await this.manager.createModel(payload);
       return res.status(StatusCodes.CREATED).json(response);
     } catch (err) {
