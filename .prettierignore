@@ -14,3 +14,4 @@ coverage
 helm
 reports
 tests/helpers/3DModels/Sphere/invalidTileset.json
+.release-please-manifest.json
