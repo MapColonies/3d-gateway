@@ -6,7 +6,6 @@ global:
   imagePullPolicy: IfNotPresent
   tracing: {}
   metrics: {}
-  environment: development
 
   providers:
     source: NFS
@@ -35,7 +34,12 @@ cloudProvider:
   flavor:
   imagePullSecretName:
 imagePullPolicy:
-environment:
+mcLabelsAndAnnotations:
+    environment: development
+    component: backend
+    partOf: 3D-Ingestion
+    owner: 3d
+    gisDomain: 3d
 
 image:
   repository: 3d-gateway
