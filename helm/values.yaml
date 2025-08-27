@@ -34,12 +34,14 @@ cloudProvider:
   flavor:
   imagePullSecretName:
 imagePullPolicy:
+
 mcLabelsAndAnnotations:
     component: backend
     partOf: ingestion
     owner: 3d
     gisDomain: 3d
-    prometheus.enabled: true
+    prometheus:
+      enabled: true
 
 image:
   repository: 3d-gateway
