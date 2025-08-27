@@ -37,7 +37,7 @@ imagePullPolicy:
 mcLabelsAndAnnotations:
     environment: development
     component: backend
-    partOf: 3D-Ingestion
+    partOf: ingestion
     owner: 3d
     gisDomain: 3d
 
