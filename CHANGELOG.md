@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.2](https://github.com/MapColonies/3d-gateway/compare/v2.6.1...v2.6.2) (2025-08-28)
+
+
+### Bug Fixes
+
+* update metadata with same product name (MAPCO-8593) ([#44](https://github.com/MapColonies/3d-gateway/issues/44)) ([023c6bb](https://github.com/MapColonies/3d-gateway/commit/023c6bba0ead779a0bae9d93f96bda14204c0772))
+
 ### [2.6.1](https://github.com/MapColonies/3d-gateway/compare/v2.6.0...v2.6.1) (2025-06-16)
 
 
