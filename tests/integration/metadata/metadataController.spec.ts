@@ -77,7 +77,7 @@ describe('MetadataController', function () {
         const payload = createUpdatePayload();
         const expected = createRecord();
         const record = createRecord();
-        record.id = identifier
+        record.id = identifier;
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
