@@ -18,7 +18,6 @@ metadata:
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
-    environment: {{ include "gateway.environment" . }}
     release: {{ $releaseName }}
     {{- include "gateway.labels" . | nindent 4 }}
 spec:
@@ -38,6 +37,7 @@ spec:
         run: {{ $fullName }}
         {{- include "gateway.selectorLabels" . | nindent 8 }}
       annotations:
+        {{ include "mc-labels-and-annotations.annotations" . | nindent 8 }}
         {{ include "merged.podAnnotations" . | nindent 8 }}
       {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}

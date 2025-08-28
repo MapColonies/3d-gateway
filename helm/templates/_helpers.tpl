@@ -36,6 +36,7 @@ helm.sh/chart: {{ include "gateway.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{ include "mc-labels-and-annotations.labels" . }}
 {{- end }}
 
 {{/*
@@ -44,18 +45,8 @@ Selector labels
 {{- define "gateway.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "gateway.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "mc-labels-and-annotations.selectorLabels" . }}
 {{- end }}
-
-{{/*
-Returns the environment from the chart's values if exists or from global, defaults to development
-*/}}
-{{- define "gateway.environment" -}}
-{{- if .Values.environment }}
-    {{- .Values.environment -}}
-{{- else -}}
-    {{- .Values.global.environment | default "development" -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Returns the cloud provider name from the chart's values if exists or from global, defaults to minikube
