@@ -72,6 +72,25 @@ describe('MetadataController', function () {
         expect(response).toSatisfyApiSpec();
       });
 
+      it(`Should return 200 status code if record product name is my name (unique)`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        const expected = createRecord();
+        const record = createRecord();
+        record.id = identifier
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [record] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const response = await requestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
+      });
+
       it(`Should return 200 status code and metadata if payload is valid and footprint is 3D and pass footprint 2D to catalog`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload('Sphere');
