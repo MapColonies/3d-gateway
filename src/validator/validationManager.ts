@@ -204,8 +204,8 @@ export class ValidationManager {
 
     if (payload.productName != undefined) {
       const records = await this.catalog.findRecords({ productName: payload.productName });
-      const differentRecordsWithSameName = records.filter((recordWithSameName) => recordWithSameName.id !== identifier);
-      if (differentRecordsWithSameName.length > 0) {
+      const differentRecordsWithSameNameExists = records.some((recordWithSameName) => recordWithSameName.id !== identifier);
+      if (differentRecordsWithSameNameExists) {
         refReason.outFailedReason = ERROR_METADATA_PRODUCT_NAME_UNIQUE!;
         return false;
       }
