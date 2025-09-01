@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.3](https://github.com/MapColonies/3d-gateway/compare/v2.7.2...v2.7.3) (2025-09-01)
+
+
+### Bug Fixes
+
+* enable update of metadata when same name is used (MAPCO-8593) ([#43](https://github.com/MapColonies/3d-gateway/issues/43)) ([37489d4](https://github.com/MapColonies/3d-gateway/commit/37489d41ea612d2aa5c8ffa2e98617b142cc0a93))
+
+
+### Helm Changes
+
+* add mc labels and annotations package (MAPCO-8562) ([#41](https://github.com/MapColonies/3d-gateway/issues/41)) ([be8ddb9](https://github.com/MapColonies/3d-gateway/commit/be8ddb9374460f3902d7fe8003a55d9b4832c962))
+
 ## [2.7.2](https://github.com/MapColonies/3d-gateway/compare/v2.7.1...v2.7.2) (2025-07-31)
 
 
