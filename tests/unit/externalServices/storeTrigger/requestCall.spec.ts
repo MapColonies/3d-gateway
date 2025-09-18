@@ -55,7 +55,7 @@ describe('StoreTriggerCall', () => {
         message: 'ERROR_STORE_TRIGGER_ERROR',
         isAxiosError: true,
       };
-      mockAxios.post.mockRejectedValueOnce(error as AxiosError);
+      mockAxios.post.mockRejectedValueOnce(error as unknown as AxiosError);
 
       const createPromise = storeTrigger.startIngestion(request);
 
@@ -101,7 +101,7 @@ describe('StoreTriggerCall', () => {
         message: 'ERROR_STORE_TRIGGER_ERROR',
         isAxiosError: true,
       };
-      mockAxios.post.mockRejectedValueOnce(error as AxiosError);
+      mockAxios.post.mockRejectedValueOnce(error as unknown as AxiosError);
 
       const deletePromise = storeTrigger.startDeleteJob(request);
 
