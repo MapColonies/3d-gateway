@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.4](https://github.com/MapColonies/3d-gateway/compare/v2.7.3...v2.7.4) (2025-09-18)
+
+
+### Dependency Updates
+
+* upgrade storage-explorer-middleware from v1.2.5 to v1.3.0 (MAPCO-8722) ([#46](https://github.com/MapColonies/3d-gateway/issues/46)) ([3d9d2d4](https://github.com/MapColonies/3d-gateway/commit/3d9d2d42cbe47bc5da8d6d0fe3ef84d4770a7619))
+
 ## [2.7.3](https://github.com/MapColonies/3d-gateway/compare/v2.7.2...v2.7.3) (2025-09-01)
 
 
