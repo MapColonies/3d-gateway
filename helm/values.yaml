@@ -45,7 +45,7 @@ mcLabelsAndAnnotations:
 
 image:
   repository: 3d-gateway
-  tag: v2.7.4
+  tag:
 
 nodePort: 30030
 replicaCount: 1
