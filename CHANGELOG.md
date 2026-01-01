@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.5](https://github.com/MapColonies/3d-gateway/compare/v2.7.4...v2.7.5) (2026-01-01)
+
+
+### Bug Fixes
+
+* remove tag value ([#49](https://github.com/MapColonies/3d-gateway/issues/49)) ([31f5778](https://github.com/MapColonies/3d-gateway/commit/31f57787ac8bc5d048c7706a46f413faaa85f70d))
+
 ## [2.7.4](https://github.com/MapColonies/3d-gateway/compare/v2.7.3...v2.7.4) (2025-09-18)
 
 
