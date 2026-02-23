@@ -112,6 +112,8 @@ export class MetadataManager {
       } else if (record3D.productStatus == RecordStatus.BEING_DELETED) {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, `Can't change status of record that is being deleted`, true);
       }
+
+      // TODO: add validation on the extractable
       this.logger.info({
         msg: 'model validated successfully',
         logContext,

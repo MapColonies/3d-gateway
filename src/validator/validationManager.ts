@@ -16,6 +16,7 @@ import { CatalogCall } from '../externalServices/catalog/catalogCall';
 import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
+import { ExtractableCall } from '../externalServices/extractable-management/extractableCall';
 
 export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
 export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
@@ -25,6 +26,7 @@ export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supporte
 export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
 export const ERROR_METADATA_ERRORED_TILESET = `File tileset validation failed`;
 export const ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL = `Wrong footprint! footprint's coordinates is not even close to the model!`;
+export const ERROR_METADATA_PRODUCT_NAME_CONFLICT = `record with this product name exists in extractable service`;
 
 export interface FailedReason {
   outFailedReason: string;
@@ -41,6 +43,7 @@ export class ValidationManager {
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
     @inject(CatalogCall) private readonly catalog: CatalogCall,
+    @inject(ExtractableCall) private readonly extractable: ExtractableCall,
     @inject(SERVICES.PROVIDER) private readonly provider: Provider
   ) {
     this.logContext = {
@@ -150,6 +153,15 @@ export class ValidationManager {
     if (record === undefined) {
       refReason.outFailedReason = `Record with identifier: ${identifier} doesn't exist!`;
       return false;
+    }
+
+    const isExtractableManagementEnabled = this.config.get<boolean>('enableServices.extractable.extractableManagement');
+    if (isExtractableManagementEnabled) {
+      const existsInExtractable = await this.extractable.isExtractableRecordExists(record.producerName!);
+      if (existsInExtractable) {
+        refReason.outFailedReason = ERROR_METADATA_PRODUCT_NAME_CONFLICT;
+        return false;
+      }
     }
 
     if (record.productStatus == RecordStatus.BEING_DELETED) {

@@ -13,6 +13,7 @@ import {
   ERROR_METADATA_DATE,
   ERROR_METADATA_ERRORED_TILESET,
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+  ERROR_METADATA_PRODUCT_NAME_CONFLICT,
   ERROR_METADATA_PRODUCT_NAME_UNIQUE,
   ERROR_METADATA_RESOLUTION,
   FailedReason,
@@ -31,7 +32,7 @@ import {
   getBasePath,
   createWrongFootprintMixed2D3D,
 } from '../../helpers/helpers';
-import { configMock, lookupTablesMock, catalogMock, providerMock } from '../../helpers/mockCreator';
+import { configMock, lookupTablesMock, catalogMock, extractableMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
 import { FILE_ENCODING } from '../../../src/common/constants';
 
@@ -45,6 +46,7 @@ describe('ValidationManager', () => {
       trace.getTracer('testTracer'),
       lookupTablesMock as never,
       catalogMock as never,
+      extractableMock as never,
       providerMock as never
     );
   });
@@ -207,6 +209,7 @@ describe('ValidationManager', () => {
         trace.getTracer('testTracer'),
         lookupTablesMock as never,
         catalogMock as never,
+        extractableMock as never,
         providerMock
       );
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint('WrongVolume'));
@@ -472,6 +475,25 @@ describe('ValidationManager', () => {
 
       expect(response).toBe(false);
       expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_UNIQUE);
+    });
+
+    it('returns false when extractable management is enabled and record exists in extractable', async () => {
+      configMock.get.mockReturnValue(true);
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+      catalogMock.findRecords.mockResolvedValue([]);
+      catalogMock.getRecord.mockResolvedValue(record);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
+      providerMock.getFile.mockResolvedValue(getTileset());
+      extractableMock.isExtractableRecordExists.mockResolvedValue(true);
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(extractableMock.isExtractableRecordExists).toHaveBeenCalledWith(record.producerName);
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_CONFLICT);
     });
   });
 

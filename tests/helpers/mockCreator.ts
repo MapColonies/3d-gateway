@@ -52,3 +52,7 @@ export const catalogMock = {
   patchMetadata: jest.fn(),
   changeStatus: jest.fn(),
 };
+
+export const extractableMock = {
+  isExtractableRecordExists: jest.fn(),
+}

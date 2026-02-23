@@ -45,6 +45,7 @@
   "externalServices": {
     "storeTrigger": "STORE_TRIGGER_URL",
     "catalog": "CATALOG_URL",
+    "extractable": "EXTRACTABLE_URL",
     "lookupTables": {
       "url": "LOOKUP_TABLES_URL",
       "subUrl": "LOOKUP_TABLES_SUB_URL"
@@ -75,6 +76,14 @@
     "maxAttempts": {
       "__name": "S3_DEST_MAX_ATTEMPTS",
       "__format": "number"
+    }
+  },
+  "enableServices": {
+    "extractable": {
+      "extractableManagement": {
+        "__name": "ENABLE_EXTRACTABLE_MANAGEMENT",
+        "__format": "boolean"
+      }
     }
   }
 }
