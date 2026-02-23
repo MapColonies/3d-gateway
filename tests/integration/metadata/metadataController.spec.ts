@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import mockAxios from 'jest-mock-axios';
 import { faker } from '@faker-js/faker';
 import config from 'config';
+import { register } from 'prom-client';
 import { RecordStatus } from '@map-colonies/types';
 import { ILookupOption } from '../../../src/externalServices/lookupTables/interfaces';
 import {
@@ -23,6 +24,7 @@ import { extractLink } from '../../../src/validator/extractPathFromLink';
 import { CatalogCall } from '../../../src/externalServices/catalog/catalogCall';
 import { ERROR_METADATA_PRODUCT_NAME_CONFLICT, ERROR_METADATA_PRODUCT_NAME_UNIQUE } from '../../../src/validator/validationManager';
 import { MetadataRequestSender } from './helpers/requestSender';
+import { IConfig } from '../../../src/common/interfaces';
 
 describe('MetadataController', function () {
   let requestSender: MetadataRequestSender;
@@ -42,6 +44,7 @@ describe('MetadataController', function () {
 
   beforeEach(async () => {
     await s3Helper.initialize();
+    register.clear();
   });
 
   afterEach(async () => {
@@ -134,10 +137,8 @@ describe('MetadataController', function () {
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
-        /* eslint-disable @typescript-eslint/no-unsafe-assignment */
         expect(catalogCallPatchPayloadSpy).toHaveBeenCalledTimes(1);
         expect(catalogCallPatchPayloadSpy).toHaveBeenCalledWith(expect.any(String), patchMetadataPayload);
-
         expect(response.status).toBe(StatusCodes.OK);
         expect(response).toSatisfyApiSpec();
       });
@@ -241,7 +242,7 @@ describe('MetadataController', function () {
         expect(response).toSatisfyApiSpec();
       });
 
-      it(`Should return 400 status code if producer name conflicts with extractable`, async function () {
+      it(`Should return 409 status code if product name conflicts with extractable`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
@@ -252,7 +253,7 @@ describe('MetadataController', function () {
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
-        expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+        expect(response.status).toBe(StatusCodes.CONFLICT);
         expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_CONFLICT);
         expect(response).toSatisfyApiSpec();
       });
@@ -266,10 +267,8 @@ describe('MetadataController', function () {
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-
         const clonedRecordWithSameNameAsPayload = { ...record, productName: payload.productName };
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [clonedRecordWithSameNameAsPayload] });
-
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
@@ -307,9 +306,9 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         mockAxios.get.mockRejectedValueOnce(new Error('lookup-tables error'));
 
@@ -336,13 +335,12 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        const linkUrl = extractLink(record.links);
-        await s3Helper.createFile(linkUrl, true);
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.BAD_REQUEST, data: [] });
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -355,11 +353,11 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
         const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        const linkUrl = extractLink(record.links);
-        await s3Helper.createFile(linkUrl, true);
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
@@ -431,7 +429,7 @@ describe('MetadataController', function () {
 
         await requestSender.updateMetadata(identifier, payload);
 
-        const extractableCall = mockAxios.get.mock.calls.find(call => call[0]!.includes('/records/'));
+        const extractableCall = mockAxios.get.mock.calls.find((call) => call[0]!.includes('/records/'));
         expect(extractableCall).toBeDefined();
         const options = extractableCall![1];
         expect(options.validateStatus).toBeDefined();
@@ -439,6 +437,49 @@ describe('MetadataController', function () {
         expect(validateStatus(200)).toBe(true);
         expect(validateStatus(404)).toBe(true);
         expect(validateStatus(500)).toBe(true);
+      });
+    });
+
+    describe('When extractable management is disabled', function () {
+      let disabledRequestSender: MetadataRequestSender;
+
+      beforeAll(function () {
+        const disabledConfig: IConfig = {
+          ...config,
+          get: <T>(setting: string): T => {
+            if (setting === 'enableServices.extractable.extractableManagement') {
+              return false as T;
+            }
+            return config.get<T>(setting);
+          },
+        };
+        const app = getApp({
+          override: [
+            { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+            { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+            { token: SERVICES.CONFIG, provider: { useValue: disabledConfig } },
+          ],
+        });
+        disabledRequestSender = new MetadataRequestSender(app);
+      });
+
+      it(`Should return 200 status code even if product name conflicts with extractable`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdatePayload();
+        const expected = createRecord();
+        const record = createRecord();
+        const linkUrl = extractLink(record.links);
+        await s3Helper.createFile(linkUrl, true);
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        // no extractable call — service is disabled
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+
+        const response = await disabledRequestSender.updateMetadata(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
       });
     });
   });
@@ -449,8 +490,9 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
         const expected = createRecord();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND }); // extractable check
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected }); // changeStatus
 
         const response = await requestSender.updateStatus(identifier, payload);
 
@@ -471,6 +513,19 @@ describe('MetadataController', function () {
         expect(response.body).toHaveProperty('message', `Record with identifier: ${identifier} doesn't exist!`);
         expect(response).toSatisfyApiSpec();
       });
+
+      it(`Should return 409 status code if conflicts with extractable`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdateStatusPayload();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK }); // extractable → found → conflict
+
+        const response = await requestSender.updateStatus(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.CONFLICT);
+        expect(response.body).toHaveProperty('message', ERROR_METADATA_PRODUCT_NAME_CONFLICT);
+        expect(response).toSatisfyApiSpec();
+      });
     });
 
     describe('Sad Path 😥', function () {
@@ -489,13 +544,52 @@ describe('MetadataController', function () {
       it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND }); // extractable check
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT }); // changeStatus → unexpected
 
         const response = await requestSender.updateStatus(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
         expect(response.body).toHaveProperty('message', 'there is an error with catalog');
+        expect(response).toSatisfyApiSpec();
+      });
+    });
+
+    describe('When extractable management is disabled', function () {
+      let disabledRequestSender: MetadataRequestSender;
+
+      beforeAll(function () {
+        const disabledConfig: IConfig = {
+          ...config,
+          get: <T>(setting: string): T => {
+            if (setting === 'enableServices.extractable.extractableManagement') {
+              return false as T;
+            }
+            return config.get<T>(setting);
+          },
+        };
+        const app = getApp({
+          override: [
+            { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+            { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+            { token: SERVICES.CONFIG, provider: { useValue: disabledConfig } },
+          ],
+        });
+        disabledRequestSender = new MetadataRequestSender(app);
+      });
+
+      it(`Should return 200 status code even if conflicts with extractable`, async function () {
+        const identifier = faker.string.uuid();
+        const payload = createUpdateStatusPayload();
+        const expected = createRecord();
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
+        // no extractable call — service is disabled
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected }); // changeStatus
+
+        const response = await disabledRequestSender.updateStatus(identifier, payload);
+
+        expect(response.status).toBe(StatusCodes.OK);
         expect(response).toSatisfyApiSpec();
       });
     });

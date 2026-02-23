@@ -51,10 +51,17 @@ export class MetadataManager {
 
     try {
       const refReason: FailedReason = { outFailedReason: '' };
-      const isValid: boolean = await this.validator.validateUpdate(identifier, payload, refReason);
+      const result = await this.validator.validateUpdate(identifier, payload, refReason);
+      const isExtractableConflict = Array.isArray(result) && result[1] === true;
+      const isValid = result === true;
+
+      if (!isValid && isExtractableConflict) {
+        throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
+      }
       if (!isValid) {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, refReason.outFailedReason, true);
       }
+
       this.logger.info({
         msg: 'model validated successfully',
         logContext,
@@ -113,7 +120,12 @@ export class MetadataManager {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, `Can't change status of record that is being deleted`, true);
       }
 
-      // TODO: add validation on the extractable
+      const refReason: FailedReason = { outFailedReason: '' };
+      const isValid: boolean = await this.validator.validateUpdateStatus(record3D, refReason);
+      if (!isValid) {
+        throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
+      }
+
       this.logger.info({
         msg: 'model validated successfully',
         logContext,

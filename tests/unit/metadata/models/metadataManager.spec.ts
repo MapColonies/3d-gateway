@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
@@ -12,6 +13,7 @@ let metadataManager: MetadataManager;
 
 describe('MetadataManager', () => {
   beforeEach(() => {
+    validationManagerMock.validateUpdateStatus = jest.fn();
     metadataManager = new MetadataManager(
       jsLogger({ enabled: false }),
       trace.getTracer('testTracer'),
@@ -65,6 +67,42 @@ describe('MetadataManager', () => {
 
       await expect(response).rejects.toThrow(AppError);
     });
+
+    it('rejects with conflict if validation failed due to extractable conflict', async () => {
+      const identifier = faker.string.uuid();
+      const payload: UpdatePayload = createUpdatePayload();
+      const refReason = { outFailedReason: 'conflict reason' };
+      validationManagerMock.validateUpdate.mockImplementation(async (id, pl, ref) => {
+        ref.outFailedReason = 'conflict reason';
+        return [false, true];
+      });
+
+      const response = metadataManager.updateMetadata(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toMatchObject({
+        status: StatusCodes.CONFLICT,
+        message: 'conflict reason',
+      });
+    });
+
+    it('rejects with bad request if validation failed for other reasons', async () => {
+      const identifier = faker.string.uuid();
+      const payload: UpdatePayload = createUpdatePayload();
+      const refReason = { outFailedReason: 'bad request reason' };
+      validationManagerMock.validateUpdate.mockImplementation(async (id, pl, ref) => {
+        ref.outFailedReason = 'bad request reason';
+        return false;
+      });
+
+      const response = metadataManager.updateMetadata(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toMatchObject({
+        status: StatusCodes.BAD_REQUEST,
+        message: 'bad request reason',
+      });
+    });
   });
 
   describe('updateStatus tests', () => {
@@ -72,6 +110,7 @@ describe('MetadataManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(createRecord());
+      validationManagerMock.validateUpdateStatus.mockResolvedValue(true);
       catalogMock.changeStatus.mockResolvedValue(payload);
 
       const response = await metadataManager.updateStatus(identifier, payload);
@@ -115,11 +154,30 @@ describe('MetadataManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(createRecord());
+      validationManagerMock.validateUpdateStatus.mockResolvedValue(true);
       catalogMock.changeStatus.mockRejectedValue(new Error('catalog service is not available'));
 
       const response = metadataManager.updateStatus(identifier, payload);
 
       await expect(response).rejects.toThrow(AppError);
+    });
+
+    it('rejects with conflict if validation failed', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdateStatusPayload();
+      catalogMock.getRecord.mockResolvedValue(createRecord());
+      validationManagerMock.validateUpdateStatus.mockImplementation(async (rec, ref) => {
+        ref.outFailedReason = 'conflict reason';
+        return false;
+      });
+
+      const response = metadataManager.updateStatus(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toMatchObject({
+        status: StatusCodes.CONFLICT,
+        message: 'conflict reason',
+      });
     });
   });
 });

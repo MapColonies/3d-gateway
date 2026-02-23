@@ -31,12 +31,11 @@ export class ExtractableCall {
     this.logger.debug({ msg: `Checking record '${recordName}' in extractable service`, logContext });
 
     try {
-      const response = await axios.get(`${this.extractable}/records/${recordName}`, 
-      {
-        validateStatus: () => true
+      const response = await axios.get(`${this.extractable}/records/${recordName}`, {
+        validateStatus: () => true,
       });
 
-      if (response.status === StatusCodes.OK) { 
+      if (response.status === StatusCodes.OK) {
         this.logger.debug({ msg: `Record '${recordName}' exists in extractable`, logContext });
         return true;
       }
