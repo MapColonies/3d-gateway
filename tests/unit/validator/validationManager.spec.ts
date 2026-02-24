@@ -500,7 +500,7 @@ describe('ValidationManager', () => {
       expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_UNIQUE);
     });
 
-    it('returns false when extractable management is enabled and record exists in extractable', async () => {
+    it('returns false and sets reason when tileset polygon extraction fails', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
@@ -509,73 +509,31 @@ describe('ValidationManager', () => {
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
       providerMock.getFile.mockResolvedValue(getTileset());
-      extractableMock.isExtractableRecordExists.mockResolvedValue(true);
+
+      const polygonSpy = jest
+        .spyOn(validationManager as unknown as { getTilesetModelPolygon: (fileContent: string, failedReason: FailedReason) => Polygon | undefined }, 'getTilesetModelPolygon')
+        .mockImplementation((_fileContent: string, failedReason: FailedReason) => {
+          failedReason.outFailedReason = 'tileset error';
+          return undefined;
+        });
 
       const refReason: FailedReason = { outFailedReason: '' };
       const response = await validationManager.validateUpdate(identifier, payload, refReason);
 
-      expect(extractableMock.isExtractableRecordExists).toHaveBeenCalledWith(record.producerName);
-      expect(response).toStrictEqual([false, true]);
-      expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_CONFLICT);
-    });
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe('tileset error');
 
-    it('returns true when extractable management is disabled even if record exists in extractable', async () => {
-      configMock.get.mockReturnValue(false);
-
-      validationManager = new ValidationManager(
-        configMock,
-        jsLogger({ enabled: false }),
-        trace.getTracer('testTracer'),
-        lookupTablesMock as never,
-        catalogMock as never,
-        extractableMock as never,
-        providerMock
-      );
-
-      const identifier = faker.string.uuid();
-      const payload = createUpdatePayload();
-      const record = createRecord();
-
-      catalogMock.findRecords.mockResolvedValue([]);
-      catalogMock.getRecord.mockResolvedValue(record);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
-      providerMock.getFile.mockResolvedValue(getTileset());
-      extractableMock.isExtractableRecordExists.mockResolvedValue(true);
-
-      const refReason: FailedReason = { outFailedReason: '' };
-      const response = await validationManager.validateUpdate(identifier, payload, refReason);
-
-      expect(extractableMock.isExtractableRecordExists).not.toHaveBeenCalled();
-      expect(response).toBe(true);
+      polygonSpy.mockRestore();
     });
   });
 
-  describe('validateUpdateStatus', () => {
-    it('returns true when valid', async () => {
+  describe('isRecordAbsentFromExtractable', () => {
+    it('returns true when extractable management is disabled', async () => {
       const record = createRecord();
-      extractableMock.isExtractableRecordExists.mockResolvedValue(false);
-
-      const refReason: FailedReason = { outFailedReason: '' };
-      const response = await validationManager.validateUpdateStatus(record, refReason);
-
-      expect(extractableMock.isExtractableRecordExists).toHaveBeenCalledWith(record.producerName);
-      expect(response).toBe(true);
-    });
-
-    it('returns false when extractable exists', async () => {
-      const record = createRecord();
-      extractableMock.isExtractableRecordExists.mockResolvedValue(true);
-
-      const refReason: FailedReason = { outFailedReason: '' };
-      const response = await validationManager.validateUpdateStatus(record, refReason);
-
-      expect(extractableMock.isExtractableRecordExists).toHaveBeenCalledWith(record.producerName);
-      expect(response).toBe(false);
-      expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_CONFLICT);
-    });
-
-    it('returns true when disabled', async () => {
-      configMock.get.mockReturnValue(false);
+      configMock.get.mockImplementation((key: string) => {
+        if (key === 'enableServices.extractable') return false;
+        return 50;
+      });
 
       validationManager = new ValidationManager(
         configMock,
@@ -587,14 +545,38 @@ describe('ValidationManager', () => {
         providerMock
       );
 
+      const refReason: FailedReason = { outFailedReason: '' };
+
+      const result = await validationManager.isRecordAbsentFromExtractable(record, refReason);
+
+      expect(result).toBe(true);
+      expect(extractableMock.isExtractableRecordExists).not.toHaveBeenCalled();
+    });
+
+    it('returns true when record does not exist in extractable', async () => {
       const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
+      extractableMock.isExtractableRecordExists.mockResolvedValue(false);
+
+      const refReason: FailedReason = { outFailedReason: '' };
+
+      const result = await validationManager.isRecordAbsentFromExtractable(record, refReason);
+
+      expect(result).toBe(true);
+      expect(extractableMock.isExtractableRecordExists).toHaveBeenCalledWith(record.productName);
+    });
+
+    it('returns false and sets reason when record exists in extractable', async () => {
+      const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
       extractableMock.isExtractableRecordExists.mockResolvedValue(true);
 
       const refReason: FailedReason = { outFailedReason: '' };
-      const response = await validationManager.validateUpdateStatus(record, refReason);
 
-      expect(extractableMock.isExtractableRecordExists).not.toHaveBeenCalled();
-      expect(response).toBe(true);
+      const result = await validationManager.isRecordAbsentFromExtractable(record, refReason);
+
+      expect(result).toBe(false);
+      expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_CONFLICT);
     });
   });
 

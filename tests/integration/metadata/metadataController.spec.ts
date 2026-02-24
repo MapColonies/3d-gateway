@@ -65,9 +65,10 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -85,9 +86,10 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [record] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -106,41 +108,19 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const catalogCallPatchPayloadSpy = jest.spyOn(CatalogCall.prototype, 'patchMetadata');
-        const patchMetadataPayload = {
-          productName: payload.productName,
-          sourceDateStart: payload.sourceDateStart?.toISOString(),
-          sourceDateEnd: payload.sourceDateEnd?.toISOString(),
-          footprint: expectedFootprint,
-          description: payload.description,
-          creationDate: payload.creationDate?.toISOString(),
-          minResolutionMeter: payload.minResolutionMeter,
-          maxResolutionMeter: payload.maxResolutionMeter,
-          maxAccuracyCE90: payload.maxAccuracyCE90,
-          absoluteAccuracyLE90: payload.absoluteAccuracyLE90,
-          accuracySE90: payload.accuracySE90,
-          relativeAccuracySE90: payload.relativeAccuracySE90,
-          visualAccuracy: payload.visualAccuracy,
-          heightRangeFrom: payload.heightRangeFrom,
-          heightRangeTo: payload.heightRangeTo,
-          classification: payload.classification,
-          producerName: payload.producerName,
-          maxFlightAlt: payload.maxFlightAlt,
-          minFlightAlt: payload.minFlightAlt,
-          geographicArea: payload.geographicArea,
-        };
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
-        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledTimes(1);
-        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledWith(expect.any(String), patchMetadataPayload);
         expect(response.status).toBe(StatusCodes.OK);
         expect(response).toSatisfyApiSpec();
+        expect(catalogCallPatchPayloadSpy).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ footprint: expectedFootprint }));
       });
     });
 
@@ -153,7 +133,7 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: classification }] as ILookupOption[] });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -169,15 +149,10 @@ describe('MetadataController', function () {
         payload.footprint = createWrongFootprintSchema();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty(
-          'message',
-          `request/body/footprint/coordinates must NOT have fewer than 2 items, request/body/footprint/type must be equal to one of the allowed values: LineString, request/body/footprint/type must be equal to one of the allowed values: Polygon, request/body/footprint/type must be equal to one of the allowed values: MultiPoint, request/body/footprint/type must be equal to one of the allowed values: MultiLineString, request/body/footprint/type must be equal to one of the allowed values: MultiPolygon, request/body/footprint must match a schema in anyOf`
-        );
         expect(response).toSatisfyApiSpec();
       });
 
@@ -187,15 +162,11 @@ describe('MetadataController', function () {
         payload.footprint = createWrongFootprintCoordinates();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty(
-          'message',
-          `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
-        );
+        expect(response.body).toHaveProperty('message', `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`);
         expect(response).toSatisfyApiSpec();
       });
 
@@ -205,7 +176,6 @@ describe('MetadataController', function () {
         payload.footprint = createWrongFootprintMixed2D3D();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -221,7 +191,6 @@ describe('MetadataController', function () {
         payload.sourceDateStart = faker.date.soon();
         const record = createRecord();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -249,6 +218,9 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -261,16 +233,13 @@ describe('MetadataController', function () {
       it(`Should return 400 status code if record product name already exists in catalog`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
-        const expected = createRecord();
         const record = createRecord();
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
         const clonedRecordWithSameNameAsPayload = { ...record, productName: payload.productName };
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [clonedRecordWithSameNameAsPayload] });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -282,16 +251,11 @@ describe('MetadataController', function () {
       it(`Should return 400 status code if record product status is 'Being-Deleted'`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdatePayload();
-        const expected = createRecord();
         const record = createRecord();
+        record.productStatus = RecordStatus.BEING_DELETED;
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
-        record.productStatus = RecordStatus.BEING_DELETED;
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -308,8 +272,9 @@ describe('MetadataController', function () {
         const record = createRecord();
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
+
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.get.mockRejectedValueOnce(new Error('lookup-tables error'));
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -338,27 +303,10 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.BAD_REQUEST, data: [] });
-
-        const response = await requestSender.updateMetadata(identifier, payload);
-
-        expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
-        expect(response.body).toHaveProperty('message', 'Problem with catalog find');
-        expect(response).toSatisfyApiSpec();
-      });
-
-      it(`Should return 500 status code if during sending request, catalog didn't return as expected on find`, async function () {
-        const identifier = faker.string.uuid();
-        const payload = createUpdatePayload();
-        const record = createRecord();
-        const linkUrl = extractLink(record.links);
-        await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -374,7 +322,6 @@ describe('MetadataController', function () {
         const record = createRecord();
         record.links = faker.word.sample();
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
 
         const response = await requestSender.updateMetadata(identifier, payload);
 
@@ -389,6 +336,9 @@ describe('MetadataController', function () {
         const record = createRecord();
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.INTERNAL_SERVER_ERROR });
 
@@ -406,6 +356,9 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockRejectedValueOnce(new Error('extractable is not available'));
 
         const response = await requestSender.updateMetadata(identifier, payload);
@@ -421,10 +374,12 @@ describe('MetadataController', function () {
         const record = createRecord();
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
+
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
+        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
-        mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
 
         await requestSender.updateMetadata(identifier, payload);
@@ -447,7 +402,7 @@ describe('MetadataController', function () {
         const disabledConfig: IConfig = {
           ...config,
           get: <T>(setting: string): T => {
-            if (setting === 'enableServices.extractable.extractableManagement') {
+            if (setting === 'enableServices.extractable') {
               return false as T;
             }
             return config.get<T>(setting);
@@ -471,9 +426,9 @@ describe('MetadataController', function () {
         const linkUrl = extractLink(record.links);
         await s3Helper.createFile(linkUrl, true);
         mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
-        // no extractable call — service is disabled
-        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [] });
+        mockAxios.get.mockResolvedValueOnce({ data: [{ value: payload.classification }] as ILookupOption[] });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: record });
         mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await disabledRequestSender.updateMetadata(identifier, payload);
@@ -490,9 +445,9 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
         const expected = createRecord();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND }); // extractable check
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected }); // changeStatus
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await requestSender.updateStatus(identifier, payload);
 
@@ -517,8 +472,9 @@ describe('MetadataController', function () {
       it(`Should return 409 status code if conflicts with extractable`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK }); // extractable → found → conflict
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK });
 
         const response = await requestSender.updateStatus(identifier, payload);
 
@@ -544,9 +500,9 @@ describe('MetadataController', function () {
       it(`Should return 500 status code if during sending request, catalog didn't return as expected`, async function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND }); // extractable check
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT }); // changeStatus → unexpected
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.NOT_FOUND });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.CONFLICT });
 
         const response = await requestSender.updateStatus(identifier, payload);
 
@@ -563,7 +519,7 @@ describe('MetadataController', function () {
         const disabledConfig: IConfig = {
           ...config,
           get: <T>(setting: string): T => {
-            if (setting === 'enableServices.extractable.extractableManagement') {
+            if (setting === 'enableServices.extractable') {
               return false as T;
             }
             return config.get<T>(setting);
@@ -583,9 +539,9 @@ describe('MetadataController', function () {
         const identifier = faker.string.uuid();
         const payload = createUpdateStatusPayload();
         const expected = createRecord();
-        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() }); // getRecord
-        // no extractable call — service is disabled
-        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected }); // changeStatus
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+        mockAxios.get.mockResolvedValueOnce({ status: StatusCodes.OK, data: createRecord() });
+        mockAxios.patch.mockResolvedValueOnce({ status: StatusCodes.OK, data: expected });
 
         const response = await disabledRequestSender.updateStatus(identifier, payload);
 

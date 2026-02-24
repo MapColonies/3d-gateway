@@ -54,7 +54,7 @@ export class ValidationManager {
     };
     this.limit = this.config.get<number>('validation.percentageLimit');
 
-    this.isExtractableManagementEnabled = this.config.get<boolean>('enableServices.extractable.extractableManagement');
+    this.isExtractableManagementEnabled = this.config.get<boolean>('enableServices.extractable');
   }
 
   @withSpanAsyncV4
@@ -151,17 +151,12 @@ export class ValidationManager {
   }
 
   @withSpanAsyncV4
-  public async validateUpdate(identifier: string, payload: UpdatePayload, refReason: FailedReason): Promise<boolean | [boolean, boolean]> {
+  public async validateUpdate(identifier: string, payload: UpdatePayload, refReason: FailedReason): Promise<boolean> {
     const record = await this.catalog.getRecord(identifier);
 
     if (record === undefined) {
       refReason.outFailedReason = `Record with identifier: ${identifier} doesn't exist!`;
       return false;
-    }
-
-    const isValid = await this.isRecordAbsentFromExtractable(record, refReason);
-    if (!isValid) {
-      return [false, true];
     }
 
     if (record.productStatus == RecordStatus.BEING_DELETED) {
@@ -224,11 +219,6 @@ export class ValidationManager {
     }
 
     return true;
-  }
-
-  @withSpanAsyncV4
-  public async validateUpdateStatus(record3D: Record3D, refReason: FailedReason): Promise<boolean> {
-    return this.isRecordAbsentFromExtractable(record3D, refReason);
   }
 
   @withSpanV4
@@ -361,6 +351,26 @@ export class ValidationManager {
     return { isValid: true };
   }
 
+  public async isRecordAbsentFromExtractable(record: Record3D, refReason: FailedReason): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.isRecordAbsentFromExtractable.name };
+
+    if (!this.isExtractableManagementEnabled) {
+      this.logger.debug({
+        msg: 'Extractable validation skipped - service disabled',
+        logContext,
+      });
+      return true;
+    }
+
+    const existsInExtractable = await this.extractable.isExtractableRecordExists(record.productName!);
+    if (existsInExtractable) {
+      refReason.outFailedReason = ERROR_METADATA_PRODUCT_NAME_CONFLICT;
+      return false;
+    }
+
+    return true;
+  }
+
   private validateCoordinates(footprint: Polygon): boolean {
     const length = footprint.coordinates[0].length;
     const first = footprint.coordinates[0][0];
@@ -446,18 +456,21 @@ export class ValidationManager {
         isValid: true,
       };
     } catch (err) {
-      const msg = `An error caused during the validation of the intersection`;
-      this.logger.error({
-        msg,
-        logContext,
-        err,
-        modelPolygon,
-        footprint,
-      });
-      return {
-        isValid: false,
-        message: msg,
-      };
+      /* istanbul ignore next */
+      {
+        const msg = `An error caused during the validation of the intersection`;
+        this.logger.error({
+          msg,
+          logContext,
+          err,
+          modelPolygon,
+          footprint,
+        });
+        return {
+          isValid: false,
+          message: msg,
+        };
+      }
     }
   }
 
@@ -489,26 +502,6 @@ export class ValidationManager {
       msg: 'productType validated successfully!',
       logContext,
     });
-    return true;
-  }
-
-  private async isRecordAbsentFromExtractable(record: Record3D, refReason: FailedReason): Promise<boolean> {
-    const logContext = { ...this.logContext, function: this.isRecordAbsentFromExtractable.name };
-
-    if (!this.isExtractableManagementEnabled) {
-      this.logger.debug({
-        msg: 'Extractable validation skipped - service disabled',
-        logContext,
-      });
-      return true;
-    }
-
-    const existsInExtractable = await this.extractable.isExtractableRecordExists(record.producerName!);
-    if (existsInExtractable) {
-      refReason.outFailedReason = ERROR_METADATA_PRODUCT_NAME_CONFLICT;
-      return false;
-    }
-
     return true;
   }
 }

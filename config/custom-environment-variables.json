@@ -80,10 +80,9 @@
   },
   "enableServices": {
     "extractable": {
-      "extractableManagement": {
-        "__name": "ENABLE_EXTRACTABLE_MANAGEMENT",
-        "__format": "boolean"
-      }
+      "__name": "ENABLE_EXTRACTABLE_MANAGEMENT",
+      "__format": "boolean"
+
     }
   }
 }

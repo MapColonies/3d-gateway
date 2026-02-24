@@ -26,6 +26,7 @@ export const validationManagerMock = {
   getTilesetModelPolygon: jest.fn(),
   isPolygonValid: jest.fn(),
   validateUpdateStatus: jest.fn(),
+  isRecordAbsentFromExtractable: jest.fn(),
 };
 
 export const configMock = {

@@ -51,15 +51,16 @@ export class MetadataManager {
 
     try {
       const refReason: FailedReason = { outFailedReason: '' };
-      const result = await this.validator.validateUpdate(identifier, payload, refReason);
-      const isExtractableConflict = Array.isArray(result) && result[1] === true;
-      const isValid = result === true;
+      const isValid = await this.validator.validateUpdate(identifier, payload, refReason);
 
-      if (!isValid && isExtractableConflict) {
-        throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
-      }
       if (!isValid) {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, refReason.outFailedReason, true);
+      }
+
+      const record = (await this.catalog.getRecord(identifier)) as Record3D;
+      const doesNotExistInExtractable = await this.validator.isRecordAbsentFromExtractable(record, refReason);
+      if (!doesNotExistInExtractable) {
+        throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
       }
 
       this.logger.info({
@@ -121,8 +122,8 @@ export class MetadataManager {
       }
 
       const refReason: FailedReason = { outFailedReason: '' };
-      const isValid: boolean = await this.validator.validateUpdateStatus(record3D, refReason);
-      if (!isValid) {
+      const doesNotExistInExtractable = await this.validator.isRecordAbsentFromExtractable(record3D, refReason);
+      if (!doesNotExistInExtractable) {
         throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
       }
 
