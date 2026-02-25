@@ -29,7 +29,7 @@ global:
     pv_path: ''
     sub_path: ''
     
-  isExtractableLogicEnabled: false
+  isExtractableLogicEnabled:
   
 cloudProvider:
   dockerRegistryUrl:
@@ -129,7 +129,6 @@ env:
     url:
   catalog:
     url:
-  isExtractableLogicEnabled: true
   extractable:
     url:
 

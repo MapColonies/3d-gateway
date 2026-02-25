@@ -555,7 +555,21 @@ describe('ValidationManager', () => {
 
     it('returns true when record does not exist in extractable', async () => {
       const record = createRecord();
-      catalogMock.getRecord.mockResolvedValue(record);
+      configMock.get.mockImplementation((key: string) => {
+        if (key === 'isExtractableLogicEnabled') return true;
+        if (key === 'validation.percentageLimit') return 50;
+        return 50;
+      });
+
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
       extractableMock.isExtractableRecordExists.mockResolvedValue(false);
 
       const refReason: FailedReason = { outFailedReason: '' };
@@ -568,7 +582,21 @@ describe('ValidationManager', () => {
 
     it('returns false and sets reason when record exists in extractable', async () => {
       const record = createRecord();
-      catalogMock.getRecord.mockResolvedValue(record);
+      configMock.get.mockImplementation((key: string) => {
+        if (key === 'isExtractableLogicEnabled') return true;
+        if (key === 'validation.percentageLimit') return 50;
+        return 50;
+      });
+
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
       extractableMock.isExtractableRecordExists.mockResolvedValue(true);
 
       const refReason: FailedReason = { outFailedReason: '' };
