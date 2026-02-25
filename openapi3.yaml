@@ -167,6 +167,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
         '500':
           description: Unexpected Error
           content:
@@ -196,6 +202,12 @@ paths:
                 $ref: '#/components/schemas/metadataResponse'
         '400':
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '409':
+          description: Conflict
           content:
             application/json:
               schema:

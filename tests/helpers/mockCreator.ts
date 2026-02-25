@@ -25,6 +25,8 @@ export const validationManagerMock = {
   validateUpdate: jest.fn(),
   getTilesetModelPolygon: jest.fn(),
   isPolygonValid: jest.fn(),
+  validateUpdateStatus: jest.fn(),
+  isRecordAbsentFromExtractable: jest.fn(),
 };
 
 export const configMock = {
@@ -51,4 +53,8 @@ export const catalogMock = {
   isProductIdExist: jest.fn(),
   patchMetadata: jest.fn(),
   changeStatus: jest.fn(),
+};
+
+export const extractableMock = {
+  isExtractableRecordExists: jest.fn(),
 };

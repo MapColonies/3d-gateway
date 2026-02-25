@@ -13,6 +13,7 @@ import {
   ERROR_METADATA_DATE,
   ERROR_METADATA_ERRORED_TILESET,
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
+  ERROR_METADATA_PRODUCT_NAME_CONFLICT,
   ERROR_METADATA_PRODUCT_NAME_UNIQUE,
   ERROR_METADATA_RESOLUTION,
   FailedReason,
@@ -31,7 +32,7 @@ import {
   getBasePath,
   createWrongFootprintMixed2D3D,
 } from '../../helpers/helpers';
-import { configMock, lookupTablesMock, catalogMock, providerMock } from '../../helpers/mockCreator';
+import { configMock, lookupTablesMock, catalogMock, extractableMock, providerMock } from '../../helpers/mockCreator';
 import { AppError } from '../../../src/common/appError';
 import { FILE_ENCODING } from '../../../src/common/constants';
 
@@ -45,6 +46,7 @@ describe('ValidationManager', () => {
       trace.getTracer('testTracer'),
       lookupTablesMock as never,
       catalogMock as never,
+      extractableMock as never,
       providerMock as never
     );
   });
@@ -63,6 +65,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -78,6 +81,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: ERROR_METADATA_RESOLUTION,
@@ -100,6 +104,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -115,6 +120,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_DATE });
     });
 
@@ -130,6 +136,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only. polygon: ${JSON.stringify(
@@ -149,6 +156,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: `Wrong polygon: ${JSON.stringify(payload.metadata.footprint)} the first and last coordinates should be equal`,
@@ -166,6 +174,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: `Wrong footprint! footprint's coordinates should be all in the same dimension 2D or 3D`,
@@ -182,6 +191,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, {} as unknown as Polygon);
+
       expect(response).toStrictEqual({ isValid: false, message: `An error caused during the validation of the intersection` });
     });
 
@@ -193,6 +203,7 @@ describe('ValidationManager', () => {
       catalogMock.findRecords.mockResolvedValue([]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({ isValid: false, message: ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL });
     });
 
@@ -207,9 +218,12 @@ describe('ValidationManager', () => {
         trace.getTracer('testTracer'),
         lookupTablesMock as never,
         catalogMock as never,
+        extractableMock as never,
         providerMock
       );
+
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint('WrongVolume'));
+
       expect(response.isValid).toBe(false);
       expect(response.message).toContain('The footprint intersectection with the model');
     });
@@ -224,6 +238,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({ isValid: true }); // For now, the validation will be only warning. so it's true
     });
 
@@ -238,6 +253,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({ isValid: true });
     });
 
@@ -250,6 +266,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: `Record with productId: ${payload.metadata.productId} doesn't exist!`,
@@ -265,6 +282,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: `classification is not a valid value.. Optional values: ${'NonValidClassification'}`,
@@ -282,6 +300,7 @@ describe('ValidationManager', () => {
       lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
       expect(response).toStrictEqual({
         isValid: false,
         message: ERROR_METADATA_PRODUCT_NAME_UNIQUE,
@@ -297,6 +316,7 @@ describe('ValidationManager', () => {
       { path: join('nonExistsFolder', createTilesetFileName()), result: false },
     ])('should check if sources exists and return true for %p', async (testInput: { path: string; result: boolean }) => {
       const response = await validationManager.isPathExist(testInput.path);
+
       expect(response).toBe(testInput.result);
     });
   });
@@ -328,7 +348,6 @@ describe('ValidationManager', () => {
   describe('validateModelPath tests', () => {
     it('returns true when got valid model path', () => {
       const modelPath = createModelPath();
-
       const result = validationManager.isModelPathValid(modelPath, getBasePath());
 
       expect(result).toBe(true);
@@ -336,7 +355,6 @@ describe('ValidationManager', () => {
 
     it('returns false when model path not in the agreed path', () => {
       const modelPath = 'some/path';
-
       const result = validationManager.isModelPathValid(modelPath, getBasePath());
 
       expect(result).toBe(false);
@@ -348,6 +366,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
@@ -362,6 +381,7 @@ describe('ValidationManager', () => {
     it('returns error if catalog dont contain the requested record', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(undefined);
 
@@ -377,6 +397,7 @@ describe('ValidationManager', () => {
       const payload = createUpdatePayload();
       const record = createRecord();
       record.productStatus = RecordStatus.BEING_DELETED;
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
 
@@ -390,6 +411,7 @@ describe('ValidationManager', () => {
     it('throws error when catalog services does not properly responded', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockRejectedValue(new AppError('error', StatusCodes.INTERNAL_SERVER_ERROR, 'catalog error', true));
 
@@ -403,6 +425,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
@@ -422,6 +445,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
@@ -445,6 +469,7 @@ describe('ValidationManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdatePayload();
       const record = createRecord();
+
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue(['NonValidClassification']);
@@ -462,6 +487,7 @@ describe('ValidationManager', () => {
       const payload = createUpdatePayload();
       const record = createRecord();
       const clonedRecordWithSameNameAsPayload = { ...record, productName: payload.productName };
+
       catalogMock.findRecords.mockResolvedValue([clonedRecordWithSameNameAsPayload]);
       catalogMock.getRecord.mockResolvedValue(record);
       lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
@@ -473,12 +499,120 @@ describe('ValidationManager', () => {
       expect(response).toBe(false);
       expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_UNIQUE);
     });
+
+    it('returns false and sets reason when tileset polygon extraction fails', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdatePayload();
+      const record = createRecord();
+
+      catalogMock.findRecords.mockResolvedValue([]);
+      catalogMock.getRecord.mockResolvedValue(record);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.classification]);
+      providerMock.getFile.mockResolvedValue(getTileset());
+
+      const polygonSpy = jest
+        .spyOn(validationManager as unknown as { getTilesetModelPolygon: (fileContent: string, failedReason: FailedReason) => Polygon | undefined }, 'getTilesetModelPolygon')
+        .mockImplementation((_fileContent: string, failedReason: FailedReason) => {
+          failedReason.outFailedReason = 'tileset error';
+          return undefined;
+        });
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const response = await validationManager.validateUpdate(identifier, payload, refReason);
+
+      expect(response).toBe(false);
+      expect(refReason.outFailedReason).toBe('tileset error');
+
+      polygonSpy.mockRestore();
+    });
+  });
+
+  describe('isRecordAbsentFromExtractable', () => {
+    it('returns true when extractable management is disabled', async () => {
+      const record = createRecord();
+      configMock.get.mockImplementation((key: string) => {
+        if (key === 'isExtractableLogicEnabled') return false;
+        return 50;
+      });
+
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
+
+      const refReason: FailedReason = { outFailedReason: '' };
+
+      const result = await validationManager.isRecordAbsentFromExtractable(record, refReason);
+
+      expect(result).toBe(true);
+      expect(extractableMock.isExtractableRecordExists).not.toHaveBeenCalled();
+    });
+
+    it('returns true when record does not exist in extractable', async () => {
+      const record = createRecord();
+      configMock.get.mockImplementation((key: string) => {
+        if (key === 'isExtractableLogicEnabled') return true;
+        if (key === 'validation.percentageLimit') return 50;
+        return 50;
+      });
+
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
+      extractableMock.isExtractableRecordExists.mockResolvedValue(false);
+
+      const refReason: FailedReason = { outFailedReason: '' };
+
+      const result = await validationManager.isRecordAbsentFromExtractable(record, refReason);
+
+      expect(result).toBe(true);
+      expect(extractableMock.isExtractableRecordExists).toHaveBeenCalledWith(record.productName);
+    });
+
+    it('returns false and sets reason when record exists in extractable', async () => {
+      const record = createRecord();
+      configMock.get.mockImplementation((key: string) => {
+        if (key === 'isExtractableLogicEnabled') return true;
+        if (key === 'validation.percentageLimit') return 50;
+        return 50;
+      });
+
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
+      extractableMock.isExtractableRecordExists.mockResolvedValue(true);
+
+      const refReason: FailedReason = { outFailedReason: '' };
+
+      const result = await validationManager.isRecordAbsentFromExtractable(record, refReason);
+
+      expect(result).toBe(false);
+      expect(refReason.outFailedReason).toBe(ERROR_METADATA_PRODUCT_NAME_CONFLICT);
+    });
   });
 
   describe('isPolygonValid', () => {
     it('returns true when Polygon is valid', () => {
       const footprint = createFootprint('Region');
       const response = validationManager.isPolygonValid(footprint);
+
       expect(response.isValid).toBe(true);
     });
 
@@ -486,6 +620,7 @@ describe('ValidationManager', () => {
       const footprint = createFootprint('Region');
       footprint.bbox = [faker.location.longitude(), faker.location.latitude(), faker.location.longitude(), faker.location.latitude()];
       const response = validationManager.isPolygonValid(footprint);
+
       expect(response.isValid).toBe(true);
     });
 
@@ -493,6 +628,7 @@ describe('ValidationManager', () => {
       const footprint = createFootprint('Region');
       footprint.coordinates = [][0] as unknown as Position[][];
       const response = validationManager.isPolygonValid(footprint);
+
       expect(response.isValid).toBe(false);
       expect(response.message).toContain(
         `Invalid polygon provided. Must be in a GeoJson format of a Polygon. Should contain "type", "coordinates" and "BBOX" only.`

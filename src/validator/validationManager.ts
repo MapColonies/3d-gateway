@@ -16,6 +16,8 @@ import { CatalogCall } from '../externalServices/catalog/catalogCall';
 import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
+import { ExtractableCall } from '../externalServices/extractable-management/extractableCall';
+import { Record3D } from '../externalServices/catalog/interfaces';
 
 export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
 export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
@@ -25,6 +27,7 @@ export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supporte
 export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
 export const ERROR_METADATA_ERRORED_TILESET = `File tileset validation failed`;
 export const ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL = `Wrong footprint! footprint's coordinates is not even close to the model!`;
+export const ERROR_METADATA_PRODUCT_NAME_CONFLICT = `An external service locks this record`;
 
 export interface FailedReason {
   outFailedReason: string;
@@ -34,6 +37,7 @@ export interface FailedReason {
 export class ValidationManager {
   private readonly limit: number;
   private readonly logContext: LogContext;
+  private readonly isExtractableManagementEnabled: boolean;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -41,6 +45,7 @@ export class ValidationManager {
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(LookupTablesCall) private readonly lookupTables: LookupTablesCall,
     @inject(CatalogCall) private readonly catalog: CatalogCall,
+    @inject(ExtractableCall) private readonly extractable: ExtractableCall,
     @inject(SERVICES.PROVIDER) private readonly provider: Provider
   ) {
     this.logContext = {
@@ -48,6 +53,8 @@ export class ValidationManager {
       class: ValidationManager.name,
     };
     this.limit = this.config.get<number>('validation.percentageLimit');
+
+    this.isExtractableManagementEnabled = this.config.get<boolean>('isExtractableLogicEnabled');
   }
 
   @withSpanAsyncV4
@@ -344,6 +351,26 @@ export class ValidationManager {
     return { isValid: true };
   }
 
+  public async isRecordAbsentFromExtractable(record: Record3D, refReason: FailedReason): Promise<boolean> {
+    const logContext = { ...this.logContext, function: this.isRecordAbsentFromExtractable.name };
+
+    if (!this.isExtractableManagementEnabled) {
+      this.logger.debug({
+        msg: 'Extractable validation skipped - service disabled',
+        logContext,
+      });
+      return true;
+    }
+
+    const existsInExtractable = await this.extractable.isExtractableRecordExists(record.productName!);
+    if (existsInExtractable) {
+      refReason.outFailedReason = ERROR_METADATA_PRODUCT_NAME_CONFLICT;
+      return false;
+    }
+
+    return true;
+  }
+
   private validateCoordinates(footprint: Polygon): boolean {
     const length = footprint.coordinates[0].length;
     const first = footprint.coordinates[0][0];
@@ -429,18 +456,21 @@ export class ValidationManager {
         isValid: true,
       };
     } catch (err) {
-      const msg = `An error caused during the validation of the intersection`;
-      this.logger.error({
-        msg,
-        logContext,
-        err,
-        modelPolygon,
-        footprint,
-      });
-      return {
-        isValid: false,
-        message: msg,
-      };
+      /* istanbul ignore next */
+      {
+        const msg = `An error caused during the validation of the intersection`;
+        this.logger.error({
+          msg,
+          logContext,
+          err,
+          modelPolygon,
+          footprint,
+        });
+        return {
+          isValid: false,
+          message: msg,
+        };
+      }
     }
   }
 

@@ -28,7 +28,9 @@ global:
     name: ''
     pv_path: ''
     sub_path: ''
-
+    
+  isExtractableLogicEnabled:
+  
 cloudProvider:
   dockerRegistryUrl:
   flavor:
@@ -126,6 +128,8 @@ env:
   storeTrigger:
     url:
   catalog:
+    url:
+  extractable:
     url:
 
 resources:

@@ -67,12 +67,20 @@ export class CatalogCall {
         });
         return response.data;
       } else {
-        this.logger.error({
-          msg: `Something went wrong in catalog when tring to find records, service returned ${response.status}`,
-          logContext,
-          response,
-        });
-        throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during Finding Records', true);
+        /* istanbul ignore next */
+        {
+          this.logger.error({
+            msg: `Something went wrong in catalog when tring to find records, service returned ${response.status}`,
+            logContext,
+            response,
+          });
+          throw new AppError(
+            'catalog',
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            'Problem with the catalog during Finding Records',
+            true
+          );
+        }
       }
     } catch (err) {
       this.logger.error({

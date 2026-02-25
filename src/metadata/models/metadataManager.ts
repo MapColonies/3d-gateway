@@ -51,10 +51,18 @@ export class MetadataManager {
 
     try {
       const refReason: FailedReason = { outFailedReason: '' };
-      const isValid: boolean = await this.validator.validateUpdate(identifier, payload, refReason);
+      const isValid = await this.validator.validateUpdate(identifier, payload, refReason);
+
       if (!isValid) {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, refReason.outFailedReason, true);
       }
+
+      const record = (await this.catalog.getRecord(identifier)) as Record3D;
+      const doesNotExistInExtractable = await this.validator.isRecordAbsentFromExtractable(record, refReason);
+      if (!doesNotExistInExtractable) {
+        throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
+      }
+
       this.logger.info({
         msg: 'model validated successfully',
         logContext,
@@ -112,6 +120,13 @@ export class MetadataManager {
       } else if (record3D.productStatus == RecordStatus.BEING_DELETED) {
         throw new AppError('badRequest', StatusCodes.BAD_REQUEST, `Can't change status of record that is being deleted`, true);
       }
+
+      const refReason: FailedReason = { outFailedReason: '' };
+      const doesNotExistInExtractable = await this.validator.isRecordAbsentFromExtractable(record3D, refReason);
+      if (!doesNotExistInExtractable) {
+        throw new AppError('conflict', StatusCodes.CONFLICT, refReason.outFailedReason, true);
+      }
+
       this.logger.info({
         msg: 'model validated successfully',
         logContext,

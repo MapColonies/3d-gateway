@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import { faker } from '@faker-js/faker';
@@ -27,7 +28,9 @@ describe('MetadataManager', () => {
     it('resolves without errors', async () => {
       const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
-      validationManagerMock.validateUpdate.mockReturnValue(true);
+      validationManagerMock.validateUpdate.mockResolvedValue(true);
+      validationManagerMock.isRecordAbsentFromExtractable.mockResolvedValue(true);
+      catalogMock.getRecord.mockResolvedValue(createRecord());
       catalogMock.patchMetadata.mockResolvedValue(payload);
 
       const response = await metadataManager.updateMetadata(identifier, payload);
@@ -38,7 +41,7 @@ describe('MetadataManager', () => {
     it(`rejects if update's validation failed`, async () => {
       const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
-      validationManagerMock.validateUpdate.mockReturnValue(false);
+      validationManagerMock.validateUpdate.mockResolvedValue(false);
 
       const response = metadataManager.updateMetadata(identifier, payload);
 
@@ -58,12 +61,48 @@ describe('MetadataManager', () => {
     it(`rejects if didn't update metadata in catalog`, async () => {
       const identifier = faker.string.uuid();
       const payload: UpdatePayload = createUpdatePayload();
-      validationManagerMock.validateUpdate.mockReturnValue(true);
+      validationManagerMock.validateUpdate.mockResolvedValue(true);
+      validationManagerMock.isRecordAbsentFromExtractable.mockResolvedValue(true);
       catalogMock.patchMetadata.mockRejectedValue(new Error('catalog service is not available'));
 
       const response = metadataManager.updateMetadata(identifier, payload);
 
       await expect(response).rejects.toThrow(AppError);
+    });
+
+    it('rejects with conflict if validation failed due to extractable conflict', async () => {
+      const identifier = faker.string.uuid();
+      const payload: UpdatePayload = createUpdatePayload();
+      validationManagerMock.validateUpdate.mockResolvedValue(true);
+      validationManagerMock.isRecordAbsentFromExtractable.mockImplementation(async (_id, ref) => {
+        ref.outFailedReason = 'conflict reason';
+        return false;
+      });
+      catalogMock.getRecord.mockResolvedValue(createRecord());
+
+      const response = metadataManager.updateMetadata(identifier, payload);
+      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toMatchObject({
+        status: StatusCodes.CONFLICT,
+        message: 'conflict reason',
+      });
+    });
+
+    it('rejects with bad request if validation failed for other reasons', async () => {
+      const identifier = faker.string.uuid();
+      const payload: UpdatePayload = createUpdatePayload();
+      validationManagerMock.validateUpdate.mockImplementation(async (_id, _pl, ref) => {
+        ref.outFailedReason = 'bad request reason';
+        return false;
+      });
+
+      const response = metadataManager.updateMetadata(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toMatchObject({
+        status: StatusCodes.BAD_REQUEST,
+        message: 'bad request reason',
+      });
     });
   });
 
@@ -71,12 +110,14 @@ describe('MetadataManager', () => {
     it('resolves without errors', async () => {
       const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
-      catalogMock.getRecord.mockResolvedValue(createRecord());
-      catalogMock.changeStatus.mockResolvedValue(payload);
+      const record = createRecord();
+      catalogMock.getRecord.mockResolvedValue(record);
+      validationManagerMock.isRecordAbsentFromExtractable.mockResolvedValue(true);
+      catalogMock.changeStatus.mockResolvedValue(record);
 
       const response = await metadataManager.updateStatus(identifier, payload);
 
-      expect(response).toMatchObject(payload);
+      expect(response).toMatchObject(record);
     });
 
     it(`rejects if update's validation failed with non-existing record`, async () => {
@@ -115,11 +156,31 @@ describe('MetadataManager', () => {
       const identifier = faker.string.uuid();
       const payload = createUpdateStatusPayload();
       catalogMock.getRecord.mockResolvedValue(createRecord());
+
+      validationManagerMock.isRecordAbsentFromExtractable.mockResolvedValue(true);
       catalogMock.changeStatus.mockRejectedValue(new Error('catalog service is not available'));
 
       const response = metadataManager.updateStatus(identifier, payload);
 
       await expect(response).rejects.toThrow(AppError);
+    });
+
+    it('rejects with conflict if validation failed', async () => {
+      const identifier = faker.string.uuid();
+      const payload = createUpdateStatusPayload();
+      catalogMock.getRecord.mockResolvedValue(createRecord());
+      validationManagerMock.isRecordAbsentFromExtractable.mockImplementation(async (_id, ref) => {
+        ref.outFailedReason = 'conflict reason';
+        return false;
+      });
+
+      const response = metadataManager.updateStatus(identifier, payload);
+
+      await expect(response).rejects.toThrow(AppError);
+      await expect(response).rejects.toMatchObject({
+        status: StatusCodes.CONFLICT,
+        message: 'conflict reason',
+      });
     });
   });
 });
