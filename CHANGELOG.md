@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.8.0](https://github.com/MapColonies/3d-gateway/compare/v2.7.5...v2.8.0) (2026-02-25)
+
+
+### Features
+
+* added validation against the extractable service (MAPCO-9560, MAPCO-9561) ([#51](https://github.com/MapColonies/3d-gateway/issues/51)) ([c90f45e](https://github.com/MapColonies/3d-gateway/commit/c90f45e9673d296f9e86f18ee3ed6a74e748304b))
+
 ## [2.7.5](https://github.com/MapColonies/3d-gateway/compare/v2.7.4...v2.7.5) (2026-01-01)
 
 
