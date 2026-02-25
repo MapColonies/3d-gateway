@@ -30,7 +30,7 @@ data:
   STORE_TRIGGER_URL: {{ .Values.env.storeTrigger.url | default (printf "http://%s-store-trigger" .Release.Name) }}
   CATALOG_URL: {{ .Values.env.catalog.url | default (printf "http://%s-catalog" .Release.Name) }}
   EXTRACTABLE_URL: {{ .Values.env.extractable.url | default (printf "http://%s-extractable" .Release.Name) }}
-  ENABLE_EXTRACTABLE_MANAGEMENT: {{ .Values.env.enableServices.extractable | quote }}
+  ENABLE_EXTRACTABLE_MANAGEMENT: {{ .Values.env.isExtractableLogicEnabled | quote }}
   LOOKUP_TABLES_URL: {{ .Values.validations.lookupTables.url | quote }}
   LOOKUP_TABLES_SUB_URL: {{ .Values.validations.lookupTables.subUrl | quote }}
   {{ if eq $providers.source "NFS" }}

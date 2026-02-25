@@ -531,7 +531,7 @@ describe('ValidationManager', () => {
     it('returns true when extractable management is disabled', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'enableServices.extractable') return false;
+        if (key === 'isExtractableLogicEnabled') return false;
         return 50;
       });
 

@@ -54,7 +54,7 @@ export class ValidationManager {
     };
     this.limit = this.config.get<number>('validation.percentageLimit');
 
-    this.isExtractableManagementEnabled = this.config.get<boolean>('enableServices.extractable');
+    this.isExtractableManagementEnabled = this.config.get<boolean>('isExtractableLogicEnabled');
   }
 
   @withSpanAsyncV4

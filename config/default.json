@@ -60,9 +60,5 @@
     "sslEnabled": false,
     "maxAttempts": 3
   },
-  "enableServices": {
-    "extractable": {
-      "extractableManagement": true
-    }
-  }
+  "isExtractableLogicEnabled": true
 }

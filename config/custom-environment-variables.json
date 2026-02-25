@@ -78,11 +78,8 @@
       "__format": "number"
     }
   },
-  "enableServices": {
-    "extractable": {
-      "__name": "ENABLE_EXTRACTABLE_MANAGEMENT",
-      "__format": "boolean"
-
-    }
+  "isExtractableLogicEnabled": {
+    "__name": "ENABLE_EXTRACTABLE_MANAGEMENT",
+    "__format": "boolean"
   }
 }

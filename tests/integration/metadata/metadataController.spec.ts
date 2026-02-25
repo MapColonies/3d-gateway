@@ -519,7 +519,7 @@ describe('MetadataController', function () {
         const disabledConfig: IConfig = {
           ...config,
           get: <T>(setting: string): T => {
-            if (setting === 'enableServices.extractable') {
+            if (setting === 'isExtractableLogicEnabled') {
               return false as T;
             }
             return config.get<T>(setting);
