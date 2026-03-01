@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.8.1](https://github.com/MapColonies/3d-gateway/compare/v2.8.0...v2.8.1) (2026-03-01)
+
+
+### Bug Fixes
+
+* fix enable-extractable from global ([#53](https://github.com/MapColonies/3d-gateway/issues/53)) ([2020cfc](https://github.com/MapColonies/3d-gateway/commit/2020cfc1e34910f55c5443013d25441d6dbb1cd6))
+
 ## [2.8.0](https://github.com/MapColonies/3d-gateway/compare/v2.7.5...v2.8.0) (2026-02-25)
 
 
