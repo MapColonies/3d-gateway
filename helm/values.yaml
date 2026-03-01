@@ -1,4 +1,7 @@
 global:
+  enable-services:
+    extractable:
+      extractable-management:
   cloudProvider:
     dockerRegistryUrl: registry
     flavor: openshift
@@ -28,8 +31,6 @@ global:
     name: ''
     pv_path: ''
     sub_path: ''
-    
-  isExtractableLogicEnabled:
   
 cloudProvider:
   dockerRegistryUrl:
