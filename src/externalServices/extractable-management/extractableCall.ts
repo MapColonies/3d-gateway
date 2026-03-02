@@ -31,7 +31,8 @@ export class ExtractableCall {
     this.logger.debug({ msg: `Checking record '${recordName}' in extractable service`, logContext });
 
     try {
-      const response = await axios.get(`${this.extractable}/records/${recordName}`, {
+      const encodedName = encodeURIComponent(recordName);
+       const response = await axios.get(`${this.extractable}/records/${encodedName}`, {
         validateStatus: () => true,
       });
 
