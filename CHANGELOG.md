@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.8.3](https://github.com/MapColonies/3d-gateway/compare/v2.8.2...v2.8.3) (2026-03-02)
+
+
+### Bug Fixes
+
+* fix encoded uri to record name ([#57](https://github.com/MapColonies/3d-gateway/issues/57)) ([377dd6a](https://github.com/MapColonies/3d-gateway/commit/377dd6a407501d085b32998f7f7ceed58e2e5c2e))
+
 ## [2.8.2](https://github.com/MapColonies/3d-gateway/compare/v2.8.1...v2.8.2) (2026-03-01)
 
 
