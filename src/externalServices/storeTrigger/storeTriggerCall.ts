@@ -71,7 +71,7 @@ export class StoreTriggerCall {
       flowPayload: payload,
     });
     try {
-      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/jobOperations/ingestion`, payload);
+      const response = await axios.post<StoreTriggerResponse>(`${this.storeTrigger}/ingestion`, payload);
       this.logger.info({
         msg: 'sent Ingestion to store-trigger successfully',
         logContext,

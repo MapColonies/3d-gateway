@@ -32,7 +32,7 @@ describe('StoreTriggerCall', () => {
 
       const created = await storeTrigger.startIngestion(request);
 
-      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/jobOperations/ingestion`, request);
+      expect(mockAxios.post).toHaveBeenCalledWith(`${storeTriggerUrl}/ingestion`, request);
       expect(created).toMatchObject(expected);
     });
 
