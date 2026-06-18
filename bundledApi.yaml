@@ -254,9 +254,7 @@ components:
       additionalProperties: false
     payloadForValidation:
       type: object
-      description: >-
-        3d model payload, if metadta is not provided will validate only the
-        sources
+      description: 3d model payload, if metadta is not provided will validate only the sources
       required:
         - modelPath
         - tilesetFilename
@@ -314,6 +312,19 @@ components:
                 links:
                   type: string
                   example: This is example
+    productType:
+      type: string
+      enum:
+        - 3DPhotorealistic
+        - 3DPhotoRealisticBest
+        - 3DSemantic
+        - 3DSemanticMesh
+        - 3DPointCloud
+      description: Type of 3D product
+    productSubType:
+      type: string
+      nullable: true
+      description: Sub-Type of 3D product
     Point3D:
       type: array
       minItems: 2
@@ -567,9 +578,9 @@ components:
           maxLength: 120
           description: Name of product
         productType:
-          type: string
-          description: Type of product (3DPhotoRealistic)
-          example: 3DPhotoRealistic
+          $ref: '#/components/schemas/productType'
+        productSubType:
+          $ref: '#/components/schemas/productSubType'
         description:
           type: string
           maxLength: 500
@@ -649,8 +660,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Geometry'
             - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+            - example: '{"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}'
         heightRangeFrom:
           type: number
           format: double
@@ -721,6 +731,8 @@ components:
           type: string
           maxLength: 120
           description: Name of product
+        productSubType:
+          $ref: '#/components/schemas/productSubType'
         description:
           type: string
           nullable: true
@@ -743,8 +755,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Geometry'
             - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+            - example: '{"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}'
         minResolutionMeter:
           type: number
           format: double
@@ -894,9 +905,9 @@ components:
           maxLength: 120
           description: Name of product
         productType:
-          type: string
-          description: Type of product (3DPhotoRealistic)
-          example: 3DPhotoRealistic
+          $ref: '#/components/schemas/productType'
+        productSubType:
+          $ref: '#/components/schemas/productSubType'
         description:
           type: string
           maxLength: 500
@@ -976,8 +987,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/Geometry'
             - description: Geographic demarcation of the product
-            - example: >-
-                {"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}
+            - example: '{"type":"Polygon","coordinates":[[[1,2],[3,4],[5,6],[7,8],[1,2]]]}'
         heightRangeFrom:
           type: number
           format: double
