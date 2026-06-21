@@ -232,7 +232,7 @@ describe('ValidationManager', () => {
     it('returns false when product type is not a valid 3D type', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      payload.metadata.productType = faker.animal.bear() as unknown as ProductType;
+      payload.metadata.productType = ProductType.QUANTIZED_MESH_DSM;
 
       configMock.get.mockReturnValue(100);
       validationManager = new ValidationManager(
