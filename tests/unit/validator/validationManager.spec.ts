@@ -229,10 +229,19 @@ describe('ValidationManager', () => {
       expect(response.message).toContain('The footprint intersectection with the model');
     });
 
-    it('returns false when product type is not a valid 3D type', async () => {
+    it.each([
+      {
+        productType: ProductType.QUANTIZED_MESH_DSM,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },
+      {
+        productType: ProductType.SEMANTIC,
+        expectedResponse: { isValid: true },
+      },
+    ])('validates product type %p', async (testInput: { productType: ProductType; expectedResponse: { isValid: boolean; message?: string } }) => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      payload.metadata.productType = ProductType.QUANTIZED_MESH_DSM;
+      payload.metadata.productType = testInput.productType;
 
       configMock.get.mockReturnValue(100);
       validationManager = new ValidationManager(
@@ -251,37 +260,7 @@ describe('ValidationManager', () => {
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
 
-      expect(response).toStrictEqual({
-        isValid: false,
-        message: ERROR_METADATA_PRODUCT_TYPE,
-      });
-    });
-
-    it('returns true when product type is ineeded a valid 3D type', async () => {
-      const payload = createIngestionPayload();
-      payload.modelPath = createMountedModelPath();
-      payload.metadata.productType = ProductType.SEMANTIC;
-
-      configMock.get.mockReturnValue(100);
-      validationManager = new ValidationManager(
-        configMock,
-        jsLogger({ enabled: false }),
-        trace.getTracer('testTracer'),
-        lookupTablesMock as never,
-        catalogMock as never,
-        extractableMock as never,
-        providerMock
-      );
-
-      catalogMock.findRecords.mockResolvedValue([]);
-      catalogMock.isProductIdExist.mockResolvedValue(true);
-      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
-
-      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
-
-      expect(response).toStrictEqual({
-        isValid: true,
-      });
+      expect(response).toStrictEqual(testInput.expectedResponse);
     });
 
     it('returns true when product id is undefined', async () => {
