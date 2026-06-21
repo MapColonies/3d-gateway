@@ -100,7 +100,7 @@ describe('ModelController', function () {
 
       it('should return 201 status code if productType is not 3DPhotoRealistic', async function () {
         const payload = createIngestionPayload();
-        payload.metadata.productType = ProductType.DTM;
+        payload.metadata.productType = ProductType.SEMANTIC;
         const storeTriggerResult: StoreTriggerResponse = {
           jobId: faker.string.uuid(),
           status: OperationStatus.IN_PROGRESS,
@@ -175,6 +175,7 @@ describe('ModelController', function () {
           productSource: '\\\\tmp\\tilesets\\models\\Sphere',
           productStatus: 'UNPUBLISHED',
           productType: '3DPhotoRealistic',
+          productSubType: payload.metadata.productSubType,
           productionSystem: payload.metadata.productionSystem,
           productionSystemVer: payload.metadata.productionSystemVer,
           region: payload.metadata.region,
@@ -245,6 +246,7 @@ describe('ModelController', function () {
           productSource: '\\\\tmp\\tilesets\\models\\Sphere',
           productStatus: 'UNPUBLISHED',
           productType: '3DPhotoRealistic',
+          productSubType: payload.metadata.productSubType,
           productionSystem: payload.metadata.productionSystem,
           productionSystemVer: payload.metadata.productionSystemVer,
           region: payload.metadata.region,
@@ -722,7 +724,7 @@ describe('ModelController', function () {
         };
 
         const expectedRecord = createRecord();
-        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedResponse });
@@ -743,7 +745,7 @@ describe('ModelController', function () {
     describe('Bad Path 😡', () => {
       it('should return 400 status when store trigger response is 400', async function () {
         const expectedRecord = createRecord();
-        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
 
@@ -793,7 +795,7 @@ describe('ModelController', function () {
     describe('Sad Path 😥, validate', () => {
       it('should return 500 status when store trigger response is 500', async function () {
         const expectedRecord = createRecord();
-        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
         mockAxios.post.mockRejectedValueOnce(new Error('failed with 500'));
@@ -812,7 +814,7 @@ describe('ModelController', function () {
         };
 
         const expectedRecord = createRecord();
-        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: expectedResponse });
@@ -838,7 +840,7 @@ describe('ModelController', function () {
         };
 
         const expectedRecord = createRecord();
-        expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+        expectedRecord.productType = ProductType.PHOTO_REALISTIC;
         expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
         mockAxios.post.mockResolvedValueOnce({ status: StatusCodes.OK, data: [expectedRecord] });
 

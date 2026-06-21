@@ -125,7 +125,6 @@ export class ValidationManager {
 
     result = this.isProductTypeValid(metadata.productType!);
     if (!result) {
-      // For now, this validation will not occur as it returns true.
       return {
         isValid: false,
         message: ERROR_METADATA_PRODUCT_TYPE,
@@ -488,20 +487,19 @@ export class ValidationManager {
     return minResolutionMeter <= maxResolutionMeter;
   }
 
-  // For now, the validation will be only warning.
   private isProductTypeValid(productType: ProductType): boolean {
     const logContext = { ...this.logContext, function: this.isProductTypeValid.name };
-    if (productType != ProductType.PHOTO_REALISTIC_3D) {
-      this.logger.warn({
-        msg: ERROR_METADATA_PRODUCT_TYPE,
-        logContext,
-      });
-      return true; // TODO: lets check if it should be returned as false
+    switch (productType) {
+      case ProductType.PHOTO_REALISTIC:
+      case ProductType.PHOTO_REALISTIC_BEST:
+      case ProductType.SEMANTIC:
+      case ProductType.SEMANTIC_MESH:
+      case ProductType.POINT_CLOUD:
+        this.logger.debug({ msg: 'productType validated successfully!', logContext });
+        return true;
+      default:
+        this.logger.warn({ msg: ERROR_METADATA_PRODUCT_TYPE, logContext });
+        return false;
     }
-    this.logger.debug({
-      msg: 'productType validated successfully!',
-      logContext,
-    });
-    return true;
   }
 }

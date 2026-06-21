@@ -315,7 +315,7 @@ components:
     productType:
       type: string
       enum:
-        - 3DPhotorealistic
+        - 3DPhotoRealistic
         - 3DPhotoRealisticBest
         - 3DSemantic
         - 3DSemanticMesh
