@@ -13,11 +13,11 @@ import { IConfig, LogContext, Provider, ValidationResponse, UpdatePayload, MetaD
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
+import { ExtractableCall } from '../externalServices/extractable-management/extractableCall';
+import { Record3D } from '../externalServices/catalog/interfaces';
 import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
-import { ExtractableCall } from '../externalServices/extractable-management/extractableCall';
-import { Record3D } from '../externalServices/catalog/interfaces';
 
 export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
 export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';

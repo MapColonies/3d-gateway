@@ -5,6 +5,7 @@ import { faker } from '@faker-js/faker';
 import { StatusCodes } from 'http-status-codes';
 import { trace } from '@opentelemetry/api';
 import { ExtractableCall } from '../../../../src/externalServices/extractable-management/extractableCall';
+
 let extractable: ExtractableCall;
 describe('extractableCall tests', () => {
   const extractableUrl = config.get<string>('externalServices.extractable');

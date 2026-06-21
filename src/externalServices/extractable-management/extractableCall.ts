@@ -32,7 +32,7 @@ export class ExtractableCall {
 
     try {
       const encodedName = encodeURIComponent(recordName);
-       const response = await axios.get(`${this.extractable}/records/${encodedName}`, {
+      const response = await axios.get(`${this.extractable}/records/${encodedName}`, {
         validateStatus: () => true,
       });
 

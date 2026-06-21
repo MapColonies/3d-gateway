@@ -74,12 +74,7 @@ export class CatalogCall {
             logContext,
             response,
           });
-          throw new AppError(
-            'catalog',
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            'Problem with the catalog during Finding Records',
-            true
-          );
+          throw new AppError('catalog', StatusCodes.INTERNAL_SERVER_ERROR, 'Problem with the catalog during Finding Records', true);
         }
       }
     } catch (err) {

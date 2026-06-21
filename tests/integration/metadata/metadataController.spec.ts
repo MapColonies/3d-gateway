@@ -23,8 +23,8 @@ import { S3Config } from '../../../src/common/interfaces';
 import { extractLink } from '../../../src/validator/extractPathFromLink';
 import { CatalogCall } from '../../../src/externalServices/catalog/catalogCall';
 import { ERROR_METADATA_PRODUCT_NAME_CONFLICT, ERROR_METADATA_PRODUCT_NAME_UNIQUE } from '../../../src/validator/validationManager';
-import { MetadataRequestSender } from './helpers/requestSender';
 import { IConfig } from '../../../src/common/interfaces';
+import { MetadataRequestSender } from './helpers/requestSender';
 
 describe('MetadataController', function () {
   let requestSender: MetadataRequestSender;
@@ -166,7 +166,10 @@ describe('MetadataController', function () {
         const response = await requestSender.updateMetadata(identifier, payload);
 
         expect(response.status).toBe(StatusCodes.BAD_REQUEST);
-        expect(response.body).toHaveProperty('message', `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`);
+        expect(response.body).toHaveProperty(
+          'message',
+          `Wrong polygon: ${JSON.stringify(payload.footprint)} the first and last coordinates should be equal`
+        );
         expect(response).toSatisfyApiSpec();
       });
 

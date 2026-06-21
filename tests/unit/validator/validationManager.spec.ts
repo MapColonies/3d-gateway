@@ -511,7 +511,10 @@ describe('ValidationManager', () => {
       providerMock.getFile.mockResolvedValue(getTileset());
 
       const polygonSpy = jest
-        .spyOn(validationManager as unknown as { getTilesetModelPolygon: (fileContent: string, failedReason: FailedReason) => Polygon | undefined }, 'getTilesetModelPolygon')
+        .spyOn(
+          validationManager as unknown as { getTilesetModelPolygon: (fileContent: string, failedReason: FailedReason) => Polygon | undefined },
+          'getTilesetModelPolygon'
+        )
         .mockImplementation((_fileContent: string, failedReason: FailedReason) => {
           failedReason.outFailedReason = 'tileset error';
           return undefined;
@@ -531,7 +534,9 @@ describe('ValidationManager', () => {
     it('returns true when extractable management is disabled', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'isExtractableLogicEnabled') return false;
+        if (key === 'isExtractableLogicEnabled') {
+return false;
+}
         return 50;
       });
 
@@ -556,8 +561,12 @@ describe('ValidationManager', () => {
     it('returns true when record does not exist in extractable', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'isExtractableLogicEnabled') return true;
-        if (key === 'validation.percentageLimit') return 50;
+        if (key === 'isExtractableLogicEnabled') {
+return true;
+}
+        if (key === 'validation.percentageLimit') {
+return 50;
+}
         return 50;
       });
 
@@ -583,8 +592,12 @@ describe('ValidationManager', () => {
     it('returns false and sets reason when record exists in extractable', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'isExtractableLogicEnabled') return true;
-        if (key === 'validation.percentageLimit') return 50;
+        if (key === 'isExtractableLogicEnabled') {
+return true;
+}
+        if (key === 'validation.percentageLimit') {
+return 50;
+}
         return 50;
       });
 
