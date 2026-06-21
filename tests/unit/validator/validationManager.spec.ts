@@ -15,6 +15,7 @@ import {
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
   ERROR_METADATA_PRODUCT_NAME_CONFLICT,
   ERROR_METADATA_PRODUCT_NAME_UNIQUE,
+  ERROR_METADATA_PRODUCT_TYPE,
   ERROR_METADATA_RESOLUTION,
   FailedReason,
   ValidationManager,
@@ -228,10 +229,21 @@ describe('ValidationManager', () => {
       expect(response.message).toContain('The footprint intersectection with the model');
     });
 
-    it('throws error if product type is invalid', async () => {
+    it('returns false when product type is not a valid 3D type', async () => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
       payload.metadata.productType = faker.animal.bear() as unknown as ProductType;
+
+      configMock.get.mockReturnValue(100);
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
 
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
@@ -239,7 +251,37 @@ describe('ValidationManager', () => {
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
 
-      expect(response).toStrictEqual({ isValid: true }); // For now, the validation will be only warning. so it's true
+      expect(response).toStrictEqual({
+        isValid: false,
+        message: ERROR_METADATA_PRODUCT_TYPE,
+      });
+    });
+
+    it('returns true when product type is ineeded a valid 3D type', async () => {
+      const payload = createIngestionPayload();
+      payload.modelPath = createMountedModelPath();
+      payload.metadata.productType = ProductType.SEMANTIC;
+
+      configMock.get.mockReturnValue(100);
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
+
+      catalogMock.findRecords.mockResolvedValue([]);
+      catalogMock.isProductIdExist.mockResolvedValue(true);
+      lookupTablesMock.getClassifications.mockResolvedValue([payload.metadata.classification]);
+
+      const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
+
+      expect(response).toStrictEqual({
+        isValid: true,
+      });
     });
 
     it('returns true when product id is undefined', async () => {

@@ -21,7 +21,7 @@ import { extractLink } from './extractPathFromLink';
 
 export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
 export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
-export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not 3DPhotoRealistic!';
+export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not a valid 3D type!';
 export const ERROR_METADATA_PRODUCT_NAME_UNIQUE = 'product name is not unique!';
 export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
 export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
