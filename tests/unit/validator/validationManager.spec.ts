@@ -233,9 +233,37 @@ describe('ValidationManager', () => {
       {
         productType: ProductType.QUANTIZED_MESH_DSM,
         expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },      
+      {
+        productType: ProductType.QUANTIZED_MESH_DTM,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },     
+      {
+        productType: ProductType.QUANTIZED_MESH_DSM_BEST,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
       },
       {
+        productType: ProductType.QUANTIZED_MESH_DTM_BEST,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },
+      {
+        productType: ProductType.PHOTO_REALISTIC,
+        expectedResponse: { isValid: true },
+      },    
+      {
+        productType: ProductType.PHOTO_REALISTIC_BEST,
+        expectedResponse: { isValid: true },
+      },      
+      {
         productType: ProductType.SEMANTIC,
+        expectedResponse: { isValid: true },
+      },      
+      {
+        productType: ProductType.SEMANTIC_MESH,
+        expectedResponse: { isValid: true },
+      },
+      {
+        productType: ProductType.POINT_CLOUD,
         expectedResponse: { isValid: true },
       },
     ])('validates product type %p', async (testInput: { productType: ProductType; expectedResponse: { isValid: boolean; message?: string } }) => {
