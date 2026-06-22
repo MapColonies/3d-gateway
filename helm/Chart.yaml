@@ -1,8 +1,8 @@
 apiVersion: v2
 name: gateway
 description: A Helm chart for 3D gateway service
-version: 2.8.3
-appVersion: 2.8.3
+version: 2.9.0
+appVersion: 2.9.0
 dependencies:
   - name: mclabels
     version: 1.0.1

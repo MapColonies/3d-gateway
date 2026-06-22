@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.9.0](https://github.com/MapColonies/3d-gateway/compare/v2.8.3...v2.9.0) (2026-06-22)
+
+
+### Features
+
+* added new type of productSubType and values to productType (MAPCO-10804) ([#59](https://github.com/MapColonies/3d-gateway/issues/59)) ([a5ff749](https://github.com/MapColonies/3d-gateway/commit/a5ff7495a70eff0a7de6b976c9ce9272be7c0dc4))
+
+
+### Helm Changes
+
+* upgrade to the latest mc-labels (MAPCO-7126) ([#60](https://github.com/MapColonies/3d-gateway/issues/60)) ([31da55a](https://github.com/MapColonies/3d-gateway/commit/31da55aded6541aa511c5970f874f441300221cf))
+
 ## [2.8.3](https://github.com/MapColonies/3d-gateway/compare/v2.8.2...v2.8.3) (2026-03-02)
 
 
