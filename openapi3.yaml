@@ -272,7 +272,7 @@ components:
           description: Model tileset filename
           example: tileset.json
         metadata:
-          $ref: '#/components/schemas/basic-payload'
+          $ref: ./Schema/3dCatalog/3dMetadata.yaml#/components/schemas/basic-payload
       additionalProperties: false
     validateResponse:
       type: object

@@ -13,15 +13,15 @@ import { IConfig, LogContext, Provider, ValidationResponse, UpdatePayload, MetaD
 import { footprintSchema } from '../common/constants';
 import { LookupTablesCall } from '../externalServices/lookupTables/lookupTablesCall';
 import { CatalogCall } from '../externalServices/catalog/catalogCall';
+import { ExtractableCall } from '../externalServices/extractable-management/extractableCall';
+import { Record3D } from '../externalServices/catalog/interfaces';
 import { convertSphereFromXYZToWGS84, convertRegionFromRadianToDegrees } from './calculatePolygonFromTileset';
 import { BoundingRegion, BoundingSphere, TileSetJson } from './interfaces';
 import { extractLink } from './extractPathFromLink';
-import { ExtractableCall } from '../externalServices/extractable-management/extractableCall';
-import { Record3D } from '../externalServices/catalog/interfaces';
 
 export const ERROR_METADATA_DATE = 'sourceStartDate should not be later than sourceEndDate';
 export const ERROR_METADATA_RESOLUTION = 'minResolutionMeter should not be bigger than maxResolutionMeter';
-export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not 3DPhotoRealistic!';
+export const ERROR_METADATA_PRODUCT_TYPE = 'product type is not a valid 3D type!';
 export const ERROR_METADATA_PRODUCT_NAME_UNIQUE = 'product name is not unique!';
 export const ERROR_METADATA_BOX_TILESET = `BoundingVolume of box is not supported yet... Please contact 3D team.`;
 export const ERROR_METADATA_BAD_FORMAT_TILESET = 'Bad tileset format. Should be in 3DTiles format';
@@ -125,7 +125,6 @@ export class ValidationManager {
 
     result = this.isProductTypeValid(metadata.productType!);
     if (!result) {
-      // For now, this validation will not occur as it returns true.
       return {
         isValid: false,
         message: ERROR_METADATA_PRODUCT_TYPE,
@@ -488,20 +487,19 @@ export class ValidationManager {
     return minResolutionMeter <= maxResolutionMeter;
   }
 
-  // For now, the validation will be only warning.
   private isProductTypeValid(productType: ProductType): boolean {
     const logContext = { ...this.logContext, function: this.isProductTypeValid.name };
-    if (productType != ProductType.PHOTO_REALISTIC_3D) {
-      this.logger.warn({
-        msg: ERROR_METADATA_PRODUCT_TYPE,
-        logContext,
-      });
-      return true; // TODO: lets check if it should be returned as false
+    switch (productType) {
+      case ProductType.PHOTO_REALISTIC:
+      case ProductType.PHOTO_REALISTIC_BEST:
+      case ProductType.SEMANTIC:
+      case ProductType.SEMANTIC_MESH:
+      case ProductType.POINT_CLOUD:
+        this.logger.debug({ msg: 'productType validated successfully!', logContext });
+        return true;
+      default:
+        this.logger.warn({ msg: ERROR_METADATA_PRODUCT_TYPE, logContext });
+        return false;
     }
-    this.logger.debug({
-      msg: 'productType validated successfully!',
-      logContext,
-    });
-    return true;
   }
 }

@@ -237,7 +237,7 @@ describe('ModelManager', () => {
       const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
@@ -255,7 +255,7 @@ describe('ModelManager', () => {
       const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
@@ -271,7 +271,7 @@ describe('ModelManager', () => {
       const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([]);
@@ -290,7 +290,7 @@ describe('ModelManager', () => {
 
     it('throw if storeTrigger.startDelete rejects with error', async () => {
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
@@ -304,7 +304,7 @@ describe('ModelManager', () => {
       const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.BEING_DELETED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
@@ -318,7 +318,7 @@ describe('ModelManager', () => {
       const expectedResponse: StoreTriggerIngestionPayload = createStoreTriggerPayload('Sphere');
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord, expectedRecord]);
@@ -336,7 +336,7 @@ describe('ModelManager', () => {
       };
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.UNPUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);
@@ -400,7 +400,7 @@ describe('ModelManager', () => {
       };
 
       const expectedRecord = createRecord();
-      expectedRecord.productType = ProductType.PHOTO_REALISTIC_3D;
+      expectedRecord.productType = ProductType.PHOTO_REALISTIC;
       expectedRecord.productStatus = RecordStatus.PUBLISHED;
 
       catalogMock.findRecords.mockResolvedValueOnce([expectedRecord]);

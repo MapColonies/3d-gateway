@@ -112,7 +112,8 @@ export const createMetadataWithoutProductSource = (modelName = 'Sphere'): Omit<L
   return {
     productId: faker.string.uuid(),
     productName: faker.word.sample(),
-    productType: ProductType.PHOTO_REALISTIC_3D,
+    productType: ProductType.PHOTO_REALISTIC,
+    productSubType: faker.word.sample(),
     description: faker.word.words(),
     creationDate: faker.date.past(),
     sourceDateStart: sourceDateStart,
@@ -182,7 +183,7 @@ export const createStoreTriggerDeletePayload = (modelId: string = faker.string.u
   return {
     modelId: modelId,
     productId: modelId,
-    productType: ProductType.PHOTO_REALISTIC_3D,
+    productType: ProductType.PHOTO_REALISTIC,
     productName: faker.word.sample(),
     producerName: faker.word.sample(),
     productVersion: faker.number.int(),

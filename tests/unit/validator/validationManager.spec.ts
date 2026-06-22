@@ -15,6 +15,7 @@ import {
   ERROR_METADATA_FOOTPRINT_FAR_FROM_MODEL,
   ERROR_METADATA_PRODUCT_NAME_CONFLICT,
   ERROR_METADATA_PRODUCT_NAME_UNIQUE,
+  ERROR_METADATA_PRODUCT_TYPE,
   ERROR_METADATA_RESOLUTION,
   FailedReason,
   ValidationManager,
@@ -228,10 +229,58 @@ describe('ValidationManager', () => {
       expect(response.message).toContain('The footprint intersectection with the model');
     });
 
-    it('throws error if product type is invalid', async () => {
+    it.each([
+      {
+        productType: ProductType.QUANTIZED_MESH_DSM,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },      
+      {
+        productType: ProductType.QUANTIZED_MESH_DTM,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },     
+      {
+        productType: ProductType.QUANTIZED_MESH_DSM_BEST,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },
+      {
+        productType: ProductType.QUANTIZED_MESH_DTM_BEST,
+        expectedResponse: { isValid: false, message: ERROR_METADATA_PRODUCT_TYPE },
+      },
+      {
+        productType: ProductType.PHOTO_REALISTIC,
+        expectedResponse: { isValid: true },
+      },    
+      {
+        productType: ProductType.PHOTO_REALISTIC_BEST,
+        expectedResponse: { isValid: true },
+      },      
+      {
+        productType: ProductType.SEMANTIC,
+        expectedResponse: { isValid: true },
+      },      
+      {
+        productType: ProductType.SEMANTIC_MESH,
+        expectedResponse: { isValid: true },
+      },
+      {
+        productType: ProductType.POINT_CLOUD,
+        expectedResponse: { isValid: true },
+      },
+    ])('validates product type %p', async (testInput: { productType: ProductType; expectedResponse: { isValid: boolean; message?: string } }) => {
       const payload = createIngestionPayload();
       payload.modelPath = createMountedModelPath();
-      payload.metadata.productType = faker.animal.bear() as unknown as ProductType;
+      payload.metadata.productType = testInput.productType;
+
+      configMock.get.mockReturnValue(100);
+      validationManager = new ValidationManager(
+        configMock,
+        jsLogger({ enabled: false }),
+        trace.getTracer('testTracer'),
+        lookupTablesMock as never,
+        catalogMock as never,
+        extractableMock as never,
+        providerMock
+      );
 
       catalogMock.findRecords.mockResolvedValue([]);
       catalogMock.isProductIdExist.mockResolvedValue(true);
@@ -239,7 +288,7 @@ describe('ValidationManager', () => {
 
       const response = await validationManager.isMetadataValidForIngestion(payload.metadata, createFootprint());
 
-      expect(response).toStrictEqual({ isValid: true }); // For now, the validation will be only warning. so it's true
+      expect(response).toStrictEqual(testInput.expectedResponse);
     });
 
     it('returns true when product id is undefined', async () => {
@@ -511,7 +560,10 @@ describe('ValidationManager', () => {
       providerMock.getFile.mockResolvedValue(getTileset());
 
       const polygonSpy = jest
-        .spyOn(validationManager as unknown as { getTilesetModelPolygon: (fileContent: string, failedReason: FailedReason) => Polygon | undefined }, 'getTilesetModelPolygon')
+        .spyOn(
+          validationManager as unknown as { getTilesetModelPolygon: (fileContent: string, failedReason: FailedReason) => Polygon | undefined },
+          'getTilesetModelPolygon'
+        )
         .mockImplementation((_fileContent: string, failedReason: FailedReason) => {
           failedReason.outFailedReason = 'tileset error';
           return undefined;
@@ -531,7 +583,9 @@ describe('ValidationManager', () => {
     it('returns true when extractable management is disabled', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'isExtractableLogicEnabled') return false;
+        if (key === 'isExtractableLogicEnabled') {
+return false;
+}
         return 50;
       });
 
@@ -556,8 +610,12 @@ describe('ValidationManager', () => {
     it('returns true when record does not exist in extractable', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'isExtractableLogicEnabled') return true;
-        if (key === 'validation.percentageLimit') return 50;
+        if (key === 'isExtractableLogicEnabled') {
+return true;
+}
+        if (key === 'validation.percentageLimit') {
+return 50;
+}
         return 50;
       });
 
@@ -583,8 +641,12 @@ describe('ValidationManager', () => {
     it('returns false and sets reason when record exists in extractable', async () => {
       const record = createRecord();
       configMock.get.mockImplementation((key: string) => {
-        if (key === 'isExtractableLogicEnabled') return true;
-        if (key === 'validation.percentageLimit') return 50;
+        if (key === 'isExtractableLogicEnabled') {
+return true;
+}
+        if (key === 'validation.percentageLimit') {
+return 50;
+}
         return 50;
       });
 
