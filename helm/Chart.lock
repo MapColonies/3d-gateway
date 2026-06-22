@@ -2,5 +2,5 @@ dependencies:
 - name: mclabels
   repository: oci://acrarolibotnonprod.azurecr.io/helm/infra
   version: 1.0.1
-digest: sha256:e38dc04f5721c6f001031275e1d549aa05d611265072ea536b92e29c2a623158
-generated: "2026-06-22T10:42:42.023044858+03:00"
+digest: sha256:a97237cd8966ab9d4f8c0b8dda2ad110fbff5d485da868124fdce2a5dbbfa208
+generated: "2026-06-22T14:27:00.74033422+03:00"
