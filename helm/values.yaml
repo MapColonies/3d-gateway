@@ -137,10 +137,10 @@ resources:
   enabled: true
   value:
     limits:
-      cpu: 400m
+      cpu: 100m
       memory: 128Mi
     requests:
-      cpu: 100m
+      cpu: 25m
       memory: 128Mi
 
 route:
