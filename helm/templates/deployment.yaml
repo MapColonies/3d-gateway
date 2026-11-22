@@ -36,6 +36,7 @@ spec:
         release: {{ $releaseName }}
         run: {{ $fullName }}
         {{- include "gateway.selectorLabels" . | nindent 8 }}
+        {{- include "mclabels.labels" . | nindent 8 }}
       annotations:
         {{ include "mclabels.annotations" . | nindent 8 }}
         {{ include "merged.podAnnotations" . | nindent 8 }}
