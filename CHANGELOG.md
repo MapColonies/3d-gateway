@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.9.1](https://github.com/MapColonies/3d-gateway/compare/v2.9.0...v2.9.1) (2026-11-22)
+
+
+### Helm Changes
+
+* add mclabels to pod template and set cpu limit to 4x request (MAPCO-11865, MAPCO-11866) ([#62](https://github.com/MapColonies/3d-gateway/issues/62)) ([9617d06](https://github.com/MapColonies/3d-gateway/commit/9617d068c12291f82609eca80f442d1273b9778e))
+
 ## [2.9.0](https://github.com/MapColonies/3d-gateway/compare/v2.8.3...v2.9.0) (2026-06-22)
 
 
